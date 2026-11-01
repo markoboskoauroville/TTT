@@ -137,7 +137,7 @@ footer{{padding:40px 0 60px; color:var(--ink3); font-size:13.5px; border-top:1px
   <p class="note" style="margin-top:14px">The latest build · Android 8 and newer · free and open source (Apache 2.0)</p>
 
   <!-- 3. the lifestyle picture -->
-  <!-- LIFESTYLE PICTURE NEEDED: a person using TTT in real life (see momentaryupdates.md, 1.11.2026) -->
+  <div class="life" style="margin-top:28px"><img src="img/lifestyle.jpg" alt="A smiling woman in a printed kurta sits on a bench under a big tree on a sunny Pondicherry street, colourful colonial houses and bougainvillea behind her, speaking into her phone" width="1024" height="765" loading="lazy"></div>
   </div>
 </main>
 
