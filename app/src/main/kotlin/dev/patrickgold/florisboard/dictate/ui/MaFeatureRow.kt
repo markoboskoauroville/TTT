@@ -1471,13 +1471,16 @@ fun MaFeatureRow(
                         },
                     ) { fg ->
                         Row(verticalAlignment = Alignment.CenterVertically) {
-                            Box(
-                                modifier = Modifier
-                                    .size(9.dp)
-                                    .clip(CircleShape)
-                                    .background(MaRecordRed),
-                            )
-                            Spacer(Modifier.width(4.dp))
+                            // E|H wears no red dot (Marko, 2.11.2026); the red outline says it records.
+                            if (!translate) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(9.dp)
+                                        .clip(CircleShape)
+                                        .background(MaRecordRed),
+                                )
+                                Spacer(Modifier.width(4.dp))
+                            }
                             if (translate) {
                                 // E|H (Marko, 2.11.2026): E on the left, a straight vertical line,
                                 // H on the right. English becomes Croatian, read left to right; the
