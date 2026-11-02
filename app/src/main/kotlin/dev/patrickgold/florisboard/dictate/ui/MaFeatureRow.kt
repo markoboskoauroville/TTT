@@ -1402,13 +1402,20 @@ fun MaFeatureRow(
                     }
                 }
 
-                MaFeatureKey.RECORD_HR, MaFeatureKey.RECORD_EN -> {
+                MaFeatureKey.RECORD_HR, MaFeatureKey.RECORD_EN, MaFeatureKey.RECORD_EN_HR -> {
                     // RECORD IN A LANGUAGE. The key is the answer to "which language is this".
                     //
                     // Written once for the two: they differ by one string, and two copies would be
                     // two places for the order of "set the language, then record" to drift — which
                     // is the one thing here that must not.
                     val language = if (button.key == MaFeatureKey.RECORD_HR) MaLanguage.HR else MaLanguage.EN
+                    // E>H records English like E, and the transcript is then written in Croatian.
+                    val translate = button.key == MaFeatureKey.RECORD_EN_HR
+                    val label = when {
+                        translate -> "E>H"
+                        language == MaLanguage.HR -> "H"
+                        else -> "E"
+                    }
                     val rec = DictateController.state.collectAsState().value as?
                         DictateController.UiState.Recording
                     val recording = rec != null
@@ -1434,7 +1441,11 @@ fun MaFeatureRow(
                         // `MaLanguage.active()` rather than `inFlightLanguage`: the latter is written
                         // when a REQUEST starts, and this is a recording — it has not been sent yet.
                         // Reading the wrong one would leave both keys dark until the upload began.
-                        ring = if (recording && MaLanguage.active() == language) onGreen else null,
+                        // E and E>H both record English, so the one that started it is the one that
+                        // rings: the controller knows whether this recording translates.
+                        ring = if (recording && MaLanguage.active() == language &&
+                            DictateController.isTranslating() == translate
+                        ) onGreen else null,
                         onClick = {
                             // THE LANGUAGE IS SET FIRST, AND SET SYNCHRONOUSLY.
                             //
@@ -1444,12 +1455,14 @@ fun MaFeatureRow(
                             // whatever the previous setting was — which is the bug he has been
                             // living with, arriving by a different road.
                             if (!recording) MaLanguage.set(context, language)
-                            DictateController.onMicClick(context)
+                            DictateController.onMicClick(context, translate = translate)
                             MaMessage.show(
                                 if (recording) {
-                                    "Sending " + if (language == MaLanguage.HR) "Croatian" else "English"
+                                    if (translate) "Sending English, writing Croatian"
+                                    else "Sending " + if (language == MaLanguage.HR) "Croatian" else "English"
                                 } else {
-                                    "Recording " + if (language == MaLanguage.HR) "Croatian" else "English"
+                                    if (translate) "Recording English, writing Croatian"
+                                    else "Recording " + if (language == MaLanguage.HR) "Croatian" else "English"
                                 },
                             )
                         },
@@ -1463,7 +1476,7 @@ fun MaFeatureRow(
                             )
                             Spacer(Modifier.width(4.dp))
                             Text(
-                                text = if (language == MaLanguage.HR) "H" else "E",
+                                text = label,
                                 color = fg,
                                 fontSize = 17.sp,
                                 fontWeight = FontWeight.Bold,

@@ -459,6 +459,17 @@ object MaRows {
     fun displayName(row: Row, index: Int): String =
         row.name.ifBlank { "Row ${index + 1}" }
 
+    /**
+     * [rows] with [key] placed right after the first of [after] found in each row (the first of
+     * [after] that the row holds), unless the row already has [key]. Rows holding none are unchanged.
+     */
+    fun withKeyAfter(rows: List<Row>, key: MaFeatureKey, after: List<MaFeatureKey>): List<Row> = rows.map { row ->
+        if (row.entries.any { it.button == Button.Builtin(key) }) return@map row
+        val anchor = after.firstOrNull { a -> row.entries.any { it.button == Button.Builtin(a) } } ?: return@map row
+        val at = row.entries.indexOfFirst { it.button == Button.Builtin(anchor) }
+        row.copy(entries = row.entries.toMutableList().apply { add(at + 1, Entry(Button.Builtin(key))) })
+    }
+
     fun serialize(rows: List<Row>): String =
         rows.joinToString(ROW_SEP.toString()) { row ->
             val flag = if (row.enabled) "1" else "0"

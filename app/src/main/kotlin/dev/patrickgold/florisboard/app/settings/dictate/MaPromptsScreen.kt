@@ -59,6 +59,7 @@ import dev.patrickgold.florisboard.dictate.MaPrompts
 import dev.patrickgold.florisboard.dictate.MaProviders
 import dev.patrickgold.florisboard.dictate.MaRewordPrompt
 import dev.patrickgold.florisboard.dictate.MaSpellcheck
+import dev.patrickgold.florisboard.dictate.MaTranslate
 import dev.patrickgold.florisboard.dictate.llm.MaPhoneModels
 import dev.patrickgold.florisboard.dictate.provider.MaClaudeModels
 import dev.patrickgold.florisboard.dictate.provider.OpenAiCompatibleClient
@@ -149,6 +150,17 @@ fun MaPromptsScreen() = FlorisScreen {
             pref = prefs.dictate.maSpellcheckPrompt,
             shipped = MaSpellcheck.INSTRUCTION,
             modelPref = prefs.dictate.maSpellcheckModel,
+        )
+
+        Spacer(Modifier.height(20.dp))
+
+        // E>H (2.11.2026): the red-dot E>H key, English dictation written as his Croatian message.
+        PromptCategory(
+            title = "E>H \u2014 English to Croatian, wording and model",
+            builtInName = MaTranslate.NAME,
+            pref = prefs.dictate.maTranslatePrompt,
+            shipped = MaTranslate.INSTRUCTION,
+            modelPref = prefs.dictate.maTranslateModel,
         )
 
         Spacer(Modifier.height(20.dp))

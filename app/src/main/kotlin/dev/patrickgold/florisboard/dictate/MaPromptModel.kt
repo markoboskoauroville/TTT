@@ -43,7 +43,7 @@ object MaPromptModel {
     suspend fun nameBlankModels() {
         val prefs by FlorisPreferenceStore
         val d = prefs.dictate
-        for (pref in listOf(d.maProofreadModel, d.maFlowModel, d.maSpellcheckModel)) {
+        for (pref in listOf(d.maProofreadModel, d.maFlowModel, d.maSpellcheckModel, d.maTranslateModel)) {
             if (pref.get().isBlank()) pref.set(accountModel())
         }
         if (d.maPhoneStyleModel.get().isBlank()) d.maPhoneStyleModel.set(MaPhoneModels.QWEN3_4B.choice)

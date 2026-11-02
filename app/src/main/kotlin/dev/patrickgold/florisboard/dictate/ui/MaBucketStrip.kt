@@ -107,6 +107,17 @@ fun MaBucketStrip(modifier: Modifier = Modifier) {
         // The clipboard itself is untouched.
         val pasted by MaCopiedLine.pasted
         val stamp = clip?.creationTimestampMs
+        // Phone test, build 425: copying the SAME text again did not bring the line back, because the
+        // clipboard history reuses the item and its time. Android's own "the clip changed" call is
+        // the copy itself, so any copy clears the pasted mark.
+        androidx.compose.runtime.DisposableEffect(Unit) {
+            val system = context.getSystemService(android.content.ClipboardManager::class.java)
+            val listener = android.content.ClipboardManager.OnPrimaryClipChangedListener {
+                MaCopiedLine.pasted.value = null
+            }
+            system?.addPrimaryClipChangedListener(listener)
+            onDispose { system?.removePrimaryClipChangedListener(listener) }
+        }
         if (text.isNotEmpty() && stamp != pasted) {
             Row(
                 modifier = modifier

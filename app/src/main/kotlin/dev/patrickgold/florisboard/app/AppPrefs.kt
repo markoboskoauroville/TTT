@@ -1198,6 +1198,12 @@ abstract class FlorisPreferenceModel : PreferenceModel() {
         val maFlowModel = string(key = "dictate__ma_flow_model", default = "")
         val maSpellcheckModel = string(key = "dictate__ma_spellcheck_model", default = "")
 
+        /** E>H (MaTranslate, 2.11.2026): its wordings, as a named set, and its model. */
+        val maTranslatePrompt = string(key = "dictate__ma_translate_prompt", default = "")
+        val maTranslateModel = string(key = "dictate__ma_translate_model", default = "")
+        /** The E>H key put next to the E key on his rows, once. */
+        val maTranslateKeyAdded = boolean(key = "dictate__ma_translate_key_added", default = false)
+
         /**
          * Style after every dictation, the Mac's rules (MaPhoneStyle, §191). On, and inert until its
          * model is downloaded: he asked for it, and a switch that does nothing until then costs nothing.

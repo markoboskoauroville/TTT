@@ -10,6 +10,8 @@
 
 package dev.patrickgold.florisboard.dictate.data.prefs
 
+import dev.patrickgold.florisboard.dictate.MaFeatureKey
+import dev.patrickgold.florisboard.dictate.MaRows
 import android.content.Context
 import dev.patrickgold.florisboard.dictate.MaLanguage
 import dev.patrickgold.florisboard.subtypeManager
@@ -733,6 +735,21 @@ object DictateLegacyMigrator {
      * turned it off before this build (the Sg key, a hold on the badge, Enable Smartbar, Display
      * suggestions, a restored profile) is turned back on. Nothing in the app can turn them off now.
      */
+    /**
+     * The E>H key next to his E key, once (2.11.2026: "please update my ttt keyboard"). Right after
+     * every RECORD_EN on his rows; where there is none, after RECORD_HR. A row that has neither gets
+     * nothing: it is not a dictation row. Afterwards the key is his to move or remove.
+     */
+    suspend fun addTranslateKeyIfNeeded() {
+        val prefs by FlorisPreferenceStore
+        if (prefs.dictate.maTranslateKeyAdded.get()) return
+        val raw = prefs.dictate.maRows.get()
+        val rows = if (raw.isBlank()) MaRows.defaultRows() else MaRows.parse(raw)
+        val next = MaRows.withKeyAfter(rows, MaFeatureKey.RECORD_EN_HR, listOf(MaFeatureKey.RECORD_EN, MaFeatureKey.RECORD_HR))
+        if (next != rows) prefs.dictate.maRows.set(MaRows.serialize(next))
+        prefs.dictate.maTranslateKeyAdded.set(true)
+    }
+
     suspend fun keepPredictionRowOn() {
         val prefs by FlorisPreferenceStore
         if (!prefs.suggestion.enabled.get()) prefs.suggestion.enabled.set(true)

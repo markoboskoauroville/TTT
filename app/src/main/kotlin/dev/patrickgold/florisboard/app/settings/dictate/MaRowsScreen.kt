@@ -774,6 +774,7 @@ internal fun MaButtonGlyph(
             // larger of the two.
             MaFeatureKey.RECORD_HR -> letters("\u25CF H")
             MaFeatureKey.RECORD_EN -> letters("\u25CF E")
+            MaFeatureKey.RECORD_EN_HR -> letters("\u25CF E>H")
             MaFeatureKey.PASTE ->
                 Icon(Icons.Default.ContentPaste, contentDescription = null, tint = tint, modifier = size)
             MaFeatureKey.CUT ->

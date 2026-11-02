@@ -98,6 +98,7 @@ import java.util.concurrent.atomic.AtomicLong
 import dev.patrickgold.florisboard.dictate.audio.MaEncoder
 import dev.patrickgold.florisboard.dictate.audio.MaResample
 import dev.patrickgold.florisboard.dictate.nlp.MaDictationCorrections
+import dev.patrickgold.florisboard.dictate.ui.MaMessage
 import dev.patrickgold.florisboard.dictate.provider.MaKeyRing
 import dev.patrickgold.florisboard.dictate.provider.MaKeys
 import androidx.compose.runtime.getValue
@@ -710,7 +711,18 @@ object DictateController {
      */
     @Volatile private var discardingBar = false
 
-    fun onMicClick(context: Context, target: OutputTarget = OutputTarget.IME) {
+    /**
+     * True while the recording in hand was started by the E>H key: transcribed as English, then
+     * translated into Croatian in his style (MaTranslate) before it is written. Set at every start,
+     * so any other way of recording clears it.
+     */
+    @Volatile
+    private var translateRecording = false
+
+    /** Whether the recording in hand was started by E>H, for its key's ring. */
+    fun isTranslating(): Boolean = translateRecording
+
+    fun onMicClick(context: Context, target: OutputTarget = OutputTarget.IME, translate: Boolean = false) {
         // The bar is a leftover from a discard that is still animating — acting on it would stop a
         // recording that no longer exists.
         if (discardingBar) return
@@ -722,6 +734,7 @@ object DictateController {
             is UiState.Rewording -> cancelRewording()
             else -> {
                 outputTarget = target
+                translateRecording = translate
                 startRecording(context)
             }
         }
@@ -2004,10 +2017,13 @@ object DictateController {
             // AssemblyAI, and never on English.
             // THE MAC'S STYLE PASS (MaPhoneStyle, §191) before it, when it is on and can run: it fixes
             // the same misheard words and spelling, so a dictation it styled skips the spell check.
-            val checked = if (!alreadyFormatted) {
-                phoneStyle(rawText) ?: croatianSpellcheck(appContext, rawText)
-            } else {
-                rawText
+            // E>H (MaTranslate): the English transcript becomes his Croatian message in one request,
+            // which replaces the style pass and the spell check rather than running under them.
+            val translated = if (translateRecording && !alreadyFormatted) translateToCroatian(rawText) else null
+            val checked = when {
+                translated != null -> translated
+                !alreadyFormatted -> phoneStyle(rawText) ?: croatianSpellcheck(appContext, rawText)
+                else -> rawText
             }
             spellchecked = checked
             val processed = if (alreadyFormatted) checked else postProcessTranscript(appContext, checked)
@@ -3725,6 +3741,34 @@ object DictateController {
         return if (MaSpellcheck.accept(text, corrected)) corrected else {
             MaLog.add("dictate", "spell check reply refused: ${corrected.length} chars for ${text.length}")
             text
+        }
+    }
+
+    /**
+     * [text], dictated in English, as his Croatian message (MaTranslate), or null when it cannot run
+     * or the reply is not a translation. Null keeps the English, so a dictation is never lost; the
+     * message says so, because English landing in a Croatian chat is a surprise worth naming.
+     */
+    private suspend fun translateToCroatian(text: String): String? {
+        if (text.isBlank()) return null
+        val model = MaTranslate.model()
+        if (!MaPhoneModels.isPhone(model) && MaProviders.rewordingApiKey().isBlank()) {
+            MaMessage.show("E>H needs an Anthropic key: the English was written instead")
+            return null
+        }
+        _state.value = UiState.Rewording(MaTranslate.NAME)
+        val translated = runCatching {
+            requestReword(MaTranslate.instruction(), MaPhoneStyle.correct(text), model = model, purpose = MaTranslate.NAME)
+        }.getOrElse {
+            if (it is CancellationException) throw it
+            MaLog.add("dictate", "E>H failed: ${it.message ?: it.javaClass.simpleName}")
+            MaMessage.show("E>H failed: the English was written instead")
+            return null
+        }
+        return if (MaTranslate.accept(text, translated)) MaPhoneStyle.correct(translated.trim()) else {
+            MaLog.add("dictate", "E>H reply refused: ${translated.length} chars for ${text.length}")
+            MaMessage.show("E>H answer refused: the English was written instead")
+            null
         }
     }
 

@@ -11061,3 +11061,23 @@ top of the … autocorrection menu, so i can always reach it first".
 - A tap on the copied line pastes it and the line leaves the row (`MaCopiedLine`, the copy's timestamp), so a
   new copy, even of the same text, shows again. The clipboard is untouched.
 - Auto prediction: the My corrections row is first, then the model radio buttons, then the switches.
+
+## §229 — E>H: dictate in English, write Croatian
+
+Marko, 2.11.2026: "I dictate my message in English and then Anthropic is translating and applying my style
+of communication … a red dot … an E … greater than … H."
+
+- **The key** `RECORD_EN_HR` ("English to Croatian"), drawn like E and H: a red dot and "E>H". It sets English
+  and records, exactly as E does, and marks the recording (`translateRecording`, set at every start so any
+  other way of recording clears it). Only the key that started a recording rings.
+- **The step** `translateToCroatian` (MaTranslate): the English transcript goes to Claude once, with the
+  Anthropic key loaded in the app, to be translated into Croatian and written in his style (his style rules,
+  in Croatian). It replaces the style pass and the Croatian spell check rather than running on top. A
+  failure, or a reply that is not a translation (`MaTranslate.accept`), keeps the English and says so.
+- **Editable** on Settings → Prompts ("E>H — English to Croatian, wording and model"), Haiku by default.
+- **On his keyboard**: `addTranslateKeyIfNeeded` puts it right after the E key on every row that has one
+  (else after H), once; after that it is his to move or remove in Feature row.
+- From the build 425 phone test: copying the same text again brings the copied line back (any copy clears
+  the pasted mark, through Android's clip-changed listener).
+
+Test: `scripts/test_translate_key.py` (24 checks).

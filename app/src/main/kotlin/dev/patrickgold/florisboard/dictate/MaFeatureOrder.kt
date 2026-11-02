@@ -441,6 +441,12 @@ enum class MaFeatureKey(val id: String, val label: String) {
      */
     RECORD_HR("recordhr", "Record in Croatian"),
     RECORD_EN("recorden", "Record in English"),
+    /**
+     * E>H (2.11.2026): record in English, write Croatian. The recording is transcribed as English
+     * and Claude translates it into Croatian in his style (MaTranslate) before it is pasted. Drawn
+     * like the E key, a red dot and the letters "E>H".
+     */
+    RECORD_EN_HR("recordenhr", "English to Croatian"),
 
     VOLUME_KEYS("volume_keys", "Volume keys"),
 
@@ -685,6 +691,7 @@ val MaFeatureKey.group: MaFeatureGroup
         MaFeatureKey.RECORD,
         MaFeatureKey.RECORD_HR,
         MaFeatureKey.RECORD_EN,
+        MaFeatureKey.RECORD_EN_HR,
         MaFeatureKey.SEND,
         -> MaFeatureGroup.DICTATION
 

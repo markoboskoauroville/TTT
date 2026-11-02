@@ -64,7 +64,7 @@ check("Ctrl+P passes its model", "MaProofread.prompt(), model = MaProofread.mode
 check("Ctrl+F passes its model", "MaFlow.prompt(), model = MaFlow.model()" in km)
 check("the override only for Anthropic", "modelOverride != null && account.providerId == MaRoles.REWORDING" in ctrl,
       "a Claude alias sent to another provider would fail")
-check("each prompt has a chooser", prompts.count("modelPref = prefs.dictate.") == 4)
+check("each prompt has a chooser", prompts.count("modelPref = prefs.dictate.") == 5)  # + E>H, 2.11.2026
 check("spell check wording is editable", "pref = prefs.dictate.maSpellcheckPrompt" in prompts)
 
 # ---------------------------------------------------------------- switches first (Mantra §1.9)
