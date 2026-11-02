@@ -110,7 +110,7 @@ abstract class FlorisPreferenceModel : PreferenceModel() {
         // The clipboard suggestion preferences are gone with the feature they switched. It put the
         // newest copy into the word suggestion strip, which is what the copy buckets do now, in the
         // same strip the bucket legend draws in.
-        // On by default in TTT mini, where it was off in FlorisBoard.
+        // On by default in TTT, where it was off in FlorisBoard.
         //
         // This is not a preference here, it is the feature. The C1 to C10 keys read this history,
         // and with recording off history.all is permanently empty, so every one of those keys sees

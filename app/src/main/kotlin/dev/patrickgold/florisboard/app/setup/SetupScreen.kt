@@ -443,7 +443,7 @@ private fun PreferenceUiScope<FlorisPreferenceModel>.steps(
                 "Android will not let this app open a file it does not own without this. Your key " +
                     "backup in Documents is such a file \u2014 so without this, the next step cannot " +
                     "read the backup the previous version left for you.\n\n" +
-                    "Find TTT mini in the list and turn it on."
+                    "Find TTT in the list and turn it on."
             )
             if (hasAllFiles) {
                 StepText("Granted. You can go on.")
@@ -504,7 +504,7 @@ private fun PreferenceUiScope<FlorisPreferenceModel>.steps(
                         )
                     }
                 }
-                StepText("2. Then find TTT mini in Accessibility and switch it on.")
+                StepText("2. Then find TTT in Accessibility and switch it on.")
                 StepButton("Open Accessibility settings") {
                     runCatching {
                         context.startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS))

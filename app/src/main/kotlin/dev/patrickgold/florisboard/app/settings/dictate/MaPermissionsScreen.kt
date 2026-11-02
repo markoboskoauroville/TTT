@@ -199,7 +199,7 @@ private fun maPermissionSteps(context: Context): List<MaPermissionStep> {
 
     steps += MaPermissionStep(
         title = "Enable the keyboard",
-        detail = "Turn TTT mini on in the list of input methods",
+        detail = "Turn TTT on in the list of input methods",
         // Every `granted` below is wrapped, and every one defaults to "not granted".
         //
         // These are queries into the system, and any of them can throw on a phone that answers
@@ -209,7 +209,7 @@ private fun maPermissionSteps(context: Context): List<MaPermissionStep> {
         // THREE ANSWERS, AND ANY ONE OF THEM IS ENOUGH.
         //
         // This said "not enabled" on a phone where the keyboard was enabled, switched on, and being
-        // typed with — photographed on 21.8.2026 with the system list showing TTT mini on.
+        // typed with — photographed on 21.8.2026 with the system list showing TTT on.
         //
         // It asked one question: does Settings.Secure.ENABLED_INPUT_METHODS contain our package
         // name. That string is a system setting, and on a modern Android it is not reliably readable
@@ -454,7 +454,7 @@ private fun MaRestrictedSettingsHelp() {
         "Lift the restriction on this install" to
             "appops set com.mantraproductions.tttlight ACCESS_RESTRICTED_SETTINGS allow",
         "Install so it never applies" to
-            "pm install -i com.android.vending -r ttt-mini.apk",
+            "pm install -i com.android.vending -r ttt.apk",
     )) {
         Spacer(Modifier.height(12.dp))
         Text(

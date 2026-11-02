@@ -2076,7 +2076,7 @@ private val MaDimmed = Color(0xFF6B6B6B)
  * Opens the system accessibility settings, where the service has to be switched on by hand.
  *
  * Android gives no way to turn it on from inside the app and no deep link to this app's own row in
- * that list, so this lands on the list and the user finds TTT mini in it. Still far better than a
+ * that list, so this lands on the list and the user finds TTT in it. Still far better than a
  * message: the keys that need the service are useless until this is done, and nothing else in the
  * app says so at the moment it matters.
  */

@@ -1,4 +1,4 @@
-# Delivery record — TTT mini
+# Delivery record — TTT
 
 What was measured, what failed, and what was not tested. Specified by
 `MANTRA_MANIFEST/modules/delivery-gate.md`; rewritten per release rather than appended.

@@ -76,7 +76,7 @@ object MaAssemblyStats {
             .addInterceptor { chain ->
                 chain.proceed(
                     chain.request().newBuilder()
-                        .header("User-Agent", "TTTmini/1.0 (Android; Mantra Productions)")
+                        .header("User-Agent", "TTT/1.0 (Android; Mantra Productions)")
                         .build(),
                 )
             }

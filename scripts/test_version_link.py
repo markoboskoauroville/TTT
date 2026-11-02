@@ -37,7 +37,7 @@ urls = URLS.read_text()
 _m = re.search(r'name="ma__latest_release_url"[^>]*>([^<]+)<', urls)
 check("the latest-release URL exists", _m is not None, "the tap has nowhere to go")
 check("it is THIS repository's latest release",
-      _m is not None and _m.group(1) == "https://github.com/markoboskoauroville/TTT_MINI/releases/latest",
+      _m is not None and _m.group(1) == "https://github.com/markoboskoauroville/TTT/releases/latest",
       _m.group(1) if _m else "missing")
 
 home = code(HOME)

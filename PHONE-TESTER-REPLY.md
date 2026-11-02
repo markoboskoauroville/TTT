@@ -52,7 +52,7 @@ Installed over 1403 with `install -r`; the sha256 matched 0aad3bf5…a747; versi
 The send_message to this session failed (session inactive), so the build is here.
 Marko is on 4G: download it once, the newest only.
 
-https://github.com/markoboskoauroville/TTT_MINI/releases/download/build-419/ttt-mini-build-419.apk
+https://github.com/markoboskoauroville/TTT/releases/download/build-419/ttt-mini-build-419.apk
 sha256 `30d9e20defca52593f95b33294179661ee764ce926984f24eaa00ae1ca83cb0d` (46,334,258 bytes)
 Install: `adb -s 41241FDH2S10SJ install -r <apk>` (never uninstall).
 

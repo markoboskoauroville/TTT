@@ -1,5 +1,5 @@
 /*
- * TTT mini, by Mantra Productions.
+ * TTT, by Mantra Productions.
  */
 
 package dev.patrickgold.florisboard.dictate.nlp

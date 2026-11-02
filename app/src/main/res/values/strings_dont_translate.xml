@@ -12,19 +12,19 @@
         code stay valid; only the values point at Marko Bosko's repository now. Upstream credit is a
         single row in About and the ATTRIBUTION.md / NOTICE files, which Apache 2.0 requires to stay.
     -->
-    <string name="florisboard__repo_url" translatable="false">https://github.com/markoboskoauroville/TTT_MINI</string>
-    <string name="florisboard__website_url" translatable="false">https://github.com/markoboskoauroville/TTT_MINI</string>
+    <string name="florisboard__repo_url" translatable="false">https://github.com/markoboskoauroville/TTT</string>
+    <string name="florisboard__website_url" translatable="false">https://github.com/markoboskoauroville/TTT</string>
     <!-- The two projects this one is built on, linked once each in About. -->
     <string name="florisboard__upstream_repo_url" translatable="false">https://github.com/DevEmperor/Dictate</string>
     <string name="florisboard__floris_repo_url" translatable="false">https://github.com/florisboard/florisboard</string>
-    <string name="florisboard__issue_tracker_url" translatable="false">https://github.com/markoboskoauroville/TTT_MINI/issues</string>
-    <string name="florisboard__privacy_policy_url" translatable="false">https://github.com/markoboskoauroville/TTT_MINI/blob/main/PRIVACY_POLICY.md</string>
-    <string name="florisboard__changelog_url" translatable="false">https://github.com/markoboskoauroville/TTT_MINI/releases</string>
-    <string name="ma__latest_release_url" translatable="false">https://github.com/markoboskoauroville/TTT_MINI/releases/latest</string>
-    <string name="florisboard__commit_by_hash_url" translatable="false">https://github.com/markoboskoauroville/TTT_MINI/commit/{hash}</string>
-    <string name="florisboard__spell_checker_wiki_url" translatable="false">https://github.com/markoboskoauroville/TTT_MINI</string>
-    <string name="florisboard__theme_editor_wiki_url" translatable="false">https://github.com/markoboskoauroville/TTT_MINI</string>
-    <string name="florisboard__internal_key_codes_url" translatable="false">https://github.com/markoboskoauroville/TTT_MINI/blob/main/app/src/main/kotlin/dev/patrickgold/florisboard/ime/text/key/KeyCode.kt</string>
+    <string name="florisboard__issue_tracker_url" translatable="false">https://github.com/markoboskoauroville/TTT/issues</string>
+    <string name="florisboard__privacy_policy_url" translatable="false">https://github.com/markoboskoauroville/TTT/blob/main/PRIVACY_POLICY.md</string>
+    <string name="florisboard__changelog_url" translatable="false">https://github.com/markoboskoauroville/TTT/releases</string>
+    <string name="ma__latest_release_url" translatable="false">https://github.com/markoboskoauroville/TTT/releases/latest</string>
+    <string name="florisboard__commit_by_hash_url" translatable="false">https://github.com/markoboskoauroville/TTT/commit/{hash}</string>
+    <string name="florisboard__spell_checker_wiki_url" translatable="false">https://github.com/markoboskoauroville/TTT</string>
+    <string name="florisboard__theme_editor_wiki_url" translatable="false">https://github.com/markoboskoauroville/TTT</string>
+    <string name="florisboard__internal_key_codes_url" translatable="false">https://github.com/markoboskoauroville/TTT/blob/main/app/src/main/kotlin/dev/patrickgold/florisboard/ime/text/key/KeyCode.kt</string>
     <string name="florisboard__character_key_codes_url" translatable="false">https://unicode-table.com/en</string>
 
     <string name="general__system_string_placeholder" translatable="false">%s</string>

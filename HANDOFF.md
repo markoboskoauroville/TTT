@@ -1,7 +1,7 @@
-# TTT mini — the finished state
+# TTT — the finished state
 
 **Build 413 (22.10.2026).** Renamed **TTT, Talk to Type Advanced Keyboard** (launcher name "TTT"; repo and package
-unchanged; APK file still ttt-mini-build-N.apk). A dictation keyboard for Marko Boško.
+unchanged then; on 2.11.2026 the repo became TTT and the APK ttt-build-N.apk). A dictation keyboard for Marko Boško.
 
 **New on 22.10.2026:** a letter's long press offers only his pop-ups (MaPopups; default č ć / đ / š / ž; Settings →
 Pop-up Configuration with a key's ID card), Key colours renamed Coloring the Buttons; the personal model learns from
@@ -11,12 +11,12 @@ scripts/test_corrections.sh (Gradle's own Kotlin compiler, no kotlinc). Product 
 (site/build.py, Cloudflare Pages "talktotype"), linked from the biography. Not yet tried by his thumbs: the correction
 learning.
 
-**Repo:** `markoboskoauroville/TTT_MINI` (Apache-2.0) · **Package:** `com.mantraproductions.tttlight`
+**Repo:** `markoboskoauroville/TTT` (Apache-2.0) · **Package:** `com.mantraproductions.tttlight`
 > **The artefact link above rots.** CI keeps the two newest releases, so a build named here is
 > unreachable within a few pushes. The tag is the durable part; take the newest release rather than
 > this number if it 404s.
 
-**Latest artefact:** https://github.com/markoboskoauroville/TTT_MINI/releases/download/build-390/ttt-mini-build-390.apk
+**Latest artefact:** https://github.com/markoboskoauroville/TTT/releases/download/build-390/ttt-mini-build-390.apk
 
 > **This file is the present state and nothing else.** Every reason, every bug and every rejected
 > alternative is in [`DEVELOPMENT.md`](DEVELOPMENT.md), grouped by shape. If you are about to reverse
@@ -43,7 +43,7 @@ A dictation keyboard for Marko Boško: Android IME, forked from FlorisBoard, tra
 AssemblyAI. He is a filmmaker who works almost entirely by voice on a Nothing Phone 2a, has low
 vision and dyslexia, and uses this all day. He dictates in Croatian and English.
 
-**Repo:** `markoboskoauroville/TTT_MINI` (Apache-2.0)
+**Repo:** `markoboskoauroville/TTT` (Apache-2.0)
 **Package:** `com.mantraproductions.tttlight`
 **CI:** GitHub Actions builds every push, publishes an APK, keeps the two newest releases.
 
@@ -84,7 +84,7 @@ the three that did read as bolted on. Green means on. The face carries a shape, 
 what tells the keys apart. Do not put a border on one key that the keys beside it do not have.
 
 **He runs several projects at once, and sometimes a message lands in the wrong chat.** He asked for
-this check by name. If a message does not belong to TTT mini — another repo, another app, a website,
+this check by name. If a message does not belong to TTT — another repo, another app, a website,
 a film, a design note about something this app does not contain — say so and stop:
 
 > Please notice you are in the wrong chat.

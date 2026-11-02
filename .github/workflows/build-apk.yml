@@ -162,8 +162,8 @@ jobs:
           # No ampersand in the file name. It is legal in a URL only when escaped, and a download
           # link that needs escaping is a link that breaks when it is pasted into a chat. The full
           # app's name had one and it had to be spelled 'ttt-lll' for exactly this reason.
-          cp "$APK" ttt-mini-build-${{ github.run_number }}.apk
-          gh release create "build-${{ github.run_number }}" ttt-mini-build-${{ github.run_number }}.apk --title "TTT build ${{ github.run_number }}" --notes "TTT, Talk to Type Advanced Keyboard, by Mantra Productions. Voice dictation into any text field. Installs beside TTT&LLL, not over it."
+          cp "$APK" ttt-build-${{ github.run_number }}.apk
+          gh release create "build-${{ github.run_number }}" ttt-build-${{ github.run_number }}.apk --title "TTT build ${{ github.run_number }}" --notes "TTT, Talk to Type Advanced Keyboard, by Mantra Productions. Voice dictation into any text field. Installs beside TTT&LLL, not over it."
 
       # The two newest releases stay, everything older goes. One was too few: a link handed over
       # is dead the moment the next push publishes, and a one line change to a document is enough

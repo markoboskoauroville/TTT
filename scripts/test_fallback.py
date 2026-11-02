@@ -93,7 +93,7 @@ check("a 200 carrying an error is caught", '"error" -> throw DictateApiException
 # The User-Agent, on every client that talks to a provider.
 for f in ("OpenAiCompatibleClient.kt", "MaAssemblyStats.kt", "RealtimeClient.kt"):
     body = (SRC / f).read_text()
-    check(f"{f} sends a User-Agent", '"User-Agent", "TTTmini/1.0' in body,
+    check(f"{f} sends a User-Agent", '"User-Agent", "TTT/1.0' in body,
           "Cloudflare refuses a client that sends none, on every key at once")
     check(f"{f} does not impersonate a browser", "Mozilla" not in body, "a lie that can be checked")
 

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Builds site/public/index.html, the page of TTT, Talk to Type Advanced Keyboard (Marko, 22.10.2026: "start building
-product page for TTT Mini and rename it to only TTT ... Call it Talk to Type Advanced Keyboard. Then make many
+product page for TTT and rename it to only TTT ... Call it Talk to Type Advanced Keyboard. Then make many
 screenshots through ADB and explain and ask for donations ... same principle").
 
     python3 site/build.py
@@ -14,7 +14,7 @@ from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
 BOWL = (Path.home() / "Developer/MANTRA_MANIFEST/kits/donation-bowl/donation-bowl.html").read_text()
-DOWNLOAD = "https://github.com/markoboskoauroville/TTT_MINI/releases/latest"
+DOWNLOAD = "https://github.com/markoboskoauroville/TTT/releases/latest"
 
 # (title, text, picture, wide picture?)
 FEATURES = [
@@ -179,7 +179,7 @@ footer{{padding:40px 0 60px; color:var(--ink3); font-size:13.5px; border-top:1px
 
 <footer>
   <div class="wrap">
-    <p>TTT, Talk to Type Advanced Keyboard, by Marko Boško, Mantra Productions · <a href="https://markobosko.pages.dev/#/kod">more of my tools</a> · <a href="https://github.com/markoboskoauroville/TTT_MINI">source code</a></p>
+    <p>TTT, Talk to Type Advanced Keyboard, by Marko Boško, Mantra Productions · <a href="https://markobosko.pages.dev/#/kod">more of my tools</a> · <a href="https://github.com/markoboskoauroville/TTT">source code</a></p>
     <p>Built on Dictate by DevEmperor and FlorisBoard, Apache License 2.0. Logitech and G815 are trademarks of their owners.</p>
   </div>
 </footer>

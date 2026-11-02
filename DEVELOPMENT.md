@@ -1,4 +1,4 @@
-# TTT mini — every bug, and every reason
+# TTT — every bug, and every reason
 
 **The one job of this file: nobody undoes a decision that was already paid for.**
 
@@ -1917,7 +1917,7 @@ toggle is still refused, **the cause is no longer in this repo's diff** — it i
 Android may have remembered the app as restricted from when 124–130 were installed.
 
 Worth trying, in order: uninstall and reinstall (this clears the restricted flag), or Settings →
-Apps → TTT mini → Force stop, then enable.
+Apps → TTT → Force stop, then enable.
 
 **And this is exactly why the log screen must come first.** Every diagnosis in this thread has been
 inference from a chat message. Nothing in the app records whether the service ever started.
@@ -8771,7 +8771,7 @@ which is worse than no highlight at all.
      0.1 MB  res/
 
 **76% of the app is one file**, and it is not ours: `libonnxruntime.so`, the runtime the on-device
-speech engine needs, plus `libsherpa-onnx-jni.so` at 4.7 MB. Everything TTT mini does — every key,
+speech engine needs, plus `libsherpa-onnx-jni.so` at 4.7 MB. Everything TTT does — every key,
 every row, the reader, the buckets, the settings — is the 3.9 MB dex.
 
 It is already built as leanly as it can be without a decision from him:
@@ -8964,7 +8964,7 @@ What the sources actually say, so the next session does not re-research it:
 
 ### What that means here, and what was NOT done
 
-TTT mini already has the arrow keys — `ARROW_LEFT/RIGHT/UP/DOWN` in the catalogue, droppable on any
+TTT already has the arrow keys — `ARROW_LEFT/RIGHT/UP/DOWN` in the catalogue, droppable on any
 row — and a number row on zone 1. **So the two things he asked me to build if missing already exist**,
 and the honest answer is where to find them rather than a second copy.
 
@@ -9641,7 +9641,7 @@ deliberately, then come back.
 ### The two levers, on the screen, copyable
 
     appops set com.mantraproductions.tttlight ACCESS_RESTRICTED_SETTINGS allow
-    pm install -i com.android.vending -r ttt-mini.apk
+    pm install -i com.android.vending -r ttt.apk
 
 The first clears it for this install; the second names an installer the restriction does not apply
 to, so it never arises again — for that install and every update over it. Both need Shizuku or a

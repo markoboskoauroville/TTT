@@ -1,4 +1,4 @@
-### [Download the latest build](https://github.com/markoboskoauroville/TTT_MINI/releases/latest)
+### [Download the latest build](https://github.com/markoboskoauroville/TTT/releases/latest)
 
 # Voice Type
 

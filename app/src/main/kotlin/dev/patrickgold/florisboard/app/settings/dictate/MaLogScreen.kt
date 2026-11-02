@@ -121,5 +121,5 @@ fun MaLogScreen() = FlorisScreen {
 
 private fun copyToClipboard(context: Context, text: String) {
     val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as? ClipboardManager ?: return
-    runCatching { clipboard.setPrimaryClip(ClipData.newPlainText("TTT mini log", text)) }
+    runCatching { clipboard.setPrimaryClip(ClipData.newPlainText("TTT log", text)) }
 }

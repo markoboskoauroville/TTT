@@ -63,7 +63,7 @@ import dev.patrickgold.jetpref.datastore.model.collectAsState as collectPrefAsSt
 
 /**
  * What a long press on each letter offers (Marko, 22.10.2026), on the same grid as Coloring the
- * Buttons: "we're going to reuse the part of TTT mini for coloring the buttons because the whole
+ * Buttons: "we're going to reuse the part of TTT for coloring the buttons because the whole
  * layout is there".
  *
  * ### The key's ID card

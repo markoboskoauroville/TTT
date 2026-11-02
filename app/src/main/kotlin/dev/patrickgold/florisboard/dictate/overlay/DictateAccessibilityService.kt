@@ -822,7 +822,7 @@ class DictateAccessibilityService : AccessibilityService() {
                 ims.windows
                     .filter { it.type == android.view.accessibility.AccessibilityWindowInfo.TYPE_APPLICATION }
                     // Never this app. A term captured while the keyboard's own window answered was
-                    // filed under tttlight and could then only ever fire inside TTT mini — which is
+                    // filed under tttlight and could then only ever fire inside TTT — which is
                     // nowhere, because the keyboard is not an app anybody presses buttons in. It
                     // showed up in Marko's list as "New chat, tttlight" for a button in Claude.
                     .filter { w ->

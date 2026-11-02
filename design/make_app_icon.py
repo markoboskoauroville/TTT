@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-TTT mini, the launcher icon, in the Mantra Shruti Box style (Marko, 21.10.2026: "change this icon of
+TTT, the launcher icon, in the Mantra Shruti Box style (Marko, 21.10.2026: "change this icon of
 this app into the same style ... instead of buttons of the Shruti box, there will be buttons of this
 keyboard with this specific feature that each button has different color ... glowing nice style").
 
@@ -28,7 +28,7 @@ CAP_EDGE = "#2C323E"
 KEYS = [
     (33.3, 34.3, 12.4, 14.4, "A", "#FF4D5E"),   # red, as the number keys in his screenshot
     (48.8, 34.3, 12.4, 14.4, "B", "#FFC24D"),   # gold
-    (64.3, 34.3, 12.4, 14.4, "C", "#4DD6E8"),   # cyan, the TTT mini colour
+    (64.3, 34.3, 12.4, 14.4, "C", "#4DD6E8"),   # cyan, the TTT colour
     (33.3, 51.0, 12.4, 10.0, "mic", "#B98CFF"), # violet
     (48.8, 51.0, 27.9, 10.0, "space", "#5CE68A"),  # green
 ]
@@ -233,8 +233,8 @@ def version_svg(text, colour):
 
 
 if __name__ == "__main__":
-    write_vd("ic_app_icon_foreground", "TTT mini, the launcher icon: lit legends on dark keys.", vd_foreground(), True)
-    write_vd("ic_app_icon_monochrome", "TTT mini, the themed icon (one tint, by alpha alone).", vd_monochrome(), False)
+    write_vd("ic_app_icon_foreground", "TTT, the launcher icon: lit legends on dark keys.", vd_foreground(), True)
+    write_vd("ic_app_icon_monochrome", "TTT, the themed icon (one tint, by alpha alone).", vd_monochrome(), False)
     (ROOT / "design").mkdir(exist_ok=True)
     (ROOT / "design/app_icon.svg").write_text(svg())
     (ROOT / "design/app_icon_monochrome.svg").write_text(svg(background="#3A3F47", mono=True))

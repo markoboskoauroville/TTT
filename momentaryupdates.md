@@ -1,4 +1,4 @@
-# TTT Mini: momentary updates
+# TTT: momentary updates
 
 Every request word for word, saved and pushed before any code (MANTRA_MANIFEST requests-saved-first).
 
