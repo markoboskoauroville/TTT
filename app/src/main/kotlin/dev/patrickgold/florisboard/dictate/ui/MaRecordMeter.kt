@@ -307,7 +307,7 @@ val MaRecordRed = Color(0xFF9B3B33)
  * says what pressing it does before it is pressed. Green replaces it only while that key is the one
  * recording. The record red itself, so the outline, the dot and the bar's lamp are one colour.
  */
-val MaRecordRing = MaRecordRed
+val MaRecordOutline = MaRecordRed
 
 private val MaRecordLampOn = MaRecordRed
 private val MaRecordLampOff = MaRecordRed.copy(alpha = 0.22f)

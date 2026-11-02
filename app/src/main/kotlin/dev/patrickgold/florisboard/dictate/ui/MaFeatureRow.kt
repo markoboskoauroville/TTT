@@ -1445,10 +1445,10 @@ fun MaFeatureRow(
                         // rings: the controller knows whether this recording translates.
                         // RED OUTLINE AT REST, GREEN WHILE IT RECORDS (Marko, 2.11.2026): every key
                         // that records his voice wears the record red, so the row says "press this and
-                        // you are recorded" before it is pressed. See MaRecordRing.
+                        // you are recorded" before it is pressed. See MaRecordOutline.
                         ring = if (recording && MaLanguage.active() == language &&
                             DictateController.isTranslating() == translate
-                        ) onGreen else MaRecordRing,
+                        ) onGreen else MaRecordOutline,
                         onClick = {
                             // THE LANGUAGE IS SET FIRST, AND SET SYNCHRONOUSLY.
                             //
@@ -1550,7 +1550,7 @@ fun MaFeatureRow(
                         modifier = keyMod,
                         // The same green ring the buckets and the volume key wear: this thing is
                         // live. One ring, one green, one meaning across the app.
-                        ring = if (recording) onGreen else MaRecordRing,
+                        ring = if (recording) onGreen else MaRecordOutline,
                         onClick = { DictateController.onMicClick(context) },
                     ) { _ ->
                         // A red dot, as he described it, and the same red as the lamp on the
