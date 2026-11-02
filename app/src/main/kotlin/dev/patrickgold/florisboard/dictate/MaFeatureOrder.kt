@@ -444,7 +444,7 @@ enum class MaFeatureKey(val id: String, val label: String) {
     /**
      * E>H (2.11.2026): record in English, write Croatian. The recording is transcribed as English
      * and Claude translates it into Croatian in his style (MaTranslate) before it is pasted. Drawn
-     * like the E key, a red dot and the letters "E>H".
+     * like the E key, a red dot and "E|H": E, a vertical line, H.
      */
     RECORD_EN_HR("recordenhr", "English to Croatian"),
 

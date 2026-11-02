@@ -392,9 +392,14 @@ private class AssemblyAiRealtimeSession(
         const val URL = "wss://streaming.assemblyai.com/v3/ws?sample_rate=16000&encoding=pcm_s16le"
     }
 
+    /** The model sent, or null once AssemblyAI refused it and the socket was reopened without one. */
+    @Volatile private var sentModel: String? = MaAssemblyCatalog.model(client, model, MaAssemblyModels.Path.STREAMING)
+    @Volatile private var heard = false
+
     fun connect() {
-        // Universal Streaming is selected by the /v3/ws endpoint itself; the raw key goes in Authorization.
-        val request = Request.Builder().url(URL).header("Authorization", apiKey).build()
+        // speech_model names the newest streaming Pro (MaAssemblyModels); the raw key goes in Authorization.
+        val url = sentModel?.let { "$URL&speech_model=$it" } ?: URL
+        val request = Request.Builder().url(url).header("Authorization", apiKey).build()
         ws = client.newWebSocket(request, listener)
     }
 
@@ -403,6 +408,7 @@ private class AssemblyAiRealtimeSession(
             val obj = runCatching { json.parseToJsonElement(text).jsonObject }.getOrNull() ?: return
             when (obj["type"]?.jsonPrimitive?.content) {
                 "Turn" -> {
+                    heard = true
                     val transcript = obj["transcript"]?.jsonPrimitive?.content.orEmpty()
                     if (transcript.isBlank()) return
                     if (obj["end_of_turn"]?.jsonPrimitive?.booleanOrNull == true) {
@@ -417,6 +423,15 @@ private class AssemblyAiRealtimeSession(
 
         override fun onFailure(webSocket: WebSocket, t: Throwable, response: Response?) {
             android.util.Log.w("DictateRT", "assemblyai realtime WS failed (http=${response?.code}): ${t.message}")
+            // Refused at the handshake while naming a model (a page that listed it before the socket took
+            // it): reopen once without speech_model, which AssemblyAI answer with their default flagship.
+            val model = sentModel
+            if (!done && !heard && model != null && response?.code.let { it == 400 || it == 404 || it == 422 }) {
+                MaAssemblyCatalog.markRefused(model)
+                sentModel = null
+                connect()
+                return
+            }
             emitError(t)
         }
         override fun onClosed(webSocket: WebSocket, code: Int, reason: String) = finishClosed(webSocket)

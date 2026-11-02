@@ -302,6 +302,13 @@ private fun MaReadings(sending: Boolean, tint: Color) {
  */
 val MaRecordRed = Color(0xFF9B3B33)
 
+/**
+ * THE RULE: every key that records his voice wears a red outline (Marko, 2.11.2026), so the row
+ * says what pressing it does before it is pressed. Green replaces it only while that key is the one
+ * recording. The record red itself, so the outline, the dot and the bar's lamp are one colour.
+ */
+val MaRecordRing = MaRecordRed
+
 private val MaRecordLampOn = MaRecordRed
 private val MaRecordLampOff = MaRecordRed.copy(alpha = 0.22f)
 

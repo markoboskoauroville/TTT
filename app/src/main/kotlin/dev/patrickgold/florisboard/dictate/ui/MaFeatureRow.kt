@@ -1443,9 +1443,12 @@ fun MaFeatureRow(
                         // Reading the wrong one would leave both keys dark until the upload began.
                         // E and E>H both record English, so the one that started it is the one that
                         // rings: the controller knows whether this recording translates.
+                        // RED OUTLINE AT REST, GREEN WHILE IT RECORDS (Marko, 2.11.2026): every key
+                        // that records his voice wears the record red, so the row says "press this and
+                        // you are recorded" before it is pressed. See MaRecordRing.
                         ring = if (recording && MaLanguage.active() == language &&
                             DictateController.isTranslating() == translate
-                        ) onGreen else null,
+                        ) onGreen else MaRecordRing,
                         onClick = {
                             // THE LANGUAGE IS SET FIRST, AND SET SYNCHRONOUSLY.
                             //
@@ -1475,12 +1478,39 @@ fun MaFeatureRow(
                                     .background(MaRecordRed),
                             )
                             Spacer(Modifier.width(4.dp))
-                            Text(
-                                text = label,
-                                color = fg,
-                                fontSize = 17.sp,
-                                fontWeight = FontWeight.Bold,
-                            )
+                            if (translate) {
+                                // E|H (Marko, 2.11.2026): E on the left, a straight vertical line,
+                                // H on the right. English becomes Croatian, read left to right; the
+                                // line divides like a fraction bar and is cleaner than the ">".
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Text(
+                                        text = "E",
+                                        color = fg,
+                                        fontSize = 17.sp,
+                                        fontWeight = FontWeight.Bold,
+                                    )
+                                    Box(
+                                        modifier = Modifier
+                                            .padding(horizontal = 3.dp)
+                                            .width(1.5.dp)
+                                            .height(16.dp)
+                                            .background(fg),
+                                    )
+                                    Text(
+                                        text = "H",
+                                        color = fg,
+                                        fontSize = 17.sp,
+                                        fontWeight = FontWeight.Bold,
+                                    )
+                                }
+                            } else {
+                                Text(
+                                    text = label,
+                                    color = fg,
+                                    fontSize = 17.sp,
+                                    fontWeight = FontWeight.Bold,
+                                )
+                            }
                         }
                     }
                 }
@@ -1520,7 +1550,7 @@ fun MaFeatureRow(
                         modifier = keyMod,
                         // The same green ring the buckets and the volume key wear: this thing is
                         // live. One ring, one green, one meaning across the app.
-                        ring = if (recording) onGreen else null,
+                        ring = if (recording) onGreen else MaRecordRing,
                         onClick = { DictateController.onMicClick(context) },
                     ) { _ ->
                         // A red dot, as he described it, and the same red as the lamp on the

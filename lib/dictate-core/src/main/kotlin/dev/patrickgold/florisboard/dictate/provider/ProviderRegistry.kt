@@ -366,17 +366,20 @@ object ProviderRegistry {
         transcriptionApi = TranscriptionApi.ASSEMBLYAI_ASYNC,
         supportsDynamicModels = false,
         apiKeyUrl = "https://www.assemblyai.com/app/api-keys",
-        // Universal-3.5 Pro, the model on his price sheet and the one the Sync path already uses.
-        // Croatian is not among its languages; the async job lists universal-2 after it, so
-        // Croatian is routed there by AssemblyAI (see transcribeAssemblyAi).
-        defaultTranscriptionModel = "universal-3-5-pro",
-        curatedTranscriptionModels = listOf("universal-3-5-pro", "universal-3-pro", "universal-2"),
-        // Realtime (#128): Universal-Streaming wss streaming.assemblyai.com/v3/ws (~300ms). Model ids
-        // verified when the session is built (billed by connection-open duration).
+        // The FAMILY, not a version: MaAssemblyModels sends the newest Universal Pro the path's own
+        // documentation lists (3.5 Pro for files on 2.11.2026), so a new Pro is used with no app update.
+        // Croatian is not a Pro language; the async job lists universal-2 after it, so Croatian is
+        // routed there by AssemblyAI (see transcribeAssemblyAi). universal-2 alone is a deliberate pin.
+        defaultTranscriptionModel = MaAssemblyModels.ALIAS,
+        curatedTranscriptionModels = listOf(MaAssemblyModels.ALIAS, "universal-2"),
+        // Realtime (#128): wss streaming.assemblyai.com/v3/ws. The alias becomes the newest streaming Pro
+        // (3.6 Pro on 2.11.2026) in `speech_model`; the two Universal-Streaming ids are cheaper pins.
         supportsRealtime = true,
         realtimeApi = RealtimeApi.ASSEMBLYAI,
-        defaultRealtimeModel = "universal-streaming",
-        curatedRealtimeModels = listOf("universal-streaming"),
+        defaultRealtimeModel = MaAssemblyModels.ALIAS,
+        curatedRealtimeModels = listOf(
+            MaAssemblyModels.ALIAS, "universal-streaming-english", "universal-streaming-multilingual",
+        ),
     )
 
     /**

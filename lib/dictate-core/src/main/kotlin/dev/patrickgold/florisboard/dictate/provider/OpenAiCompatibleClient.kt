@@ -648,15 +648,16 @@ class OpenAiCompatibleClient(
             executeForBody(uploadRequest, onRetry = onRetry),
         ).uploadUrl
 
-        // 2. Create the transcription job.
+        // 2. Create the transcription job, on the newest Universal Pro this path accepts (MaAssemblyModels).
         val lang = request.language?.takeIf { it.isNotEmpty() && it != "detect" }
-        val createDto = AssemblyCreateDto(
+        val sentModel = MaAssemblyCatalog.model(client, request.model, MaAssemblyModels.Path.ASYNC)
+        fun createDtoFor(model: String) = AssemblyCreateDto(
             audioUrl = uploadUrl,
             // ALWAYS WITH universal-2 BEHIND IT. Croatian is not one of the Universal-3 languages; it
             // is a Universal-2 language. A list is AssemblyAI's own routing: the first model that
             // supports the language transcribes it. English goes to the Pro model, Croatian to
             // Universal-2, by the API's rule rather than by a guess of ours.
-            speechModels = request.model.takeIf { it.isNotBlank() }?.let {
+            speechModels = model.takeIf { it.isNotBlank() }?.let {
                 if (it == ASSEMBLY_FALLBACK_MODEL) listOf(it) else listOf(it, ASSEMBLY_FALLBACK_MODEL)
             },
             languageCode = lang,
@@ -667,15 +668,22 @@ class OpenAiCompatibleClient(
                 null
             },
         )
-        val createRequest = Request.Builder()
+        fun createRequestFor(model: String) = Request.Builder()
             .url(base + "v2/transcript")
             .header("authorization", authHeader)
-            .post(json.encodeToString(AssemblyCreateDto.serializer(), createDto).toRequestBody(JSON_MEDIA_TYPE))
+            .post(json.encodeToString(AssemblyCreateDto.serializer(), createDtoFor(model)).toRequestBody(JSON_MEDIA_TYPE))
             .build()
-        val id = json.decodeFromString(
-            AssemblyTranscriptDto.serializer(),
-            executeForBody(createRequest, onRetry = onRetry),
-        ).id
+        val createBody = try {
+            executeForBody(createRequestFor(sentModel), onRetry = onRetry)
+        } catch (e: DictateApiException) {
+            // Refused as a model (the page named it before the API took it): once more on the known id.
+            val fallback = MaAssemblyModels.FALLBACK.getValue(MaAssemblyModels.Path.ASYNC)
+            if (sentModel == fallback || !MaAssemblyModels.isModelFailure(e.httpStatus, e.message, sentModel)) throw e
+            MaAssemblyCatalog.markRefused(sentModel)
+            DictateHttpLog.warn("AssemblyAI model ${sanitizeForLog(sentModel)} refused; retrying on $fallback")
+            executeForBody(createRequestFor(fallback), onRetry = onRetry)
+        }
+        val id = json.decodeFromString(AssemblyTranscriptDto.serializer(), createBody).id
 
         // 3. Poll until completed / error, bounded by the overall budget.
         val statusUrl = base + "v2/transcript/" + id
@@ -805,7 +813,23 @@ class OpenAiCompatibleClient(
         request: TranscriptionRequest,
         onRetry: (attempt: Int) -> Unit,
     ): TranscriptionResult {
-        val model = request.model.takeIf { it.isNotBlank() } ?: SYNC_MODEL
+        val model = MaAssemblyCatalog.model(client, request.model, MaAssemblyModels.Path.SYNC)
+        return try {
+            transcribeAssemblyAiSyncOnce(request, model, onRetry)
+        } catch (e: DictateApiException) {
+            val fallback = MaAssemblyModels.FALLBACK.getValue(MaAssemblyModels.Path.SYNC)
+            if (model == fallback || !MaAssemblyModels.isModelFailure(e.httpStatus, e.message, model)) throw e
+            MaAssemblyCatalog.markRefused(model)
+            DictateHttpLog.warn("AssemblyAI sync model ${sanitizeForLog(model)} refused; retrying on $fallback")
+            transcribeAssemblyAiSyncOnce(request, fallback, onRetry)
+        }
+    }
+
+    private suspend fun transcribeAssemblyAiSyncOnce(
+        request: TranscriptionRequest,
+        model: String,
+        onRetry: (attempt: Int) -> Unit,
+    ): TranscriptionResult {
         val audioBody = request.audioFile.asRequestBody(guessAudioMediaType(request.audioFile))
         val multipart = MultipartBody.Builder()
             .setType(MultipartBody.FORM)
@@ -1789,11 +1813,11 @@ class OpenAiCompatibleClient(
 
         /**
          * AssemblyAI Sync routes on a header rather than a body field, and the header is required. The
-         * canonical value is `universal-3-5-pro`; `u3-sync-pro` and `u3-pro` are accepted as legacy
-         * aliases, and nothing else is.
+         * stored value is the family alias; [MaAssemblyCatalog] sends the newest Pro id the Sync page
+         * lists (`universal-3-5-pro` on 2.11.2026).
          */
         private const val SYNC_MODEL_HEADER = "X-AAI-Model"
-        const val SYNC_MODEL = "universal-3-5-pro"
+        const val SYNC_MODEL = MaAssemblyModels.ALIAS
 
         /** The AssemblyAI model that covers Croatian; listed after the chosen model on every async job. */
         private const val ASSEMBLY_FALLBACK_MODEL = "universal-2"
