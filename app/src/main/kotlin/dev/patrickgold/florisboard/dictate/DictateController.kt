@@ -3758,7 +3758,7 @@ object DictateController {
         }
         _state.value = UiState.Rewording(MaTranslate.NAME)
         val translated = runCatching {
-            requestReword(MaTranslate.instruction(), MaPhoneStyle.correct(text), model = model, purpose = MaTranslate.NAME)
+            requestReword(MaTranslate.instruction(), MaPhoneStyle.correct(text), model = model, purpose = MaTranslate.NAME, answerLanguage = "Croatian")
         }.getOrElse {
             if (it is CancellationException) throw it
             MaLog.add("dictate", "E>H failed: ${it.message ?: it.javaClass.simpleName}")
@@ -3893,6 +3893,8 @@ object DictateController {
         reasoningCustom: String? = null,
         model: String? = null,
         purpose: String = "Rewording",
+        /** Set for a translation: the language of the answer, instead of the text's own. */
+        answerLanguage: String? = null,
     ): String {
         // THE LANGUAGE RULE GOES LAST, AND IT NAMES THE LANGUAGE.
         //
@@ -3904,8 +3906,8 @@ object DictateController {
         // previews, so what he reads there is what is sent. See there for the be-precise sentence
         // that used to contradict this rule, and for the passage detection that replaced the
         // recording key as the guess.
-        if (MaPhoneModels.isPhone(model)) return requestPhoneModel(instruction, input, model.orEmpty())
-        val content = MaRewordPrompt.forSending(instruction, input)
+        if (MaPhoneModels.isPhone(model)) return requestPhoneModel(instruction, input, model.orEmpty(), answerLanguage)
+        val content = MaRewordPrompt.forSending(instruction, input, answerLanguage)
         return requestRewordRaw(content, reasoning, reasoningCustom, modelOverride = model, purpose = purpose)
     }
 
@@ -3914,13 +3916,13 @@ object DictateController {
      * network, nothing leaves the phone. The message is the one [MaRewordPrompt] builds for Claude,
      * split into its rules and his text, and recorded the same way for the Prompts screen.
      */
-    private suspend fun requestPhoneModel(instruction: String, input: String?, model: String): String {
+    private suspend fun requestPhoneModel(instruction: String, input: String?, model: String, answerLanguage: String? = null): String {
         val m = MaPhoneModels.byChoice(model)
             ?: throw DictateApiException(DictateApiException.Kind.UNKNOWN, "No model on the phone called $model")
         val (rules, user) = if (input.isNullOrBlank()) {
             "" to MaRewordPrompt.forSending(instruction, null)
         } else {
-            MaRewordPrompt.forSendingSplit(instruction, input)
+            MaRewordPrompt.forSendingSplit(instruction, input, answerLanguage)
         }
         // The phone model does not stop by itself the way Claude does (phone test A4, build 398): it
         // is told to stop at the end of the rewrite, and given about the text's own length to do it.

@@ -117,26 +117,35 @@ object MaRewordPrompt {
         MaWordLanguage.detectPassage(input)?.let { MaWordLanguage.nameOf(it) }
 
     /** [build] with everything taken from the settings, as the keyboard sends it. */
-    fun forSending(instruction: String, input: String?): String = build(
+    fun forSending(instruction: String, input: String?, answerLanguage: String? = null): String = build(
         instruction = instruction,
         systemPrompt = currentSystemPrompt(),
-        languageTemplate = currentLanguageTemplate(),
+        languageTemplate = if (answerLanguage != null) TRANSLATE_RULE else currentLanguageTemplate(),
         languageUnsure = currentLanguageUnsure(),
-        language = input?.takeIf { it.isNotBlank() }?.let { languageOf(it) },
+        language = answerLanguage ?: input?.takeIf { it.isNotBlank() }?.let { languageOf(it) },
         input = input,
     )
+
+    /**
+     * For a translation (E>H) the language line names the language of the ANSWER, not of the text.
+     * The ordinary rule says "The text below is written in English. Your entire answer must be in
+     * English. Do not translate it", which contradicts the translate instruction; Claude sometimes
+     * obeyed it and answered "this cannot be translated into Croatian" (phone test, 2.11.2026).
+     */
+    const val TRANSLATE_RULE = "Your entire answer must be in {language}, translated from the text below."
 
     /**
      * The same message in two parts, for the model on the phone, which takes its rules as a system
      * message (§191): everything [forSending] puts before his text, and his text. The order inside
      * the first part is the same, so the language rule is still the last thing before his words.
      */
-    fun forSendingSplit(instruction: String, input: String): Pair<String, String> {
+    fun forSendingSplit(instruction: String, input: String, answerLanguage: String? = null): Pair<String, String> {
         val rules = buildString {
             append(instruction)
             val sys = appendix(currentSystemPrompt(), hasInput = true)
             if (sys.isNotBlank()) append("\n\n").append(sys)
-            val line = languageLine(currentLanguageTemplate(), currentLanguageUnsure(), languageOf(input))
+            val line = if (answerLanguage != null) languageLine(TRANSLATE_RULE, "", answerLanguage)
+                else languageLine(currentLanguageTemplate(), currentLanguageUnsure(), languageOf(input))
             if (line.isNotBlank()) append("\n\n").append(line)
         }
         return rules to input

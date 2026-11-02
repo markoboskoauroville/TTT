@@ -46,8 +46,13 @@ object MaTranslate {
             "gently.\n\n" +
             "First fix what the recogniser misheard in the English, then remove repetitions, false " +
             "starts and filler words (um, uh, you know, like, I mean).\n\n" +
-            "Style: short paragraphs of one or two sentences. Plain everyday words. Warm, never " +
-            "gushing. Correct Croatian spelling (č, ć, dž, đ, ije, je), capitals and punctuation. " +
+            "Style (Yshai Afterman's, with normal capitals): short paragraphs of one or two sentences, " +
+            "a blank line between them, never three sentences in a row. Plain everyday words, written to " +
+            "one person as \"ti\". Put the reason before the request, so the request reads as an " +
+            "invitation. Keep a \"but\" or an honest qualification he made, and keep what he says he " +
+            "saw or did himself, as he said it. Practical facts (time, place, price) stay bare. Keep any " +
+            "line that takes a worry away (\"if you can't come, nothing is lost\"), last. Never invent " +
+            "any of these. Warm, never gushing. Correct Croatian spelling (č, ć, dž, đ, ije, je), capitals and punctuation. " +
             "Never use dashes, bullet points, headings, bold, exclamation marks or emoji.\n\n" +
             "Keep names, brand names and technical terms as they are (Claude, Kie, Higgsfield, " +
             "DaVinci Resolve, Premiere Pro, UGC, Pixar, Mantra Productions, Auroville). English words " +
