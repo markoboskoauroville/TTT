@@ -184,7 +184,7 @@ check("it names the language", "fun nameOf(" in wl, "nothing to put in the instr
 ctrl = code(SRC / "dictate/DictateController.kt")
 # The message is built in MaRewordPrompt now, the same function the Prompts screen previews.
 rp = code(SRC / "dictate/MaRewordPrompt.kt")
-check("the controller sends what MaRewordPrompt builds", "MaRewordPrompt.forSending(instruction, input)" in ctrl,
+check("the controller sends what MaRewordPrompt builds", "MaRewordPrompt.forSending(instruction, input, answerLanguage)" in ctrl,
       "the preview and the request would be two different texts")
 check("every rewording names the language", "Your entire answer must be in" in rp, "silent translation")
 check("it forbids translating outright", "Do not translate it into another language" in rp)
