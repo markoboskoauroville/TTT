@@ -11081,3 +11081,17 @@ of communication … a red dot … an E … greater than … H."
   the pasted mark, through Android's clip-changed listener).
 
 Test: `scripts/test_translate_key.py` (24 checks).
+
+## §230 — One line break between paragraphs; E|H stays Croatian
+
+Marko, 3.11.2026, with a WhatsApp screenshot: "When I press reflow or whenever this Sonnet is correcting my
+text, it is adding the spaces between paragraphs … It should add only new line without any space in
+between. … E to H is not working. I press that and then I get English text."
+
+- **Paragraphs** (`MaParagraphs.single`): every run of empty lines becomes one line break, on everything
+  the app writes into a field: dictation (`commitOutput`), the realtime final text, and Ctrl+P / Ctrl+F.
+- **E|H**: the translation was followed by the auto-formatting pass, which names the language setting to
+  the model, and E|H sets English, so the Croatian came back as English. A translated message now skips
+  the formatting and auto-apply passes (it is already finished), and single-call audio is translated too.
+
+Test: `scripts/test_paragraphs_translate.py` (12 checks).

@@ -2019,14 +2019,20 @@ object DictateController {
             // the same misheard words and spelling, so a dictation it styled skips the spell check.
             // E>H (MaTranslate): the English transcript becomes his Croatian message in one request,
             // which replaces the style pass and the spell check rather than running under them.
-            val translated = if (translateRecording && !alreadyFormatted) translateToCroatian(rawText) else null
+            //
+            // Phone report, 3.11.2026: E|H wrote ENGLISH. The translation was right, and then the
+            // auto-formatting pass below ran on it, told by the language setting (English, set by the
+            // key) that the text was English, and the model wrote it back in English. A translated
+            // message is finished: it skips the formatting and auto-apply passes. And it runs on
+            // single-call audio too, which used to skip it.
+            val translated = if (translateRecording) translateToCroatian(rawText) else null
             val checked = when {
                 translated != null -> translated
                 !alreadyFormatted -> phoneStyle(rawText) ?: croatianSpellcheck(appContext, rawText)
                 else -> rawText
             }
             spellchecked = checked
-            val processed = if (alreadyFormatted) checked else postProcessTranscript(appContext, checked)
+            val processed = if (alreadyFormatted || translated != null) checked else postProcessTranscript(appContext, checked)
             applyPendingPrompts(appContext, processed)
         }
         // Paragraph splitting (issue #225): break a long *pure* transcript into paragraphs at sentence
@@ -2057,7 +2063,9 @@ object DictateController {
         // Case forced last, after every other transformation, so nothing downstream can put a capital
         // back. Only for plain transcripts: a rewrite asked for in words is allowed to choose its own
         // capitals, and flattening a prompt's answer would undo the very thing it was asked to do.
-        val outputText = if (isPureTranscript) maApplyCase(mapped) else mapped
+        // One line break between paragraphs, never an empty line (MaParagraphs, 3.11.2026), on the
+        // realtime path too, which does not go through commitOutput.
+        val outputText = MaParagraphs.single(if (isPureTranscript) maApplyCase(mapped) else mapped)
         if (finalizeViaComposing) {
             // Realtime only runs while a field is open — it streams into one. So this path always
             // delivered, and saying so explicitly is what makes the flag trustworthy: it was set in
@@ -2721,7 +2729,8 @@ object DictateController {
         // Before the press-send check, because a command word is removed here and the check reads
         // the last two words. Doing it the other way round would leave "dot" sitting between his
         // sentence and the word "press", and neither rule would see what it was looking for.
-        var body = MaSpokenFormat.apply(text)
+        // One line break between paragraphs, never an empty line (MaParagraphs, 3.11.2026).
+        var body = MaParagraphs.single(MaSpokenFormat.apply(text))
         if (prefs.dictate.maVoiceCommands.get() && DictateAccessibilityService.isRunning) {
             val split = MaVoiceCommand.splitTrailing(body)
             if (split != null) {
@@ -3678,8 +3687,9 @@ object DictateController {
                     )
                     return@launch
                 }
-                // commitText replaces the active selection if any, else inserts at the cursor.
-                sink.commitText(text)
+                // commitText replaces the active selection if any, else inserts at the cursor. One line
+                // break between paragraphs, never an empty line (MaParagraphs, 3.11.2026).
+                sink.commitText(MaParagraphs.single(text))
                 _state.value = UiState.Idle
             } catch (e: CancellationException) {
                 throw e // stop button pressed: cancelRewording already reset the state, leave the field as-is
