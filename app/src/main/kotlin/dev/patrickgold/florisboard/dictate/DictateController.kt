@@ -3763,21 +3763,38 @@ object DictateController {
         if (text.isBlank()) return null
         val model = MaTranslate.model()
         if (!MaPhoneModels.isPhone(model) && MaProviders.rewordingApiKey().isBlank()) {
-            MaMessage.show("E>H needs an Anthropic key: the English was written instead")
+            MaMessage.show("E|H needs an Anthropic key: the English was written instead")
             return null
         }
         _state.value = UiState.Rewording(MaTranslate.NAME)
-        val translated = runCatching {
-            requestReword(MaTranslate.instruction(), MaPhoneStyle.correct(text), model = model, purpose = MaTranslate.NAME, answerLanguage = "Croatian")
+        val english = MaPhoneStyle.correct(text)
+        // The dictation is fenced in tags (MaTranslate.message), so a short English line is translated
+        // rather than taken as a request (phone log, 3.11.2026: 701 chars back for 38). A reply that is
+        // still not a translation gets one second try with the bare job (strictMessage).
+        suspend fun ask(content: String): String =
+            if (MaPhoneModels.isPhone(model)) {
+                requestReword(MaTranslate.instruction(), english, model = model, purpose = MaTranslate.NAME, answerLanguage = "Croatian")
+            } else {
+                requestRewordRaw(content, modelOverride = model, purpose = MaTranslate.NAME)
+            }
+        return runCatching {
+            var reply = MaTranslate.clean(ask(MaTranslate.message(MaTranslate.instruction(), english)))
+            if (!MaTranslate.accept(english, reply)) {
+                MaLog.add("dictate", "E>H reply refused: ${reply.length} chars for ${english.length}; trying once more")
+                reply = MaTranslate.clean(ask(MaTranslate.strictMessage(english)))
+            }
+            if (MaTranslate.accept(english, reply)) {
+                MaLog.add("dictate", "E>H translated: ${english.length} chars to ${reply.length}")
+                MaPhoneStyle.correct(reply)
+            } else {
+                MaLog.add("dictate", "E>H reply refused again: ${reply.length} chars for ${english.length}")
+                MaMessage.show("E|H: no translation came back, the English was written instead")
+                null
+            }
         }.getOrElse {
             if (it is CancellationException) throw it
             MaLog.add("dictate", "E>H failed: ${it.message ?: it.javaClass.simpleName}")
-            MaMessage.show("E>H failed: the English was written instead")
-            return null
-        }
-        return if (MaTranslate.accept(text, translated)) MaPhoneStyle.correct(translated.trim()) else {
-            MaLog.add("dictate", "E>H reply refused: ${translated.length} chars for ${text.length}")
-            MaMessage.show("E>H answer refused: the English was written instead")
+            MaMessage.show("E|H failed: the English was written instead")
             null
         }
     }

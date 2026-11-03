@@ -11095,3 +11095,17 @@ between. … E to H is not working. I press that and then I get English text."
   the formatting and auto-apply passes (it is already finished), and single-call audio is translated too.
 
 Test: `scripts/test_paragraphs_translate.py` (12 checks).
+
+## §231 — E|H: the real cause, from the phone's log
+
+The Nothing Phone session read TTT's log of his E|H dictation (build 1434): `E>H reply refused: 701 chars for
+38`. No formatting pass ran (the §230 change is still right, but it was not this). The 38-character English
+line sat bare under the instruction, so the model took it as a request and wrote a whole new message; the
+length guard refused it and the English was pasted.
+
+- The dictation is now fenced: `MaTranslate.message` puts it between `<english>` tags with a rule that it is
+  his message to translate, not a request to answer, and asks for the translation only.
+- A reply still refused gets one second try with the bare job (`strictMessage`), then the English with a
+  message saying no translation came back.
+- `accept` allows short lines to grow ("Ok" → "U redu") but still refuses 701 for 38.
+- The prompt's style section says one line break between paragraphs, never an empty line (§230).

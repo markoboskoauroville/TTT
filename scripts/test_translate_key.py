@@ -59,8 +59,8 @@ check("translated after transcription", "if (translateRecording) translateToCroa
 check("instead of style and spell check, not on top",
       re.search(r"translated != null -> translated\s*!alreadyFormatted -> phoneStyle", ctrl) is not None)
 check("with the chosen model and the loaded key", "requestReword(MaTranslate.instruction()" in ctrl and "MaTranslate.model()" in ctrl)
-check("a failure keeps the English", "E>H failed: the English was written instead" in ctrl)
-check("a reply that is not a translation is refused", "MaTranslate.accept(text, translated)" in ctrl)
+check("a failure keeps the English and says so", "E|H failed: the English was written instead" in ctrl)
+check("a reply that is not a translation is refused", "MaTranslate.accept(english, reply)" in ctrl)
 
 # The prompt
 check("it translates into Croatian", "Translate \" +\n            \"it into Croatian" in tr or "Translate it into Croatian" in tr.replace('" +\n            "', ""))
@@ -75,15 +75,26 @@ check("never twice in a row", "if (row.entries.any { it.button == Button.Builtin
 
 
 def accept(english: str, translated: str) -> bool:  # MaTranslate.accept
-    t = translated.strip()
-    if not t:
+    t = len(translated.strip())
+    if t == 0:
         return False
-    return 0.33 <= len(t) / max(1, len(english.strip())) <= 2.5
+    e = max(1, len(english.strip()))
+    too_long = t > e * 2.5 and t > e + 60
+    too_short = t < e * 0.33 and t < e - 30
+    return not too_long and not too_short
 
 
 check("a translation of similar length passes", accept("I will bring the guitar tomorrow.", "Sutra ću donijeti gitaru."))
 check("an empty reply fails", not accept("Hello there", "  "))
-check("a model talking fails", not accept("ok", "Here is the translation of your message into Croatian: U redu."))
+check("the phone's case fails: 701 chars for 38", not accept("x" * 38, "y" * 701))
+check("a short line may grow a little: Ok -> U redu", accept("Ok", "U redu"))
+check("a short line translated longer still passes", accept("Give me an hour.", "Daj mi sat vremena, molim te."))
+
+# 3.11.2026: the dictation is fenced, so a short line is translated, not answered; one retry.
+check("the dictation is fenced in tags", "<english>" in tr and "fun message(instruction: String, english: String)" in tr)
+check("a refused reply gets one stricter try", "MaTranslate.strictMessage(english)" in ctrl)
+check("sent as the fenced message", "ask(MaTranslate.message(MaTranslate.instruction(), english))" in ctrl)
+check("no empty line between its paragraphs", "a single line break between them, never an empty line" in tr.replace('" +\n            "', ""))
 
 print(f"translate key, test 1: {checks} checks, {len(failures)} failed")
 for f in failures:
