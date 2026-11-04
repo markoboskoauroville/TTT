@@ -11147,3 +11147,7 @@ style must be there."
 - The next code word is one more entry in `MaCodeWords.ALL`.
 
 Tests: `MaCodeWordsTest` (kotest), `scripts/test_code_words.py` (32 checks).
+- (same day) **Claude reads the list too.** Marko: "for some unknown terms … this application must point AI to
+  look at our code words, and then it will find it". Every Reprompt now carries the whole code-word list with
+  descriptions and a rule: an unfamiliar term, or a misspelled or misheard form of a name, means that code
+  word; otherwise ignore the list. A code word the app's own spelling match caught is named first.

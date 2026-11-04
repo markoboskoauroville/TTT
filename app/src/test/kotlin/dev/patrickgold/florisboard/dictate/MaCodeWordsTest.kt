@@ -23,16 +23,19 @@ class MaCodeWordsTest : FunSpec({
             MaCodeWords.found(said).map { it.name } shouldBe listOf("Yshai Afterman style")
         }
     }
-    test("ordinary instructions are left alone") {
+    test("ordinary instructions name nothing, but still carry the list for Claude") {
         for (said in listOf(
             "make it shorter", "the aftermath of the storm", "a man after my own heart", "after the man left",
         )) {
-            MaCodeWords.expand(said) shouldBe said
+            MaCodeWords.found(said) shouldBe emptyList()
+            val e = MaCodeWords.expand(said)
+            e shouldContain MaCodeWords.INDEX_RULE
+            e shouldContain "Code word \"Yshai Afterman style\":"
         }
     }
     test("the expansion carries the style, in normal capitals") {
         val e = MaCodeWords.expand("make it Ashai Afterman style")
-        e shouldContain "\"Yshai Afterman style\" in the instruction above means this:"
+        e shouldContain "The instruction above names: Yshai Afterman style."
         e shouldContain "Normal sentence capitalisation"
         e shouldContain "Short paragraphs of one or two sentences"
     }

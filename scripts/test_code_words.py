@@ -96,6 +96,10 @@ for rule in ["Short paragraphs of one or two sentences", "honest counterweight",
     check(f"style holds: {rule}", rule in desc)
 
 check("Reprompt sends the expansion", "MaCodeWords.expand(words.trim())" in rp)
+# 4.11.2026: every code word is always listed, so Claude can find one the app did not catch.
+check("the list is always sent", "for (w in ALL) {" in cw and "append(\"\\n\\n\").append(INDEX_RULE)" in cw)
+check("Claude is told to read unfamiliar terms against it", "If a term in the instruction is \" +" in cw and "unfamiliar" in cw)
+check("one the app caught is named first", "The instruction above names: " in cw)
 
 print(f"code words, test 1: {checks} checks, {len(failures)} failed")
 for f in failures:

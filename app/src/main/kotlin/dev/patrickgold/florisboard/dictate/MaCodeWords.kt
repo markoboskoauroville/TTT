@@ -137,18 +137,32 @@ object MaCodeWords {
     fun found(text: String): List<CodeWord> = ALL.filter { mentions(text, it) }
 
     /**
-     * [instruction] with the description of every code word it names added after it, or unchanged
-     * when it names none.
+     * [instruction] with the code words added after it.
+     *
+     * Every code word is listed, always, with its description (Marko, 4.11.2026: "for some unknown
+     * terms … this application must point AI to look at our code words, and then it will find it").
+     * The spelling match above is the app's own guess; the list lets Claude find a code word the app
+     * did not catch, from a term it does not recognise. One the app did catch is named first, so
+     * Claude does not have to guess at all.
      */
     fun expand(instruction: String): String {
         val hits = found(instruction)
-        if (hits.isEmpty()) return instruction
         return buildString {
             append(instruction.trim())
-            for (h in hits) {
-                append("\n\n\"").append(h.name).append("\" in the instruction above means this:\n")
-                append(h.description)
+            append("\n\n").append(INDEX_RULE)
+            if (hits.isNotEmpty()) {
+                append("\nThe instruction above names: ").append(hits.joinToString(", ") { it.name }).append('.')
+            }
+            for (w in ALL) {
+                append("\n\nCode word \"").append(w.name).append("\":\n").append(w.description)
             }
         }
     }
+
+    /** What Claude is told about the list. */
+    const val INDEX_RULE =
+        "Code words: the user has private code words, listed below. If a term in the instruction is " +
+            "unfamiliar, or looks like a misspelled or misheard form of one of these names, it means " +
+            "that code word: follow its description. Use a code word only when the instruction refers " +
+            "to it; otherwise ignore the list."
 }
