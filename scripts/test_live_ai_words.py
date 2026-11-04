@@ -76,6 +76,12 @@ check("forgotten with the rest", ngram.count("teacherFor(language).clear()") >= 
 check("never his counts: a guess is not a word he wrote", "teacherFor(language).remember(two, one, words)" in ngram
       and "modelFor(language).learn(" not in ngram[ngram.find("fun rememberTeacher"):ngram.find("fun teacherWords")])
 
+# 4.11.2026: tapping a word typed an older one ("since since since"): the gesture kept its first lambda.
+item = row[row.find("private fun CandidateItem"):]
+check("the tap calls the word on screen now", "val currentOnClick by rememberUpdatedState(onClick)" in item
+      and "currentOnClick()" in item and "\n                        onClick()" not in item)
+check("the long press too", "val currentOnLongPress by rememberUpdatedState(onLongPress)" in item and "if (currentOnLongPress())" in item)
+
 print(f"live AI words, test 1: {checks} checks, {len(failures)} failed")
 for f in failures:
     print("  FAIL ", f)

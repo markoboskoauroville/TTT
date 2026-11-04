@@ -16,6 +16,7 @@
 
 package dev.patrickgold.florisboard.ime.smartbar
 
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.Icons
@@ -436,6 +437,14 @@ private fun CandidateItem(
     longPressDelay: Long,
 ) = with(LocalDensity.current) {
     var isPressed by remember { mutableStateOf(false) }
+    // THE WORD TAPPED IS THE WORD SHOWN (Marko, 4.11.2026: "tapping on words in suggestion row is
+    // typing wrong word", "since since since"). The gesture below is installed once per slot
+    // (pointerInput(Unit)), so it kept calling the FIRST onClick it was given: when the words in the
+    // row changed, a slot still committed the word it had shown before. Read through updated state,
+    // the gesture always calls the lambda of the word on screen now.
+    val currentOnClick by rememberUpdatedState(onClick)
+    val currentOnLongPress by rememberUpdatedState(onLongPress)
+    val currentLongPressDelay by rememberUpdatedState(longPressDelay)
 
     val elementName = FlorisImeUi.SmartbarCandidateWord.elementName
     // Remembered so recomposing the row on each keystroke doesn't allocate a fresh map (which, as an
@@ -457,19 +466,19 @@ private fun CandidateItem(
                     if (down.pressed != down.previousPressed) down.consume()
                     var upOrCancel: PointerInputChange? = null
                     try {
-                        upOrCancel = withTimeout(longPressDelay) {
+                        upOrCancel = withTimeout(currentLongPressDelay) {
                             waitForUpOrCancellation()
                         }
                         upOrCancel?.let { if (it.pressed != it.previousPressed) it.consume() }
                     } catch (_: PointerEventTimeoutCancellationException) {
-                        if (onLongPress()) {
+                        if (currentOnLongPress()) {
                             upOrCancel = null
                             isPressed = false
                         }
                         waitForUpOrCancellation()?.let { if (it.pressed != it.previousPressed) it.consume() }
                     }
                     if (upOrCancel != null) {
-                        onClick()
+                        currentOnClick()
                     }
                     isPressed = false
                 }

@@ -11214,3 +11214,12 @@ The Mac session tested build 440 in the Android emulator with his key loaded the
 - Noted, not changed: the first Back only hides the keyboard (Android's own behaviour); loading keys left
   TTT's copy in the emulator's Documents/TTTmini/keys.txt (the app's key vault, as on a phone); fast adb
   typing once turned "for the" into "fort he" (autocorrect, to watch).
+
+## §238 — Tapping a suggestion typed an older word
+
+Marko, 4.11.2026: "tapping on words in suggestion row is typing wrong word" ("since since since … also
+also"). `CandidateItem` installs its gesture once per slot (`pointerInput(Unit)`), so it kept calling the
+first `onClick` that slot was given; when the row's words changed, a tap committed the word that slot showed
+before. Now the gesture reads `rememberUpdatedState(onClick)` / `(onLongPress)` / `(longPressDelay)`, so
+it always commits the word on screen. More visible since the live Haiku words make the row change more
+often. Check: `scripts/test_live_ai_words.py`.
