@@ -11200,3 +11200,17 @@ words itself."
   n-gram model. Cleared with "forget" like the rest; not in incognito; not with Learn my words off.
 
 Tests: `MaTeacherMemoryTest` (kotest, 4), `scripts/test_live_ai_words.py` (23 checks).
+
+## §237 — Reprompt sent bare; its buttons always visible (Mac emulator test, build 440)
+
+The Mac session tested build 440 in the Android emulator with his key loaded there: 6 pass, 1 fail.
+- **Fail B:** "make it shorter" came back only proofread. The instruction went through the rewording path,
+  which adds the proofreading system prompt and a language line after it, and those outweighed his words.
+  Reprompt is now sent bare (`applyPrompt(bare = true)` → `MaReprompt.message`): his instruction ("do exactly
+  what it asks … do not just proofread"), his text fenced in `<text>` tags, the language of the text named,
+  and "return only the resulting text, single line breaks". Phone models keep the old path.
+- With the keyboard hidden and three instructions listed, Cancel and Apply slid under the navigation bar:
+  they now sit right under the line, before the list, and the window keeps clear of the navigation bar.
+- Noted, not changed: the first Back only hides the keyboard (Android's own behaviour); loading keys left
+  TTT's copy in the emulator's Documents/TTTmini/keys.txt (the app's key vault, as on a phone); fast adb
+  typing once turned "for the" into "fort he" (autocorrect, to watch).

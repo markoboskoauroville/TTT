@@ -3593,6 +3593,12 @@ object DictateController {
         model: String? = null,
         /** A reprompt may ask for more text ("add a paragraph about…"); the length guard is off then. */
         allowGrowth: Boolean = false,
+        /**
+         * Sent as built, without the rewording system prompt and language line (MaReprompt.message).
+         * Mac emulator test, build 440: "make it shorter" came back only proofread, because the
+         * proofreading system prompt after his instruction outweighed it.
+         */
+        bare: Boolean = false,
     ) {
         if (_state.value !is UiState.Idle && _state.value !is UiState.Error) return
         // The floating overlay passes OVERLAY so the result is injected into the focused field via the
@@ -3658,10 +3664,14 @@ object DictateController {
         // Store the job so the stop button can abort this reword mid-generation (issue #192).
         rewordJob = scope.launch {
             try {
-                val text = requestReword(
-                    raw, input, prompt.reasoningEffort, prompt.reasoningEffortCustom,
-                    model = model, purpose = prompt.name ?: "Prompt",
-                )
+                val text = if (bare && model != null && !MaPhoneModels.isPhone(model)) {
+                    requestRewordRaw(MaReprompt.message(raw, input), modelOverride = model, purpose = prompt.name ?: "Prompt")
+                } else {
+                    requestReword(
+                        raw, input, prompt.reasoningEffort, prompt.reasoningEffortCustom,
+                        model = model, purpose = prompt.name ?: "Prompt",
+                    )
+                }
                 // A reply that is not his text back does not go into his text.
                 //
                 // Ctrl+P and Ctrl+F replace the field with whatever returns, and a model that

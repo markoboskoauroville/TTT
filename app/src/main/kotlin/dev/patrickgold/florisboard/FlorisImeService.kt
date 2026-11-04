@@ -460,7 +460,7 @@ class FlorisImeService : LifecycleInputMethodService() {
                 val content = editorInstance.activeContent
                 val write = content.text.isBlank() && content.selectedText.isBlank()
                 DictateController.applyPrompt(
-                    this, MaReprompt.prompt(words, write), model = MaFlow.model(), allowGrowth = true,
+                    this, MaReprompt.prompt(words, write), model = MaFlow.model(), allowGrowth = true, bare = true,
                 )
             }, 400)
         }

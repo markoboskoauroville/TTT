@@ -30,7 +30,17 @@ class MaRepromptTest : FunSpec({
     test("a field with text is reshaped, as before") {
         val p = MaReprompt.prompt("make it shorter", write = false)
         p.requiresSelection shouldBe true
-        p.prompt!! shouldStartWith "Apply this instruction to the text below"
+        p.prompt!! shouldStartWith "Carry out this instruction on the text between the <text> tags."
+        p.prompt!! shouldContain "Do not just proofread."
+    }
+    test("the reshape message fences his text and keeps its language") {
+        val m = MaReprompt.message("Carry out: make it shorter", "Dobro jutro Damjan, radim na tome i javit cu se kasnije danas.")
+        m shouldContain "<text>\nDobro jutro Damjan"
+        m shouldContain "answer in Croatian"
+        m shouldContain "single line break"
+    }
+    test("the prompt mode sends its instruction alone") {
+        MaReprompt.message("Write the message…", null) shouldBe "Write the message…"
     }
     test("code words work in both modes") {
         MaReprompt.prompt("a thank-you note, Ashai Afterman style", write = true)

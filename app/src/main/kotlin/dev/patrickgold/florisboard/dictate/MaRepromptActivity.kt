@@ -22,6 +22,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
@@ -85,7 +86,7 @@ class MaRepromptActivity : ComponentActivity() {
                 ) {
                     Surface(
                         shape = RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp),
-                        modifier = Modifier.fillMaxWidth().clickable(enabled = false) {},
+                        modifier = Modifier.fillMaxWidth().navigationBarsPadding().clickable(enabled = false) {},
                     ) {
                         Column(modifier = Modifier.padding(16.dp)) {
                             Text(
@@ -112,6 +113,15 @@ class MaRepromptActivity : ComponentActivity() {
                                 keyboardActions = KeyboardActions(onDone = { apply(text) }),
                                 modifier = Modifier.fillMaxWidth().focusRequester(focus),
                             )
+                            // Cancel and Apply right under the line, before the list, so they never
+                            // slide under the navigation bar (Mac emulator test, build 440).
+                            Row(
+                                modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
+                                horizontalArrangement = Arrangement.End,
+                            ) {
+                                TextButton(onClick = { MaReprompt.cancel(); finish() }) { Text("Cancel") }
+                                TextButton(enabled = text.isNotBlank(), onClick = { apply(text) }) { Text("Apply") }
+                            }
                             // His last instructions: one tap runs one again.
                             for (r in recent) {
                                 Text(
@@ -125,13 +135,6 @@ class MaRepromptActivity : ComponentActivity() {
                                         .clickable { apply(r) }
                                         .padding(vertical = 8.dp),
                                 )
-                            }
-                            Row(
-                                modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
-                                horizontalArrangement = Arrangement.End,
-                            ) {
-                                TextButton(onClick = { MaReprompt.cancel(); finish() }) { Text("Cancel") }
-                                TextButton(enabled = text.isNotBlank(), onClick = { apply(text) }) { Text("Apply") }
                             }
                         }
                     }

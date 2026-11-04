@@ -117,10 +117,26 @@ object MaReprompt {
 
     /** What is sent: his words, as the instruction for the text below them. */
     fun instructionFor(words: String): String =
-        "Apply this instruction to the text below and return only the resulting text, nothing " +
+        "Carry out this instruction on the text between the <text> tags. Do exactly what it asks: " +
+            "if it asks for shorter, make it clearly shorter; if it asks for a different tone or " +
+            "language, change it. Do not just proofread. Instruction: " +
             // Hidden code words (MaCodeWords): a name such as "Ashai Afterman" brings its full
             // description with it, however it was spelled or misheard.
-            "before or after it: " + MaCodeWords.expand(words.trim())
+            MaCodeWords.expand(words.trim())
+
+    /**
+     * The whole message, sent bare (no rewording system prompt): the instruction, then his text
+     * fenced, then the rules for the answer. Without text (the prompt mode), the instruction alone.
+     */
+    fun message(instruction: String, text: String?): String {
+        if (text.isNullOrBlank()) return instruction
+        val language = MaRewordPrompt.languageOf(text)
+        val keep = if (language != null) "The text is in $language; answer in $language unless the instruction asks for another language."
+        else "Answer in the language of the text unless the instruction asks for another language."
+        return instruction.trim() + "\n\n<text>\n" + text + "\n</text>\n\n" + keep +
+            " Return only the resulting text, nothing before or after it, no tags. Paragraphs are " +
+            "separated by a single line break."
+    }
 
     /** The prompt mode: a new message from his instruction, nothing to reshape. */
     fun writeInstructionFor(words: String): String {

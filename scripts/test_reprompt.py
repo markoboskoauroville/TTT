@@ -68,8 +68,14 @@ check("Back or Cancel rewrites nothing", "if (!submitted) MaReprompt.cancel()" i
 
 # Back in the field
 check("runs when the field comes back", "MaReprompt.takeFor(info.packageName, info.fieldId)" in ime)
-check("through the Ctrl+P / Ctrl+F path, with Ctrl+F's model",
-      "MaReprompt.prompt(words, write), model = MaFlow.model(), allowGrowth = true" in ime)
+check("through the Ctrl+P / Ctrl+F path, with Ctrl+F's model, sent bare",
+      "MaReprompt.prompt(words, write), model = MaFlow.model(), allowGrowth = true, bare = true" in ime)
+# Mac emulator, build 440: "make it shorter" came back only proofread. Sent bare, no proofreading system prompt.
+check("bare skips the rewording system prompt", "requestRewordRaw(MaReprompt.message(raw, input), modelOverride = model" in ctrl)
+check("his text fenced, its language kept", "<text>" in rp and "MaRewordPrompt.languageOf(text)" in rp)
+check("told not to just proofread", "Do not just proofread." in rp)
+check("buttons before the list, above the navigation bar",
+      act.find('Text("Apply")') < act.find("for (r in recent)") and "navigationBarsPadding()" in act)
 check("the length guard is off only for it", "val grew = !allowGrowth && text.length >" in ctrl)
 check("never its own window's field", "packageName == ownPackage) return null" in rp)
 check("only the same field, only within a minute",
