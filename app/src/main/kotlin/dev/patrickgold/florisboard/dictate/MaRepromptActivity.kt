@@ -93,7 +93,8 @@ class MaRepromptActivity : ComponentActivity() {
                                 style = MaterialTheme.typography.titleMedium,
                             )
                             Text(
-                                text = "What should Claude do with the text in the field?",
+                                text = if (MaReprompt.writeMode) "The field is empty: what message should Claude write?"
+                                else "What should Claude do with the text in the field?",
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 modifier = Modifier.padding(top = 2.dp, bottom = 8.dp),
@@ -101,7 +102,12 @@ class MaRepromptActivity : ComponentActivity() {
                             OutlinedTextField(
                                 value = text,
                                 onValueChange = { text = it },
-                                placeholder = { Text("e.g. make it shorter and friendlier") },
+                                placeholder = {
+                                    Text(
+                                        if (MaReprompt.writeMode) "e.g. tell Damjan I'm working on it, an hour"
+                                        else "e.g. make it shorter and friendlier",
+                                    )
+                                },
                                 keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
                                 keyboardActions = KeyboardActions(onDone = { apply(text) }),
                                 modifier = Modifier.fillMaxWidth().focusRequester(focus),

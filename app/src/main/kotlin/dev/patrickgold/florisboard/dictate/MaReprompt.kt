@@ -36,6 +36,13 @@ import kotlin.jvm.Volatile
  *
  * The model is Ctrl+F's (Settings → Prompts), because a reprompt is a rewrite. His last instructions
  * are kept (on this phone only) and offered as one tap in the window.
+ *
+ * ### Two modes, decided by the field (4.11.2026)
+ *
+ * "If message is empty, then it goes to the prompt mode and I'm going to tell him what kind of message
+ * to write. If there is a message, then it's as before … reshape the message." An empty field gets a
+ * new message written from his instruction ([writeInstructionFor]); a field with text is reshaped
+ * ([instructionFor]). The field decides when it comes back, so text written meanwhile is reshaped.
  */
 object MaReprompt {
 
@@ -59,8 +66,14 @@ object MaReprompt {
     var instruction: String? = null
         private set
 
+    /** Whether the window was opened on an empty field: it then asks what message to write. */
+    @Volatile
+    var writeMode: Boolean = false
+        private set
+
     /** The key: remember the field, open the window. */
-    fun open(context: Context, packageName: String, fieldId: Int) {
+    fun open(context: Context, packageName: String, fieldId: Int, write: Boolean = false) {
+        writeMode = write
         ownPackage = context.packageName
         target = Target(packageName, fieldId, System.currentTimeMillis())
         instruction = null
@@ -109,12 +122,31 @@ object MaReprompt {
             // description with it, however it was spelled or misheard.
             "before or after it: " + MaCodeWords.expand(words.trim())
 
-    fun prompt(words: String): PromptModel = PromptModel(
+    /** The prompt mode: a new message from his instruction, nothing to reshape. */
+    fun writeInstructionFor(words: String): String {
+        val w = words.trim()
+        // The language is named, not left to "the language of the instruction": this wrapper is
+        // English, and a Croatian request must not come back English (the E|H lesson, 3.11.2026).
+        val language = MaRewordPrompt.languageOf(w)
+        val inLanguage = if (language != null) " Write it in $language unless the request names another language."
+        else " Write it in the language of the request unless the request names another language."
+        return MaCodeWords.expand(
+            "Write the message the user asks for between the <request> tags. Write it as the user, " +
+                "ready to send.$inLanguage Return only the message, nothing before or after it.\n\n" +
+                "<request>\n$w\n</request>",
+        )
+    }
+
+    /**
+     * The prompt sent. [write] (an empty field): a new message, inserted at the cursor, nothing
+     * selected or replaced. Otherwise the text is reshaped: the selection, else the whole field.
+     */
+    fun prompt(words: String, write: Boolean = false): PromptModel = PromptModel(
         id = PromptModel.ID_INSTANT_PROMPT,
         pos = 0,
         name = NAME,
-        prompt = instructionFor(words),
-        requiresSelection = true,
+        prompt = if (write) writeInstructionFor(words) else instructionFor(words),
+        requiresSelection = !write,
         autoApply = false,
     )
 

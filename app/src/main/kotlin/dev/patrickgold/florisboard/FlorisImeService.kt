@@ -456,8 +456,11 @@ class FlorisImeService : LifecycleInputMethodService() {
         // window, so its text is rewritten now. A moment later, so the editor has read the field.
         MaReprompt.takeFor(info.packageName, info.fieldId)?.let { words ->
             android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
+                // Empty field: write the message he asks for, at the cursor. Text: reshape it.
+                val content = editorInstance.activeContent
+                val write = content.text.isBlank() && content.selectedText.isBlank()
                 DictateController.applyPrompt(
-                    this, MaReprompt.prompt(words), model = MaFlow.model(), allowGrowth = true,
+                    this, MaReprompt.prompt(words, write), model = MaFlow.model(), allowGrowth = true,
                 )
             }, 400)
         }

@@ -1530,12 +1530,14 @@ fun MaFeatureRow(
                         onClick = {
                             val info = editorInstance.activeInfo
                             val pkg = info.packageName
-                            if (pkg == null || editorInstance.activeContent.text.isBlank() &&
+                            // An empty field is the prompt mode (4.11.2026): the instruction says
+                            // what message to write. With text, it reshapes the text, as before.
+                            val empty = editorInstance.activeContent.text.isBlank() &&
                                 editorInstance.activeContent.selectedText.isBlank()
-                            ) {
-                                MaMessage.show("Reprompt: write something first")
+                            if (pkg == null) {
+                                MaMessage.show("Reprompt: no field to write into")
                             } else {
-                                MaReprompt.open(context, pkg, info.base.fieldId)
+                                MaReprompt.open(context, pkg, info.base.fieldId, write = empty)
                             }
                         },
                     ) { fg ->

@@ -47,8 +47,16 @@ manifest = (ROOT / "app/src/main/AndroidManifest.xml").read_text()
 check("the key exists", 'REPROMPT("reprompt", "Reprompt")' in order)
 check("drawn as re + a small sparkle", 'text = "re"' in row and "Icons.Default.AutoAwesome" in row)
 check("in the rows editor too", 'MaFeatureKey.REPROMPT -> letters("re\\u2726")' in rows_screen)
-check("it remembers the field and opens the window", "MaReprompt.open(context, pkg, info.base.fieldId)" in row)
-check("an empty field says so instead", '"Reprompt: write something first"' in row)
+check("it remembers the field and opens the window", "MaReprompt.open(context, pkg, info.base.fieldId" in row)
+# 4.11.2026: an empty field is the prompt mode, not a refusal.
+check("an empty field opens the prompt mode", "MaReprompt.open(context, pkg, info.base.fieldId, write = empty)" in row
+      and '"Reprompt: write something first"' not in row)
+check("the field decides when it is back", "val write = content.text.isBlank() && content.selectedText.isBlank()" in ime
+      and "MaReprompt.prompt(words, write)" in ime)
+check("write mode inserts, reshape mode replaces", "requiresSelection = !write," in rp)
+check("write mode: the request fenced, its language named",
+      "<request>" in rp and "MaRewordPrompt.languageOf(w)" in rp)
+check("the window asks the right question", "The field is empty: what message should Claude write?" in act)
 
 # The window
 check("the window is declared", "dev.patrickgold.florisboard.dictate.MaRepromptActivity" in manifest)
@@ -61,7 +69,7 @@ check("Back or Cancel rewrites nothing", "if (!submitted) MaReprompt.cancel()" i
 # Back in the field
 check("runs when the field comes back", "MaReprompt.takeFor(info.packageName, info.fieldId)" in ime)
 check("through the Ctrl+P / Ctrl+F path, with Ctrl+F's model",
-      "MaReprompt.prompt(words), model = MaFlow.model(), allowGrowth = true" in ime)
+      "MaReprompt.prompt(words, write), model = MaFlow.model(), allowGrowth = true" in ime)
 check("the length guard is off only for it", "val grew = !allowGrowth && text.length >" in ctrl)
 check("never its own window's field", "packageName == ownPackage) return null" in rp)
 check("only the same field, only within a minute",

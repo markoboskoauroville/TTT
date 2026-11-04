@@ -11151,3 +11151,16 @@ Tests: `MaCodeWordsTest` (kotest), `scripts/test_code_words.py` (32 checks).
   look at our code words, and then it will find it". Every Reprompt now carries the whole code-word list with
   descriptions and a rule: an unfamiliar term, or a misspelled or misheard form of a name, means that code
   word; otherwise ignore the list. A code word the app's own spelling match caught is named first.
+
+## §234 — Reprompt on an empty field writes the message
+
+Marko, 4.11.2026: "If message is empty, then it goes to the prompt mode and I'm going to tell him what kind
+of message to write. If there is a message, then it's as before … reshape the message."
+
+- The key opens the window on an empty field too (no more "write something first"); the window asks
+  "The field is empty: what message should Claude write?".
+- When the field is back, it decides: empty → `MaReprompt.writeInstructionFor`, the request fenced in
+  `<request>` tags, its language named (detected from his words: Croatian stays Croatian), the code words
+  listed; inserted at the cursor (`requiresSelection = false`). Text → reshaped as before.
+
+Tests: `MaRepromptTest` (kotest, 4), `scripts/test_reprompt.py` (29 checks).
