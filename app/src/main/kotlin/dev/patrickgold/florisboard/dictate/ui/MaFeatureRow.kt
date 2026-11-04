@@ -16,6 +16,9 @@
 
 package dev.patrickgold.florisboard.dictate.ui
 
+import dev.patrickgold.florisboard.dictate.MaReprompt
+import androidx.compose.foundation.layout.offset
+import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -1514,6 +1517,36 @@ fun MaFeatureRow(
                                     fontWeight = FontWeight.Bold,
                                 )
                             }
+                        }
+                    }
+                }
+
+                MaFeatureKey.REPROMPT -> {
+                    // REPROMPT (MaReprompt, 4.11.2026): "re" and a small sparkle. Opens the window for
+                    // an instruction; the field the key was pressed in is rewritten when it is back.
+                    ThemedKey(
+                        code = KeyCode.NOOP,
+                        modifier = keyMod,
+                        onClick = {
+                            val info = editorInstance.activeInfo
+                            val pkg = info.packageName
+                            if (pkg == null || editorInstance.activeContent.text.isBlank() &&
+                                editorInstance.activeContent.selectedText.isBlank()
+                            ) {
+                                MaMessage.show("Reprompt: write something first")
+                            } else {
+                                MaReprompt.open(context, pkg, info.base.fieldId)
+                            }
+                        },
+                    ) { fg ->
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text(text = "re", color = fg, fontSize = 17.sp, fontWeight = FontWeight.Bold)
+                            Icon(
+                                imageVector = Icons.Default.AutoAwesome,
+                                contentDescription = MaReprompt.NAME,
+                                tint = fg,
+                                modifier = Modifier.size(11.dp).offset(y = (-5).dp),
+                            )
                         }
                     }
                 }

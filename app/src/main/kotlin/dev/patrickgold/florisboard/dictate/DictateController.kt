@@ -3590,6 +3590,8 @@ object DictateController {
         target: OutputTarget? = null,
         /** The model for this prompt (Settings → Prompts), or null for the rewording account's own. */
         model: String? = null,
+        /** A reprompt may ask for more text ("add a paragraph about…"); the length guard is off then. */
+        allowGrowth: Boolean = false,
     ) {
         if (_state.value !is UiState.Idle && _state.value !is UiState.Error) return
         // The floating overlay passes OVERLAY so the result is injected into the focused field via the
@@ -3677,7 +3679,7 @@ object DictateController {
                 // Generous on purpose — three times plus eighty characters. A real correction never
                 // comes close to that, and the cost of guessing wrong in this direction is one
                 // visible message rather than a ruined one already sent.
-                val grew = text.length > input.orEmpty().length * 3 + 80
+                val grew = !allowGrowth && text.length > input.orEmpty().length * 3 + 80
                 if (grew && !input.isNullOrBlank()) {
                     MaLog.add("reword", "refused a reply of ${text.length} chars for ${input.length} in")
                     _state.value = UiState.Error(

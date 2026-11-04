@@ -16,6 +16,8 @@
 
 package dev.patrickgold.florisboard
 
+import dev.patrickgold.florisboard.dictate.MaFlow
+import dev.patrickgold.florisboard.dictate.MaReprompt
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
@@ -450,6 +452,15 @@ class FlorisImeService : LifecycleInputMethodService() {
         super.onStartInputView(info, restarting)
         if (info == null) return
         val editorInfo = FlorisEditorInfo.wrap(info)
+        // REPROMPT (MaReprompt): the field the key was pressed in is back from the instruction
+        // window, so its text is rewritten now. A moment later, so the editor has read the field.
+        MaReprompt.takeFor(info.packageName, info.fieldId)?.let { words ->
+            android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
+                DictateController.applyPrompt(
+                    this, MaReprompt.prompt(words), model = MaFlow.model(), allowGrowth = true,
+                )
+            }, 400)
+        }
         // The cursor pad never survives a new field.
         //
         // It is a mode drawn over the keyboard, and it trapped him once already by having only one

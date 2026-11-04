@@ -750,6 +750,23 @@ object DictateLegacyMigrator {
         prefs.dictate.maTranslateKeyAdded.set(true)
     }
 
+    /**
+     * The Reprompt key on his rows, once (4.11.2026), right after E|H (else after E, else after H).
+     * Afterwards it is his to move or remove in Feature row.
+     */
+    suspend fun addRepromptKeyIfNeeded() {
+        val prefs by FlorisPreferenceStore
+        if (prefs.dictate.maRepromptKeyAdded.get()) return
+        val raw = prefs.dictate.maRows.get()
+        val rows = if (raw.isBlank()) MaRows.defaultRows() else MaRows.parse(raw)
+        val next = MaRows.withKeyAfter(
+            rows, MaFeatureKey.REPROMPT,
+            listOf(MaFeatureKey.RECORD_EN_HR, MaFeatureKey.RECORD_EN, MaFeatureKey.RECORD_HR),
+        )
+        if (next != rows) prefs.dictate.maRows.set(MaRows.serialize(next))
+        prefs.dictate.maRepromptKeyAdded.set(true)
+    }
+
     suspend fun keepPredictionRowOn() {
         val prefs by FlorisPreferenceStore
         if (!prefs.suggestion.enabled.get()) prefs.suggestion.enabled.set(true)

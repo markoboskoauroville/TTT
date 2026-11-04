@@ -447,6 +447,11 @@ enum class MaFeatureKey(val id: String, val label: String) {
      * "E|H": E, a vertical line, H, with no red dot; the red outline stays (Marko, 2.11.2026).
      */
     RECORD_EN_HR("recordenhr", "English to Croatian"),
+    /**
+     * Reprompt (4.11.2026): "re" and a small magic sparkle. Opens a window for an instruction, typed
+     * or dictated, and Claude applies it to the text in the field, in place (MaReprompt).
+     */
+    REPROMPT("reprompt", "Reprompt"),
 
     VOLUME_KEYS("volume_keys", "Volume keys"),
 
@@ -692,6 +697,7 @@ val MaFeatureKey.group: MaFeatureGroup
         MaFeatureKey.RECORD_HR,
         MaFeatureKey.RECORD_EN,
         MaFeatureKey.RECORD_EN_HR,
+        MaFeatureKey.REPROMPT,
         MaFeatureKey.SEND,
         -> MaFeatureGroup.DICTATION
 

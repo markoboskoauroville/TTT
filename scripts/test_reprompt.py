@@ -1,0 +1,112 @@
+#!/usr/bin/env python3
+"""
+Test 1 for the Reprompt key (MaReprompt, DEVELOPMENT.md §232).
+
+    python3 scripts/test_reprompt.py
+
+Marko, 4.11.2026: a key with "re" and a small magic symbol; it opens a window for an instruction to
+Claude, and the text in the field is changed directly.
+"""
+
+import re
+import sys
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parent.parent
+SRC = ROOT / "app/src/main/kotlin/dev/patrickgold/florisboard"
+
+failures: list[str] = []
+checks = 0
+
+
+def check(name: str, ok: bool, detail: str = "") -> None:
+    global checks
+    checks += 1
+    if not ok:
+        failures.append(f"{name}: {detail}")
+
+
+def code(path: Path) -> str:
+    t = path.read_text()
+    t = re.sub(r"/\*.*?\*/", "", t, flags=re.S)
+    return re.sub(r"^\s*//.*$", "", t, flags=re.M)
+
+
+rp = code(SRC / "dictate/MaReprompt.kt")
+act = code(SRC / "dictate/MaRepromptActivity.kt")
+order = code(SRC / "dictate/MaFeatureOrder.kt")
+row = code(SRC / "dictate/ui/MaFeatureRow.kt")
+rows_screen = code(SRC / "app/settings/dictate/MaRowsScreen.kt")
+ime = code(SRC / "FlorisImeService.kt")
+ctrl = code(SRC / "dictate/DictateController.kt")
+mig = code(SRC / "dictate/data/prefs/DictateLegacyMigrator.kt")
+app = code(SRC / "FlorisApplication.kt")
+manifest = (ROOT / "app/src/main/AndroidManifest.xml").read_text()
+
+# The key
+check("the key exists", 'REPROMPT("reprompt", "Reprompt")' in order)
+check("drawn as re + a small sparkle", 'text = "re"' in row and "Icons.Default.AutoAwesome" in row)
+check("in the rows editor too", 'MaFeatureKey.REPROMPT -> letters("re\\u2726")' in rows_screen)
+check("it remembers the field and opens the window", "MaReprompt.open(context, pkg, info.base.fieldId)" in row)
+check("an empty field says so instead", '"Reprompt: write something first"' in row)
+
+# The window
+check("the window is declared", "dev.patrickgold.florisboard.dictate.MaRepromptActivity" in manifest)
+check("with the keyboard open on it", "stateAlwaysVisible" in manifest)
+check("its own task, so closing returns to his app", 'android:taskAffinity=""' in manifest)
+check("Apply and Enter submit", "onDone = { apply(text) }" in act and 'Text("Apply")' in act)
+check("his last instructions are one tap", "clickable { apply(r) }" in act)
+check("Back or Cancel rewrites nothing", "if (!submitted) MaReprompt.cancel()" in act)
+
+# Back in the field
+check("runs when the field comes back", "MaReprompt.takeFor(info.packageName, info.fieldId)" in ime)
+check("through the Ctrl+P / Ctrl+F path, with Ctrl+F's model",
+      "MaReprompt.prompt(words), model = MaFlow.model(), allowGrowth = true" in ime)
+check("the length guard is off only for it", "val grew = !allowGrowth && text.length >" in ctrl)
+check("never its own window's field", "packageName == ownPackage) return null" in rp)
+check("only the same field, only within a minute",
+      "t.packageName != packageName || t.fieldId != fieldId" in rp and "WAIT_MS = 60_000L" in rp)
+
+# On his keyboard
+check("put on his rows once, after E|H", "fun addRepromptKeyIfNeeded()" in mig and
+      "listOf(MaFeatureKey.RECORD_EN_HR, MaFeatureKey.RECORD_EN, MaFeatureKey.RECORD_HR)" in mig)
+check("runs at start", "DictateLegacyMigrator.addRepromptKeyIfNeeded()" in app)
+
+
+# The memory of instructions (MaReprompt.withRecent)
+def with_recent(lst, w, mx=6):
+    return ([w] + [x for x in lst if x.lower() != w.lower()])[:mx]
+
+
+check("newest first, no duplicates", with_recent(["a", "b"], "B") == ["B", "a"])
+check("at most six", len(with_recent([str(i) for i in range(10)], "x")) == 6)
+check("same rule in the code", "(listOf(words) + list.filter { !it.equals(words, ignoreCase = true) }).take(RECENT_MAX)" in rp)
+
+
+# takeFor, walked
+class R:
+    def __init__(self):
+        self.target = None; self.instr = None; self.own = "com.mantraproductions.tttlight"
+
+    def take(self, pkg, fid, now):
+        if self.target is None or self.instr is None: return None
+        if pkg is None or pkg == self.own: return None
+        t, i = self.target, self.instr
+        self.target = self.instr = None
+        if now - t[2] > 60000: return None
+        if t[0] != pkg or t[1] != fid: return None
+        return i
+
+
+r = R(); r.target = ("com.whatsapp", 7, 0); r.instr = "shorter"
+check("own window first: waits", r.take(r.own, 1, 10) is None and r.instr == "shorter")
+check("his field back: runs", r.take("com.whatsapp", 7, 20) == "shorter")
+r.target = ("com.whatsapp", 7, 0); r.instr = "shorter"
+check("another app first: dropped", r.take("com.android.chrome", 3, 20) is None and r.instr is None)
+r.target = ("com.whatsapp", 7, 0); r.instr = "shorter"
+check("too late: dropped", r.take("com.whatsapp", 7, 70000) is None)
+
+print(f"reprompt, test 1: {checks} checks, {len(failures)} failed")
+for f in failures:
+    print("  FAIL ", f)
+sys.exit(1 if failures else 0)

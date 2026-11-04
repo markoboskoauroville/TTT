@@ -11109,3 +11109,22 @@ length guard refused it and the English was pasted.
   message saying no translation came back.
 - `accept` allows short lines to grow ("Ok" → "U redu") but still refuses 701 for 38.
 - The prompt's style section says one line break between paragraphs, never an empty line (§230).
+
+## §232 — Reprompt: "re" and a sparkle, an instruction, the field rewritten
+
+Marko, 4.11.2026: "Once the message is written, there should be a button … Reprompt. You can just put re
+on it with small magic symbol. And then I press the button and then the dialog open up which I'm giving
+instruction to Anthropic what to do with the text which is in the box and it can directly modify it."
+
+- **The key** `REPROMPT` ("re" + a small AutoAwesome sparkle), put once on his rows right after E|H
+  (`addRepromptKeyIfNeeded`). An empty field says "write something first".
+- **The window** `MaRepromptActivity`: at the bottom over his app, the keyboard open on one line, so the
+  instruction is typed or dictated with •E / •H; his last six instructions under it, one tap each; Apply or
+  Enter submits, Back or Cancel rewrites nothing.
+- **The rewrite**: a keyboard cannot type into itself, so the key remembers the field (app + field id) and
+  `FlorisImeService.onStartInputView` runs the instruction when that field is back (`MaReprompt.takeFor`):
+  through `applyPrompt`, the same path as Ctrl+P and Ctrl+F (the selection, else the whole field, replaced
+  in one go), with Ctrl+F's model, and the length guard off (a reprompt may ask for more text). Another app
+  first, or more than a minute, drops it.
+
+Test: `scripts/test_reprompt.py` (25 checks).

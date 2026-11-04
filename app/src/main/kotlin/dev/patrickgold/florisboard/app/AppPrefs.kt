@@ -876,6 +876,10 @@ abstract class FlorisPreferenceModel : PreferenceModel() {
             key = "dictate__ma_detect_typing_language",
             default = true,
         )
+        /** Reprompt (MaReprompt): his last instructions, newest first, on this phone only. */
+        val maRepromptRecent = string(key = "dictate__ma_reprompt_recent", default = "")
+        /** The Reprompt key put on his rows, once. */
+        val maRepromptKeyAdded = boolean(key = "dictate__ma_reprompt_key_added", default = false)
         val maAiPredictKey = boolean(
             key = "dictate__ma_ai_predict_key",
             default = true,
