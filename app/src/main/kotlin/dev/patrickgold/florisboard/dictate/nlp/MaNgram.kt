@@ -86,6 +86,45 @@ object MaNgram {
         recency.getOrPut(language) { MaRecency() }
     }
 
+    /** What Haiku taught, per language (MaTeacherMemory). */
+    private val teachers = mutableMapOf<String, MaTeacherMemory>()
+
+    private fun teacherFor(language: String): MaTeacherMemory = synchronized(modelsLock) {
+        teachers.getOrPut(language) { MaTeacherMemory() }
+    }
+
+    /** The word being typed and the text before it, as [predict] reads them. */
+    private fun splitWord(textBeforeCursor: String, currentWord: String): Pair<String, String> {
+        val trailing = textBeforeCursor.takeLastWhile { it.isLetter() || it == '\'' || it == '-' }
+        val derived = currentWord.isBlank() && trailing.isNotEmpty()
+        val word = if (derived) trailing else currentWord
+        val context = if (derived) textBeforeCursor.dropLast(trailing.length) else textBeforeCursor
+        return word to context
+    }
+
+    /**
+     * Haiku's answer for this spot, kept for the local engine (MaTeacherMemory, 4.11.2026: "Haiku
+     * should improve local prediction as we go"). Not in incognito, not with learning off.
+     */
+    fun rememberTeacher(textBeforeCursor: String, currentWord: String, words: List<String>, isIncognito: Boolean) {
+        if (isIncognito || words.isEmpty()) return
+        val prefs by FlorisPreferenceStore
+        if (!prefs.dictate.maNgramEnabled.get()) return
+        val (_, context) = splitWord(textBeforeCursor, currentWord)
+        val language = MaTypingLanguage.of(textBeforeCursor)
+        val (two, one) = modelFor(language).contextOf(context)
+        teacherFor(language).remember(two, one, words)
+        scheduleSave()
+    }
+
+    /** What Haiku already taught for this spot: when there are enough, Haiku is not asked again. */
+    fun teacherWords(textBeforeCursor: String, currentWord: String): List<String> {
+        val (word, context) = splitWord(textBeforeCursor, currentWord)
+        val language = MaTypingLanguage.of(textBeforeCursor)
+        val (two, one) = modelFor(language).contextOf(context)
+        return teacherFor(language).words(two, one, word)
+    }
+
     private fun today(): Int = MaRecency.today(System.currentTimeMillis())
 
     /**
@@ -157,6 +196,8 @@ object MaNgram {
                     .getOrNull()?.let { correctionsFor(language).parse(it) }
                 runCatching { File(context.filesDir, "ma_recency_$language.tsv").takeIf { it.exists() }?.readText() }
                     .getOrNull()?.let { recencyFor(language).parse(it) }
+                runCatching { File(context.filesDir, "ma_teacher_$language.tsv").takeIf { it.exists() }?.readText() }
+                    .getOrNull()?.let { teacherFor(language).parse(it) }
             }
         }
         // The old single mixed file, removed once.
@@ -408,6 +449,15 @@ object MaNgram {
                 predicted.filter { !it.word.equals(shown, ignoreCase = true) }.take(PREDICT_LIMIT - 1)
         } else {
             predicted
+        }.let { own ->
+            // WHAT HAIKU TAUGHT (MaTeacherMemory): after his own words, before the shipped list.
+            if (own.size >= PREDICT_LIMIT) return@let own
+            val (two, one) = active.contextOf(context)
+            val have = own.mapTo(HashSet()) { it.word.lowercase() }
+            own + teacherFor(language).words(two, one, word)
+                .filter { it.lowercase() !in have && !fixes.isTypo(it) }
+                .take(PREDICT_LIMIT - own.size)
+                .map { MaNgramSuggestion(word = MaCorrectionStore.matchCase(word, it), count = 1, tier = 0) }
         }
         if (personal.size >= PREDICT_LIMIT) return personal
         // The shipped Croatian list fills what is left, and only then.
@@ -462,6 +512,7 @@ object MaNgram {
         runCatching {
             correctionsFor(language).takeIf { it.isDirty }?.let { File(dir, "ma_corrections_$language.tsv").writeText(it.serialize()) }
             recencyFor(language).takeIf { it.isDirty }?.let { File(dir, "ma_recency_$language.tsv").writeText(it.serialize()) }
+            teacherFor(language).takeIf { it.isDirty }?.let { File(dir, "ma_teacher_$language.tsv").writeText(it.serialize()) }
         }
     }
 
@@ -487,6 +538,7 @@ object MaNgram {
                 modelFor(language).clear()
                 correctionsFor(language).clear()
                 recencyFor(language).clear()
+                teacherFor(language).clear()
                 synchronized(modelsLock) { files[language] }?.delete()
                 saveExtras(language)
             }
@@ -629,6 +681,7 @@ object MaNgram {
         modelFor(language).clear()
         correctionsFor(language).clear()
         recencyFor(language).clear()
+        teacherFor(language).clear()
         synchronized(modelsLock) { files[language] }?.delete()
         saveExtras(language)
     }

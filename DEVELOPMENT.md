@@ -11182,3 +11182,21 @@ local engine, both displayed at same time."
 - Cost: one small Haiku request per pause, each in the Claude costs log as "Live words".
 
 Test: `scripts/test_live_ai_words.py` (17 checks).
+
+## §236 — Haiku teaches the local engine as it goes
+
+Marko, 4.11.2026: "Haiku should improve local prediction as we go, using its database to better predict
+words itself."
+
+- `MaTeacherMemory` (per language, on the phone, `ma_teacher_<lang>.tsv`): every live Haiku answer is kept
+  under the two words before the cursor, newest first, six words a context, 3000 contexts, least recently
+  used dropped first.
+- `MaNgram.predict` offers those words itself: after his own words and corrections, before the shipped
+  Croatian list, continuing the prefix, in the case he types. So the local row learns from Haiku even on a
+  fresh install.
+- The live effect asks Haiku only where the memory has fewer than three words for that spot, so the more he
+  types, the fewer requests (and the less cost).
+- A soft layer, never his counts: a guess is not a word he wrote. Only what he writes or picks enters the
+  n-gram model. Cleared with "forget" like the rest; not in incognito; not with Learn my words off.
+
+Tests: `MaTeacherMemoryTest` (kotest, 4), `scripts/test_live_ai_words.py` (23 checks).

@@ -64,6 +64,18 @@ check("a sparkle where Haiku's words begin", "if (n == firstLive && liveCandidat
 check("shown even when the local engine has nothing", "if (candidates.isNotEmpty() || liveCandidates.isNotEmpty())" in row)
 check("a picked Haiku word teaches the local model", "if (aiWords.isNotEmpty() || n >= firstLive)" in row)
 
+# Haiku teaches the local engine as we go (4.11.2026), and is asked less as it does.
+ngram = code(SRC / "dictate/nlp/MaNgram.kt")
+check("each answer is kept for the local engine", "MaNgram.rememberTeacher(before, current, words," in row)
+check("the local engine offers it, after his own words", "teacherFor(language).words(two, one, word)" in ngram
+      and "WHAT HAIKU TAUGHT" in (SRC / "dictate/nlp/MaNgram.kt").read_text())
+check("a spot it already knows is not asked again",
+      "if (MaNgram.teacherWords(before, current).size >= MaAiPredict.LIVE_WANTED) return@collectLatest" in row)
+check("kept on disk, per language", "ma_teacher_$language.tsv" in ngram)
+check("forgotten with the rest", ngram.count("teacherFor(language).clear()") >= 2)
+check("never his counts: a guess is not a word he wrote", "teacherFor(language).remember(two, one, words)" in ngram
+      and "modelFor(language).learn(" not in ngram[ngram.find("fun rememberTeacher"):ngram.find("fun teacherWords")])
+
 print(f"live AI words, test 1: {checks} checks, {len(failures)} failed")
 for f in failures:
     print("  FAIL ", f)

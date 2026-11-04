@@ -171,6 +171,9 @@ fun CandidatesRow(modifier: Modifier = Modifier) {
                 if (keyboardManager.activeState.isIncognitoMode || maIsSecretField(editorInstance.activeInfo.base.inputType)) return@collectLatest
                 if (MaProviders.rewordingApiKey().isBlank()) return@collectLatest
                 delay(MaAiPredict.LIVE_PAUSE_MS)
+                // Haiku already taught the local engine enough for this spot (MaTeacherMemory): its
+                // words are in the local row, so it is not asked again. This is where it gets cheaper.
+                if (MaNgram.teacherWords(before, current).size >= MaAiPredict.LIVE_WANTED) return@collectLatest
                 val reply = DictateController.askLiveModel(
                     MaAiPredict.prompt(
                         before = before,
@@ -181,7 +184,10 @@ fun CandidatesRow(modifier: Modifier = Modifier) {
                 ) ?: return@collectLatest
                 MaAiPredict.remember(before)
                 MaAiPredict.liveFor = before
-                MaAiPredict.live.value = MaAiPredict.readWords(reply, current, MaAiPredict.LIVE_WANTED)
+                val words = MaAiPredict.readWords(reply, current, MaAiPredict.LIVE_WANTED)
+                MaAiPredict.live.value = words
+                // Taught to the local engine as we go (4.11.2026), so next time it knows this spot itself.
+                MaNgram.rememberTeacher(before, current, words, keyboardManager.activeState.isIncognitoMode)
             }
     }
     // The AI words are for the text they were asked about, and go the moment it changes: a letter
