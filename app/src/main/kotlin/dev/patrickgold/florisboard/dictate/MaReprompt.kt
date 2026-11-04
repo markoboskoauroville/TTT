@@ -105,7 +105,9 @@ object MaReprompt {
     /** What is sent: his words, as the instruction for the text below them. */
     fun instructionFor(words: String): String =
         "Apply this instruction to the text below and return only the resulting text, nothing " +
-            "before or after it: " + words.trim()
+            // Hidden code words (MaCodeWords): a name such as "Ashai Afterman" brings its full
+            // description with it, however it was spelled or misheard.
+            "before or after it: " + MaCodeWords.expand(words.trim())
 
     fun prompt(words: String): PromptModel = PromptModel(
         id = PromptModel.ID_INSTANT_PROMPT,

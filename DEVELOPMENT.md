@@ -11128,3 +11128,22 @@ instruction to Anthropic what to do with the text which is in the box and it can
   first, or more than a minute, drops it.
 
 Test: `scripts/test_reprompt.py` (25 checks).
+
+## §233 — Hidden code words: the first is the Yshai Afterman style
+
+Marko, 4.11.2026: "Please hardcode right inside application Ashai Afterman style … when I'm reprompting,
+when I refer to Ashai Afterman or something similar, if there is misspelling, it will recognize from the
+code. And this is first of our hidden code words … don't make it all small caps, normal sentence caps, but
+style must be there."
+
+- `MaCodeWords`: a list of code words, each with the spellings it answers to and a full description.
+  A Reprompt instruction is read for them (`MaReprompt.instructionFor` → `MaCodeWords.expand`) and each one
+  named brings its description into what Claude is sent.
+- Spelling: Croatian letters folded (Jišai → jisai), one edit for short keys (yshai ← ashai, ishai, jshai),
+  two for long ones (afterman ← aftermen, aftreman), "after man" joined only when the second word is
+  man/men, and real words that are near (aftermath, shah, shai) never count.
+- The Yshai Afterman description comes from MANTRA_MANIFEST modules/writing-styles.md §2 (two of his
+  letters), with normal sentence capitals and correct apostrophes, never all lowercase.
+- The next code word is one more entry in `MaCodeWords.ALL`.
+
+Tests: `MaCodeWordsTest` (kotest), `scripts/test_code_words.py` (32 checks).
