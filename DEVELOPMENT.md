@@ -11223,3 +11223,21 @@ first `onClick` that slot was given; when the row's words changed, a tap committ
 before. Now the gesture reads `rememberUpdatedState(onClick)` / `(onLongPress)` / `(longPressDelay)`, so
 it always commits the word on screen. More visible since the live Haiku words make the row change more
 often. Check: `scripts/test_live_ai_words.py`.
+
+## §239 — The feature-row colour language, made consistent
+
+Marko, 4.11.2026, with a screenshot of the feature row: "record buttons are dark red, when recording light
+red; buttons showing other rows have grey outline, when selected green. In this example F2 should have grey
+outline but one is missing. Please go through all buttons."
+
+- Record keys (E, H, E|H, Record): dark red outline (`MaRecordOutline`), light red (`MaRecordOutlineLive`,
+  #E8776C) while that key is recording. They no longer turn green.
+- Keys that show a row (F1–F6, #, the keys, zone 3, reader row, bucket row): grey outline (`MaSwitcherRingOff`)
+  when the row is hidden, green when it shows. F1–F6 had no outline when off: fixed.
+- Switches use the same pair: the volume keys switch had no outline when off: fixed (Claude.ai reader and
+  reader watch already did).
+- Unchanged: green on a full C bucket (state, not a switch); keys that only act (history, settings, re✦,
+  undo…) have no outline; the transcribe view's big record button hides its ring while recording on purpose
+  (the meter is drawn there).
+
+Test: `scripts/test_colour_language.py` (13 checks).

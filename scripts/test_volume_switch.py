@@ -118,7 +118,8 @@ check("not in the switchboard", pref not in switchboard, "back in the list that 
 
 row = code(SRC / "dictate/ui/MaFeatureRow.kt")
 # The ring, the same one the buckets wear. One visual language: a green ring means on, everywhere.
-check("the key shows its state", "ring = if (volumeLive) onGreen else null" in row, "an invisible switch again")
+# 4.11.2026: grey outline off, green on, like every switch.
+check("the key shows its state", "ring = if (volumeLive) onGreen else MaSwitcherRingOff" in row, "an invisible switch again")
 check("and the glyph holds still", "VolumeOff" not in row, "the face changes as well as the ring")
 check("and says it out loud", "Volume keys off" in row, "silent, like the one that cost him days")
 

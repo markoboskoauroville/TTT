@@ -275,7 +275,8 @@ check("Send says when it finds nothing", "No Send button found" in row_src, "sil
 
 # Record must be the same call as the volume key and the bar's mic, or three routes drift apart.
 check("Record uses the one entry point", "DictateController.onMicClick(context)" in row_code, "its own recording path")
-check("Record wears the live ring", "ring = if (recording) onGreen else MaRecordOutline" in row_code, "no sign it is running")
+# 4.11.2026: dark red outline, light red while recording.
+check("Record wears the live ring", "ring = if (recording) MaRecordOutlineLive else MaRecordOutline" in row_code, "no sign it is running")
 # The rule (2.11.2026): every key that records his voice is outlined in record red at rest.
 check("Record keys outlined red at rest", row_code.count("else MaRecordOutline") >= 2, "a record key without the red outline")
 

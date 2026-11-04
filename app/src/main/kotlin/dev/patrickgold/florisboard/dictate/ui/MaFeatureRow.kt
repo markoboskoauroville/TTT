@@ -1451,7 +1451,7 @@ fun MaFeatureRow(
                         // you are recorded" before it is pressed. See MaRecordOutline.
                         ring = if (recording && MaLanguage.active() == language &&
                             DictateController.isTranslating() == translate
-                        ) onGreen else MaRecordOutline,
+                        ) MaRecordOutlineLive else MaRecordOutline,
                         onClick = {
                             // THE LANGUAGE IS SET FIRST, AND SET SYNCHRONOUSLY.
                             //
@@ -1588,7 +1588,7 @@ fun MaFeatureRow(
                         modifier = keyMod,
                         // The same green ring the buckets and the volume key wear: this thing is
                         // live. One ring, one green, one meaning across the app.
-                        ring = if (recording) onGreen else MaRecordOutline,
+                        ring = if (recording) MaRecordOutlineLive else MaRecordOutline,
                         onClick = { DictateController.onMicClick(context) },
                     ) { _ ->
                         // A red dot, as he described it, and the same red as the lamp on the
@@ -1702,9 +1702,9 @@ fun MaFeatureRow(
                     ThemedKey(
                         code = KeyCode.NOOP,
                         modifier = keyMod,
-                        // The same green ring as a full bucket and a live volume key. He asked for
-                        // an outline and the app already had one that means exactly this.
-                        ring = if (on) onGreen else null,
+                        // A key that shows a row: grey outline, green while its row is showing
+                        // (Marko, 4.11.2026: "F2 should have grey outline but one is missing").
+                        ring = if (on) onGreen else MaSwitcherRingOff,
                         onClick = {
                             scope.launch {
                                 prefs.dictate.maRows.set(
@@ -1910,7 +1910,8 @@ fun MaFeatureRow(
                         // something — and a mark that means one thing is read without being learned.
                         // A tint on a glyph in one place and a ring in another is two dialects for
                         // one idea.
-                        ring = if (volumeLive) onGreen else null,
+                        // A switch: grey outline off, green on, like every other switch (4.11.2026).
+                        ring = if (volumeLive) onGreen else MaSwitcherRingOff,
                         onClick = {
                             scope.launch { prefs.dictate.maVolumeKeysLive.set(!volumeLive) }
                             // Said out loud as well as shown. The keys themselves cannot report

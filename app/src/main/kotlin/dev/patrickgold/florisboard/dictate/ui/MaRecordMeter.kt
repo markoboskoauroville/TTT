@@ -309,6 +309,12 @@ val MaRecordRed = Color(0xFF9B3B33)
  */
 val MaRecordOutline = MaRecordRed
 
+/**
+ * The same outline while that key is the one recording: light red (Marko, 4.11.2026: "record buttons
+ * are dark red, when recording light red"). Red stays red, so the key still says "this records".
+ */
+val MaRecordOutlineLive = Color(0xFFE8776C)
+
 private val MaRecordLampOn = MaRecordRed
 private val MaRecordLampOff = MaRecordRed.copy(alpha = 0.22f)
 

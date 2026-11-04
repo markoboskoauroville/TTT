@@ -164,7 +164,8 @@ check("and switched off", not any(e for _, e in upgraded[3:]), "three rows appea
 row_ui = code(SRC / "dictate/ui/MaFeatureRow.kt")
 check("the keys are written once", row_ui.count("MaFeatureKey.ROW_1, MaFeatureKey.ROW_2, MaFeatureKey.ROW_3") == 1,
       "three copies is three places for the ring to disagree with the row")
-check("the ring says which are showing", "ring = if (on) onGreen else null" in row_ui, "no feedback")
+# 4.11.2026: grey outline when its row is hidden, green when showing.
+check("the ring says which are showing", "ring = if (on) onGreen else MaSwitcherRingOff" in row_ui, "no feedback")
 check("the key writes through the model", "MaRows.setRowEnabled(storedRows, which, !on)" in row_ui,
       "its own idea of what a row is")
 
