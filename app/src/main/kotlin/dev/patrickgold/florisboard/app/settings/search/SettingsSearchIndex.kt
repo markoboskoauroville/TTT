@@ -227,6 +227,7 @@ object SettingsSearchIndex {
         SettingsSearchEntry(R.string.pref__ma_predict_row_auto_hide__label, R.string.settings__ma_predictions__title, Routes.Settings.MaPredictions),
         SettingsSearchEntry(R.string.pref__ma_detect_typing_language__label, R.string.settings__ma_predictions__title, Routes.Settings.MaPredictions),
         SettingsSearchEntry(R.string.pref__ma_ai_predict_key__label, R.string.settings__ma_predictions__title, Routes.Settings.MaPredictions),
+        SettingsSearchEntry(R.string.pref__ma_ai_live_predict__label, R.string.settings__ma_predictions__title, Routes.Settings.MaPredictions),
         SettingsSearchEntry(R.string.pref__ma_ngram_enabled__label, R.string.settings__ma_predictions__title, Routes.Settings.MaPredictions),
         SettingsSearchEntry(R.string.pref__ma_corrections_enabled__label, R.string.settings__ma_predictions__title, Routes.Settings.MaPredictions),
         SettingsSearchEntry(R.string.settings__ma_corrections__title, R.string.settings__ma_predictions__title, Routes.Settings.MaDictationCorrections),

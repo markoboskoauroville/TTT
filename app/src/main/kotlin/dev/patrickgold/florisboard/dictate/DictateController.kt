@@ -10,6 +10,7 @@
 
 package dev.patrickgold.florisboard.dictate
 
+import dev.patrickgold.florisboard.dictate.provider.MaClaudeModels
 import android.content.BroadcastReceiver
 import android.content.ClipData
 import android.content.ClipboardManager
@@ -4012,6 +4013,15 @@ object DictateController {
      */
     suspend fun askCheapModel(prompt: String): String? = runCatching {
         requestRewordRaw(prompt, cheapest = true)
+    }.getOrNull()
+
+    /**
+     * AI words while typing (MaAiPredict.live): always Claude Haiku, the newest one, with the
+     * Anthropic key loaded in the app, whatever the AI key's model is set to: it runs on every pause
+     * in typing, so it must be the cheapest and fastest.
+     */
+    suspend fun askLiveModel(prompt: String): String? = runCatching {
+        requestRewordRaw(prompt, cheapest = true, modelOverride = MaClaudeModels.DEFAULT, purpose = "Live words")
     }.getOrNull()
 
     /**

@@ -121,6 +121,13 @@ fun MaPredictionsScreen() = FlorisScreen {
                 "are wrong. The word you pick is taught to Learn my words. Each press is one request.",
         )
         SwitchPreference(
+            prefs.dictate.maAiLivePredict,
+            title = stringRes(R.string.pref__ma_ai_live_predict__label),
+            summary = "While you type, Claude Haiku is asked after each short pause, in parallel with " +
+                "the local suggestions. Its words appear after them, behind a small sparkle. Each pause " +
+                "is one small request on your Anthropic key; nothing in incognito or password fields.",
+        )
+        SwitchPreference(
             prefs.suggestion.nextWordPrediction,
             modifier = Modifier.settingsSearchAnchor("pref__suggestion__next_word_prediction__label"),
             title = stringRes(R.string.pref__ma_next_word__label),

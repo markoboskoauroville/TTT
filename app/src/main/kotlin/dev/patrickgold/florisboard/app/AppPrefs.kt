@@ -880,6 +880,12 @@ abstract class FlorisPreferenceModel : PreferenceModel() {
         val maRepromptRecent = string(key = "dictate__ma_reprompt_recent", default = "")
         /** The Reprompt key put on his rows, once. */
         val maRepromptKeyAdded = boolean(key = "dictate__ma_reprompt_key_added", default = false)
+        // AI words while typing (4.11.2026): Claude Haiku asked in parallel with the local engine, after
+        // a short pause in typing, its words shown beside the local ones. On, as he asked ("always").
+        val maAiLivePredict = boolean(
+            key = "dictate__ma_ai_live_predict",
+            default = true,
+        )
         val maAiPredictKey = boolean(
             key = "dictate__ma_ai_predict_key",
             default = true,

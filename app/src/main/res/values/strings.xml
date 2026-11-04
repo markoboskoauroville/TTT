@@ -2041,6 +2041,7 @@
     <string name="pref__ma_detect_typing_language__label">Detect typing language</string>
     <string name="settings__ma_corrections__title">My corrections</string>
     <string name="pref__ma_ai_predict_key__label">AI key in the row</string>
+    <string name="pref__ma_ai_live_predict__label">AI words while typing (Haiku)</string>
     <string name="pref__ma_next_word__label">Next-word prediction</string>
     <string name="pref__ma_auto_correct__label">Auto-correct</string>
     <string name="pref__ma_multilingual__label">Multilingual typing</string>

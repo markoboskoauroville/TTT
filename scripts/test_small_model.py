@@ -83,8 +83,10 @@ check("the preset is the fallback, not the source", 0 <= _named < _preset,
 # 27.10.2026: two callers now, both on the cheap path. Word prediction may name a Claude model he
 # chose on Settings → Auto prediction; that choice starts at the newest Haiku and can only be one of
 # the three Claude tiers offered there.
-check("two cheap paths, no more", ctrl.count("cheapest = true") == 2,
-      "a third caller could pick its own model")
+# 4.11.2026: a third, AI words while typing (askLiveModel), named to the newest Haiku and nothing else.
+check("three cheap paths, no more", ctrl.count("cheapest = true") == 3,
+      "a fourth caller could pick its own model")
+check("the live one is Haiku by name", "cheapest = true, modelOverride = MaClaudeModels.DEFAULT" in ctrl)
 check("and the AI features use it", "askCheapModel" in ctrl, "prediction would use the chat model")
 check("prediction asks the chosen model", "modelOverride = prefs.dictate.maPredictModel.get()" in ctrl)
 _prefs = code(SRC / "app/AppPrefs.kt")

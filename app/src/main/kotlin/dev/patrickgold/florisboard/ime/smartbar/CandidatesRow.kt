@@ -16,6 +16,14 @@
 
 package dev.patrickgold.florisboard.ime.smartbar
 
+import androidx.compose.foundation.layout.size
+import androidx.compose.material.icons.filled.AutoAwesome
+import androidx.compose.material.icons.Icons
+import androidx.compose.material3.LocalContentColor
+import androidx.compose.material3.Icon
+import dev.patrickgold.florisboard.dictate.MaProviders
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.collectLatest
 import androidx.compose.foundation.rememberScrollState
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
@@ -100,6 +108,23 @@ fun CandidatesRow(modifier: Modifier = Modifier) {
     // he pressed the key is that the ordinary guesses were wrong.
     val aiWords = MaAiPredict.words.value
     val aiBusy = MaAiPredict.busy.value
+    // Haiku's words while typing (MaAiPredict.live), beside the local ones, never instead of them.
+    val liveWords = MaAiPredict.live.value
+    val liveOn by prefs.dictate.maAiLivePredict.collectAsState()
+    val liveCandidates = remember(ordinaryCandidates, liveWords, aiWords) {
+        if (aiWords.isNotEmpty()) emptyList() else {
+            val local = ordinaryCandidates.map { it.text.toString().lowercase() }.toSet()
+            liveWords.filter { it.lowercase() !in local }.map { word ->
+                WordSuggestionCandidate(
+                    text = word,
+                    secondaryText = null,
+                    confidence = 0.9,
+                    isEligibleForAutoCommit = false,
+                    sourceProvider = null,
+                )
+            }
+        }
+    }
     val candidates = remember(ordinaryCandidates, aiWords) {
         if (aiWords.isEmpty()) {
             ordinaryCandidates
@@ -127,6 +152,38 @@ fun CandidatesRow(modifier: Modifier = Modifier) {
     // words began half under the badge: "hello" read as "ello" (phone tests, builds 421 and 423).
     val rowScroll = rememberScrollState()
     LaunchedEffect(candidates) { rowScroll.scrollTo(0) }
+    // AI WORDS WHILE TYPING: after a short pause, Haiku is asked about the text before the cursor, in
+    // parallel with the local engine (4.11.2026). collectLatest drops a question the moment the text
+    // moves on, and the words of the last one are cleared at once, so nothing stale is ever shown.
+    // Never with the setting off, in incognito, in a password field, with no Anthropic key, or while
+    // the AI key's own words are showing.
+    LaunchedEffect(editorInstance, liveOn) {
+        if (!liveOn) {
+            MaAiPredict.clearLive()
+            return@LaunchedEffect
+        }
+        editorInstance.activeContentFlow
+            .map { it.textBeforeSelection.toString() to it.currentWordText.toString() }
+            .distinctUntilChanged()
+            .collectLatest { (before, current) ->
+                if (MaAiPredict.liveFor != before) MaAiPredict.clearLive()
+                if (before.isBlank() || MaAiPredict.words.value.isNotEmpty()) return@collectLatest
+                if (keyboardManager.activeState.isIncognitoMode || maIsSecretField(editorInstance.activeInfo.base.inputType)) return@collectLatest
+                if (MaProviders.rewordingApiKey().isBlank()) return@collectLatest
+                delay(MaAiPredict.LIVE_PAUSE_MS)
+                val reply = DictateController.askLiveModel(
+                    MaAiPredict.prompt(
+                        before = before,
+                        current = current,
+                        language = if (MaTypingLanguage.of(before) == MaLanguage.HR) "Croatian" else "English",
+                        wanted = MaAiPredict.LIVE_WANTED,
+                    ),
+                ) ?: return@collectLatest
+                MaAiPredict.remember(before)
+                MaAiPredict.liveFor = before
+                MaAiPredict.live.value = MaAiPredict.readWords(reply, current, MaAiPredict.LIVE_WANTED)
+            }
+    }
     // The AI words are for the text they were asked about, and go the moment it changes: a letter
     // typed, one deleted, the field emptied or the cursor moved. Picking one, or pressing the key
     // again, clears them too (below).
@@ -174,8 +231,8 @@ fun CandidatesRow(modifier: Modifier = Modifier) {
             Arrangement.Center
         },
     ) {
-        if (candidates.isNotEmpty()) {
-            val candidateModifier = if (candidates.size == 1) {
+        if (candidates.isNotEmpty() || liveCandidates.isNotEmpty()) {
+            val candidateModifier = if (candidates.size + liveCandidates.size == 1) {
                 Modifier
                     .fillMaxHeight()
                     .weight(1f, fill = false)
@@ -204,9 +261,18 @@ fun CandidatesRow(modifier: Modifier = Modifier) {
                 // centre stops being a single obvious place — so the rule that would make it better
                 // for three would make it arbitrary for the rest.
                 if (ordered.size == 3) listOf(ordered[1], ordered[0], ordered[2]) else ordered
-            }
+            } + liveCandidates
+            val firstLive = list.size - liveCandidates.size
             for ((n, candidate) in list.withIndex()) {
-                if (n > 0) {
+                if (n == firstLive && liveCandidates.isNotEmpty()) {
+                    // A small sparkle where Haiku's words begin, so the two kinds are told apart.
+                    Icon(
+                        imageVector = Icons.Default.AutoAwesome,
+                        contentDescription = null,
+                        tint = LocalContentColor.current.copy(alpha = 0.6f),
+                        modifier = Modifier.size(12.dp).align(Alignment.CenterVertically),
+                    )
+                } else if (n > 0) {
                     SnyggSpacer(
                         elementName = FlorisImeUi.SmartbarCandidateSpacer.elementName,
                         modifier = Modifier
@@ -242,13 +308,14 @@ fun CandidatesRow(modifier: Modifier = Modifier) {
                         // Only for a word he chose out of the AI's list. An ordinary candidate came
                         // from the local model or the dictionary, and teaching the model its own
                         // output back is how a prediction engine ends up certain of one word.
-                        if (aiWords.isNotEmpty()) {
+                        if (aiWords.isNotEmpty() || n >= firstLive) {
                             MaNgram.learn(
                                 MaAiPredict.lesson(tapped.text.toString()),
                                 keyboardManager.activeState.isIncognitoMode,
                             )
                         }
                         MaAiPredict.clear()
+                        MaAiPredict.clearLive()
                         keyboardManager.commitCandidate(tapped)
                     },
                     onLongPress = {
@@ -453,5 +520,17 @@ private fun CandidateItem(
                 )
             }
         }
+    }
+}
+
+/** A password field of any kind: Haiku is never asked about what is typed there. */
+private fun maIsSecretField(inputType: Int): Boolean {
+    val variation = inputType and android.text.InputType.TYPE_MASK_VARIATION
+    return when (inputType and android.text.InputType.TYPE_MASK_CLASS) {
+        android.text.InputType.TYPE_CLASS_TEXT -> variation == android.text.InputType.TYPE_TEXT_VARIATION_PASSWORD ||
+            variation == android.text.InputType.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD ||
+            variation == android.text.InputType.TYPE_TEXT_VARIATION_WEB_PASSWORD
+        android.text.InputType.TYPE_CLASS_NUMBER -> variation == android.text.InputType.TYPE_NUMBER_VARIATION_PASSWORD
+        else -> false
     }
 }

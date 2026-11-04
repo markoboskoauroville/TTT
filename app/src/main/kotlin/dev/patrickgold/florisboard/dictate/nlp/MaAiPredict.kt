@@ -4,6 +4,7 @@
 
 package dev.patrickgold.florisboard.dictate.nlp
 
+import kotlin.jvm.Volatile
 import androidx.compose.runtime.mutableStateOf
 
 /**
@@ -45,6 +46,31 @@ object MaAiPredict {
     /** True while a question is in flight, so the key can say so rather than looking dead. */
     val busy = mutableStateOf(false)
 
+    /**
+     * AI WORDS WHILE TYPING (4.11.2026: "always do parallel to word prediction using Anthropic Haiku,
+     * parallel to local engine, both displayed at same time").
+     *
+     * Asked by itself after a short pause in typing ([LIVE_PAUSE_MS]), never on every letter, and
+     * shown AFTER the local words, behind a small sparkle, so the two kinds are told apart. Cleared
+     * the moment the text changes, because they are about the text they were asked for.
+     */
+    val live = mutableStateOf<List<String>>(emptyList())
+
+    /** The text before the cursor [live] was asked for. */
+    @Volatile
+    var liveFor: String? = null
+
+    /** The pause in typing before Haiku is asked. Long enough not to ask on every letter. */
+    const val LIVE_PAUSE_MS = 450L
+
+    /** How many live words: three, beside the local ones, is what fits and what is worth paying for. */
+    const val LIVE_WANTED = 3
+
+    fun clearLive() {
+        live.value = emptyList()
+        liveFor = null
+    }
+
     /** How many to ask for. Five fits the row without scrolling and is enough to be worth a press. */
     const val WANTED = 5
 
@@ -78,7 +104,7 @@ object MaAiPredict {
      * SENSE. A model given them as one string treats the fragment as the last word of the sentence
      * and completes the sentence instead of the word.
      */
-    fun prompt(before: String, current: String, language: String): String = buildString {
+    fun prompt(before: String, current: String, language: String, wanted: Int = WANTED): String = buildString {
         // The language is stated three times, and that is not clumsiness.
         //
         // The text before the cursor is often in the other language — he writes a sentence in
@@ -89,7 +115,7 @@ object MaAiPredict {
         append("You are a phone keyboard's word prediction for ").append(language).append(".\n")
         append("EVERY answer must be a ").append(language)
             .append(" word. Never answer in another language, even if the text so far is in one.\n")
-        append("Give the ").append(WANTED).append(" most likely ").append(language)
+        append("Give the ").append(wanted).append(" most likely ").append(language)
             .append(" words, one per line, nothing else.\n")
         append("No numbering, no punctuation, no explanation.\n\n")
         append("Text so far: ").append(before.takeLast(300).ifBlank { "(nothing yet)" }).append('\n')
@@ -112,7 +138,7 @@ object MaAiPredict {
      * rather than shown. Tapping a suggestion replaces the composing word, so a suggestion that does
      * not start with his letters would silently rewrite what he had already typed.
      */
-    fun readWords(reply: String, current: String): List<String> {
+    fun readWords(reply: String, current: String, wanted: Int = WANTED): List<String> {
         val prefix = current.trim().lowercase()
         return reply.lineSequence()
             .map { line ->
@@ -125,7 +151,7 @@ object MaAiPredict {
             .filter { it.isNotBlank() && !it.contains(' ') && it.length <= 40 }
             .filter { prefix.isEmpty() || it.lowercase().startsWith(prefix) }
             .distinct()
-            .take(WANTED)
+            .take(wanted)
             .toList()
     }
 

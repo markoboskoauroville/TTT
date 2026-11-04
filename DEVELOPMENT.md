@@ -11164,3 +11164,21 @@ of message to write. If there is a message, then it's as before … reshape the 
   listed; inserted at the cursor (`requiresSelection = false`). Text → reshaped as before.
 
 Tests: `MaRepromptTest` (kotest, 4), `scripts/test_reprompt.py` (29 checks).
+
+## §235 — AI words while typing: Haiku in parallel with the local engine
+
+Marko, 4.11.2026: "Add feature to always do parallel to word prediction using Anthropic Haiku, parallel to
+local engine, both displayed at same time."
+
+- `maAiLivePredict` (on), a switch on Auto prediction: "AI words while typing (Haiku)".
+- `CandidatesRow`: after a pause in typing (`LIVE_PAUSE_MS` 450 ms), Claude Haiku (always the newest Haiku,
+  `askLiveModel`, whatever the AI key's model is) is asked for three words for the text before the cursor,
+  in the typing language. `collectLatest` drops a question when the text moves on; the words of an older text
+  are cleared at once.
+- Shown after the local words, behind a small sparkle, never instead of them; a word the local engine already
+  shows is not repeated; shown even when the local engine has nothing. A picked Haiku word is taught to the
+  personal model, like the AI key's.
+- Never in incognito, in a password field, with no Anthropic key, or while the AI key's own words show.
+- Cost: one small Haiku request per pause, each in the Claude costs log as "Live words".
+
+Test: `scripts/test_live_ai_words.py` (17 checks).
