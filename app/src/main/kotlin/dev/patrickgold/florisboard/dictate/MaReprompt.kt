@@ -91,6 +91,12 @@ object MaReprompt {
         remember(t)
     }
 
+    /** A spoken instruction, kept in the list like a typed one. */
+    suspend fun rememberWords(words: String) {
+        val t = words.trim()
+        if (t.isNotEmpty()) remember(t)
+    }
+
     fun cancel() {
         target = null
         instruction = null

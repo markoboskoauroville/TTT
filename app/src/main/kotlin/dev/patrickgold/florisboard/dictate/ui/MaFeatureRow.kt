@@ -1450,7 +1450,8 @@ fun MaFeatureRow(
                         // that records his voice wears the record red, so the row says "press this and
                         // you are recorded" before it is pressed. See MaRecordOutline.
                         ring = if (recording && MaLanguage.active() == language &&
-                            DictateController.isTranslating() == translate
+                            DictateController.isTranslating() == translate &&
+                            !DictateController.isRepromptRecording()
                         ) MaRecordOutlineLive else MaRecordOutline,
                         onClick = {
                             // THE LANGUAGE IS SET FIRST, AND SET SYNCHRONOUSLY.
@@ -1522,12 +1523,24 @@ fun MaFeatureRow(
                 }
 
                 MaFeatureKey.REPROMPT -> {
-                    // REPROMPT (MaReprompt, 4.11.2026): "re" and a small sparkle. Opens the window for
-                    // an instruction; the field the key was pressed in is rewritten when it is back.
+                    // REPROMPT (MaReprompt). 5.11.2026: "when I click on re-prompt … it's automatically
+                    // running audio recorder … always in English". A press records the instruction in
+                    // English and a second press sends it; the transcript is applied to the field (text:
+                    // reshaped; empty: written). It records, so it wears the record outline: dark red,
+                    // light red while it is the one recording. A long press opens the typing window.
+                    val rec = DictateController.state.collectAsState().value as?
+                        DictateController.UiState.Recording
+                    val recordingThis = rec != null && DictateController.isRepromptRecording()
                     ThemedKey(
                         code = KeyCode.NOOP,
                         modifier = keyMod,
+                        ring = if (recordingThis) MaRecordOutlineLive else MaRecordOutline,
                         onClick = {
+                            if (rec == null) MaLanguage.set(context, MaLanguage.EN)
+                            DictateController.onMicClick(context, reprompt = true)
+                            MaMessage.show(if (rec == null) "Reprompt: say the instruction" else "Reprompt: sending")
+                        },
+                        onLongClick = {
                             val info = editorInstance.activeInfo
                             val pkg = info.packageName
                             // An empty field is the prompt mode (4.11.2026): the instruction says

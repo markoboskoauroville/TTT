@@ -11241,3 +11241,19 @@ outline but one is missing. Please go through all buttons."
   (the meter is drawn there).
 
 Test: `scripts/test_colour_language.py` (13 checks).
+
+## §240 — Reprompt by voice, in English; the record outline on its key
+
+Marko, 5.11.2026: "action button re-prompt is not have its outline … when I click on re-prompt … it's
+automatically running audio recorder. So every prompt I'm recording through audio and transcription, and
+it's always in English language by default."
+
+- A press on re✦ sets English and starts recording (`onMicClick(reprompt = true)`); a second press sends it.
+  `finalizeAndCommit` sees `repromptRecording`: nothing is typed (a streamed preview is taken back), the
+  transcript goes to Reprompt's list and is applied to the field: reshaped when there is text, written at the
+  cursor when the field is empty (bare, with the code words), as with the window.
+- It records, so it wears the record outline: dark red, light red while it is the one recording; the E key
+  stays dark meanwhile.
+- A long press still opens the typing window.
+
+Checks: `scripts/test_reprompt.py` (42).

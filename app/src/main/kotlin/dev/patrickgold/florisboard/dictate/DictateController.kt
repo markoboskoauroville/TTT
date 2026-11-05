@@ -723,7 +723,21 @@ object DictateController {
     /** Whether the recording in hand was started by E>H, for its key's ring. */
     fun isTranslating(): Boolean = translateRecording
 
-    fun onMicClick(context: Context, target: OutputTarget = OutputTarget.IME, translate: Boolean = false) {
+    /**
+     * True while the recording in hand was started by the Reprompt key (5.11.2026): its transcript is
+     * an instruction for the field, not text to type. Set at every start, like [translateRecording].
+     */
+    @Volatile
+    private var repromptRecording = false
+
+    fun isRepromptRecording(): Boolean = repromptRecording
+
+    fun onMicClick(
+        context: Context,
+        target: OutputTarget = OutputTarget.IME,
+        translate: Boolean = false,
+        reprompt: Boolean = false,
+    ) {
         // The bar is a leftover from a discard that is still animating — acting on it would stop a
         // recording that no longer exists.
         if (discardingBar) return
@@ -735,7 +749,8 @@ object DictateController {
             is UiState.Rewording -> cancelRewording()
             else -> {
                 outputTarget = target
-                translateRecording = translate
+                translateRecording = translate && !reprompt
+                repromptRecording = reprompt
                 startRecording(context)
             }
         }
@@ -1976,6 +1991,28 @@ object DictateController {
         capture: HistoryCapture? = null,
         latencyTrace: BatchLatencyTrace? = null,
     ) {
+        // REPROMPT BY VOICE (5.11.2026): the transcript is his instruction for the field. Nothing of it
+        // is typed: a streamed preview is taken back, and the field's text is reshaped, or, when the
+        // field is empty, the message he asked for is written (MaReprompt, sent bare, code words
+        // included). Not kept in the history as a dictation; kept in Reprompt's own list.
+        if (repromptRecording && !live) {
+            repromptRecording = false
+            val outSink = sink(appContext)
+            if (finalizeViaComposing && realtimeShown.isNotEmpty()) {
+                outSink.clearDictationPreview(realtimeShown.toString())
+                realtimeShown.setLength(0)
+            }
+            _state.value = UiState.Idle
+            val words = rawText.trim()
+            if (words.isEmpty()) return
+            MaReprompt.rememberWords(words)
+            val write = outSink.fullText().isBlank() && outSink.selectedText().isBlank()
+            applyPrompt(
+                appContext, MaReprompt.prompt(words, write), model = MaFlow.model(),
+                allowGrowth = true, bare = true,
+            )
+            return
+        }
         // The transcript after the Croatian spell check: a correction, not a rewrite, so paragraph
         // splitting still treats it as the pure transcript. The raw one stays the history's original.
         var spellchecked = rawText

@@ -120,6 +120,19 @@ check("another app first: dropped", r.take("com.android.chrome", 3, 20) is None 
 r.target = ("com.whatsapp", 7, 0); r.instr = "shorter"
 check("too late: dropped", r.take("com.whatsapp", 7, 70000) is None)
 
+# 5.11.2026: a press records the instruction in English; the window is the long press.
+check("a press records, in English", "if (rec == null) MaLanguage.set(context, MaLanguage.EN)" in row
+      and "DictateController.onMicClick(context, reprompt = true)" in row)
+check("the long press opens the typing window", "onLongClick = {" in row[row.find("MaFeatureKey.REPROMPT -> {"):row.find("MaFeatureKey.RECORD -> {")])
+check("set at every start", "repromptRecording = reprompt" in ctrl)
+check("the transcript is an instruction, not typed", "if (repromptRecording && !live) {" in ctrl
+      and "MaReprompt.prompt(words, write), model = MaFlow.model()," in ctrl)
+check("empty field writes, text is reshaped", "val write = outSink.fullText().isBlank() && outSink.selectedText().isBlank()" in ctrl)
+check("a streamed preview is taken back", "outSink.clearDictationPreview(realtimeShown.toString())" in ctrl)
+check("kept in Reprompt's list", "MaReprompt.rememberWords(words)" in ctrl)
+check("the record outline, light red while it records", "ring = if (recordingThis) MaRecordOutlineLive else MaRecordOutline," in row)
+check("the E key stays dark while Reprompt records", "!DictateController.isRepromptRecording()" in row)
+
 print(f"reprompt, test 1: {checks} checks, {len(failures)} failed")
 for f in failures:
     print("  FAIL ", f)

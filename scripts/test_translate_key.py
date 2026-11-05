@@ -54,7 +54,7 @@ check("and asks for the translation", "DictateController.onMicClick(context, tra
 check("only the key that started it rings", "DictateController.isTranslating() == translate" in row)
 
 # The pipeline
-check("set at every start", "translateRecording = translate\n                startRecording(context)" in ctrl)
+check("set at every start", "translateRecording = translate && !reprompt" in ctrl)
 check("translated after transcription", "if (translateRecording) translateToCroatian(rawText)" in ctrl)
 check("instead of style and spell check, not on top",
       re.search(r"translated != null -> translated\s*!alreadyFormatted -> phoneStyle", ctrl) is not None)
