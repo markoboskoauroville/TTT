@@ -70,3 +70,13 @@ Every request word for word, saved and pushed before any code (MANTRA_MANIFEST r
 - MaAddressBook: emails, phone numbers, web addresses and IBANs (checksum-checked) saved whole when the field is left or the cursor moves past them; offered first from their first characters (091 55 also finds +385 91 555…), in empty email / phone / URL fields, and after "my email is", "moj broj je", "IBAN", "moj račun je". Contacts: opt-in (READ_CONTACTS declared, never asked; allow it in Android settings → TTT → Permissions), then contact emails, numbers and names (a capitalised "Mar" → "Marko …") join.
 - Live: build 452 on the emulator: 37 of 100 SwiftKey words in TTT's strip (448: 28), by OCR; "laku n" → noć, "good m" → morning, "do you w" → want / want to, "thank you " → for. Phone number saved and offered after "my number is" (454).
 - SwiftKey itself: emoji predictions switched off; it has no setting for more than three suggestions (the arrow at the left of its bar opens more).
+
+## 7.11.2026: WA key, WhatsApp controlled by Sonnet, never sending
+
+> "please in parallel Add a new feature to the app, and that is a WhatsApp control. It's going to be able to control WhatsApp through wireless debugging, and commands are going to Sonnet or to my engine. And I can ask Sonnet, for example, find me this and that person and write this and that message, or take screenshot of past conversation and continue conversation. So it's a WhatsApp controller working with Sonnet, and it needs to have a special button that WA is on the button and looks similar as RE button, and it puts similar mechanism, just different engine to control WhatsApp when it's opened. Like I'm controlling it, searching for contact, and then write the message and never send the message automatically." (Marko, 7.11.2026)
+
+1. A WA key beside RE, looking like it, with the same mechanism (press, speak the instruction).
+2. The instruction goes to Sonnet (or his engine), which drives WhatsApp while it is open: search a contact, open the chat, read the past conversation (screenshot), write the message.
+3. The message is never sent automatically: it is left in the field for him.
+
+**Status:** saved first.
