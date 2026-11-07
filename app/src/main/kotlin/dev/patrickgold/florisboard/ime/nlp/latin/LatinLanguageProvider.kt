@@ -943,6 +943,26 @@ class LatinLanguageProvider(context: Context) : SpellingProvider, SuggestionProv
         val completionBigrams = if (completionPrev != null) bigramsFor(subtype) else emptyMap()
         val completionPrev2 = if (completionPrev != null) previousTwoWordsOf(content) else null
         val completionTri = if (completionPrev2 != null) trigramsFor(subtype).counts else emptyMap()
+        // Words that follow the previous word(s) join the pool even when they are not among the most frequent
+        // COMPLETION_POOL words of that prefix: "happy b" → birthday, "koliko k" → košta (SwiftKey, held-out
+        // test set 7.11.2026: 41 → 44 of 73).
+        if (completionPrev != null) {
+            val lowerIndex = lowerIndexFor(subtype)
+            fun matchesTyped(f: String): Boolean =
+                f.length >= word.length && (if (foldDiacritics) {
+                    foldCroatian(f.substring(0, word.length)).equals(typedFolded, ignoreCase = true)
+                } else f.startsWith(word, ignoreCase = true))
+            val inPool = pool.mapTo(HashSet()) { it.lowercase() }
+            val followers = ArrayList<String>()
+            val key = "$completionPrev "
+            for (k in completionBigrams.keys) if (k.startsWith(key)) followers.add(k.substring(key.length))
+            if (completionPrev2 != null) trigramsFor(subtype).byContext[completionPrev2]?.forEach { followers.add(it.first) }
+            for (f in followers) {
+                if (f in inPool || !matchesTyped(f)) continue
+                val canonical = lowerIndex.canonical[f] ?: continue
+                if (data.containsKey(canonical)) { pool.add(canonical); inPool.add(f) }
+            }
+        }
         val ranked = if (completionBigrams.isEmpty()) pool else pool.sortedByDescending { w ->
             val lw = w.lowercase()
             lmPrior(data[w] ?: 0) +
