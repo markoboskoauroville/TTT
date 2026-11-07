@@ -107,6 +107,8 @@ class LatinLanguageProvider(context: Context) : SpellingProvider, SuggestionProv
         // Croatian diacritic restoration: bound the variant generation so a long word with many c/s/z/d
         // doesn't explode combinatorially. Words needing more than this are left alone.
         private const val MAX_DIACRITIC_SITES = 6
+        // A real word typed without diacritics is still swapped when its diacritic form is this much commoner.
+        private const val DIACRITIC_OVERRIDE_MARGIN = 20
         // Prefix completion: how many of the most frequent matches are re-ranked by context, and the weight
         // of ln(bigram count + 1) against the 0..LM_SPAN frequency prior (tuned against SwiftKey, 7.11.2026).
         private const val COMPLETION_POOL = 40
@@ -803,6 +805,7 @@ class LatinLanguageProvider(context: Context) : SpellingProvider, SuggestionProv
                 val ctx = bigramContextScore(prevWord, bigrams)
                 val ranked = variants.sortedByDescending { (v, f, _) -> ln((f + 1).toDouble()) + ctx(v.lowercase()) }
                 val typedIsWord = index.freq.containsKey(word.lowercase())
+                val typedFreq = index.freq[word.lowercase()] ?: 0
                 // Keep the typed word tappable, left-most, to bypass the restoration (issue #150).
                 out[word.lowercase()] = WordSuggestionCandidate(
                     text = word, confidence = 1.0, isEligibleForAutoCommit = false, sourceProvider = this,
@@ -814,9 +817,11 @@ class LatinLanguageProvider(context: Context) : SpellingProvider, SuggestionProv
                         WordSuggestionCandidate(
                             text = text,
                             confidence = f / 255.0,
-                            // Auto-swap only the top variant of a NON-word; a validly typed word stays the
-                            // user's choice and the variant is merely offered.
-                            isEligibleForAutoCommit = i == 0 && !typedIsWord && f >= AUTOCORRECT_MIN_FREQ,
+                            // Auto-swap the top variant of a non-word, and also of a real word when the
+                            // diacritic form is far commoner (SwiftKey, 7.11.2026: sto → Što, kuca → Kuća,
+                            // zena → žena; reci stays, reći is barely commoner).
+                            isEligibleForAutoCommit = i == 0 && f >= AUTOCORRECT_MIN_FREQ &&
+                                (!typedIsWord || f >= typedFreq + DIACRITIC_OVERRIDE_MARGIN),
                             sourceProvider = this,
                         ),
                     )
