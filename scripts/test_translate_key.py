@@ -45,7 +45,7 @@ app = code(SRC / "FlorisApplication.kt")
 
 # The key
 check("the key exists", 'RECORD_EN_HR("recordenhr"' in order)
-check("it is a dictation key", "MaFeatureKey.RECORD_EN_HR,\n        MaFeatureKey.REPROMPT,\n        MaFeatureKey.SEND," in order)
+check("it is a dictation key", "MaFeatureKey.RECORD_EN_HR,\n        MaFeatureKey.REPROMPT," in order)   # WA follows RE since 7.11.2026
 check("drawn with the record keys (red dot)", "MaFeatureKey.RECORD_HR, MaFeatureKey.RECORD_EN, MaFeatureKey.RECORD_EN_HR ->" in row)
 check("its letters are E>H", 'translate -> "E>H"' in row)
 check("in the rows editor too", 'MaFeatureKey.RECORD_EN_HR -> letters("\\u25CF E>H")' in rows_screen)
