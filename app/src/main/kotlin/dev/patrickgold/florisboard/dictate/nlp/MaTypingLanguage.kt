@@ -131,7 +131,18 @@ object MaTypingLanguage {
             knowsEn = { MaNgram.knowsIn(MaWordLanguage.EN, it) || MaShippedWords.leans(MaWordLanguage.EN, it) || MaShippedWords.isMisspelling(it) },
             knowsHr = { MaNgram.knowsIn(MaWordLanguage.HR, it) || MaShippedWords.leans(MaWordLanguage.HR, it) },
         )
-        val language = decided ?: last ?: MaLanguage.active()
+        // Nothing before the cursor decides: the word being typed may ("mozda", "kuca" are Croatian with the
+        // diacritics folded, "seperate" is English), before falling back to the last language. Live typo test
+        // 7.11.2026: lone Croatian words typed after English were judged in English and left uncorrected.
+        val current = textBefore.takeLastWhile { it.isLetter() || it == '\'' }
+        val byWord = if (decided == null && current.length >= 3) {
+            when {
+                MaShippedWords.isMisspelling(current) || MaShippedWords.leans(MaWordLanguage.EN, current) -> MaWordLanguage.EN
+                MaShippedWords.leans(MaWordLanguage.HR, current) -> MaWordLanguage.HR
+                else -> null
+            }
+        } else null
+        val language = decided ?: byWord ?: last ?: MaLanguage.active()
         last = language
         return language
     }
