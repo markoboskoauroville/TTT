@@ -225,7 +225,11 @@ object MaAddressBook {
             if (stillTyping && endsAt >= before.length - 1) return   // the cursor is still in it
             val key = keyOf(value, kind)
             synchronized(lock) {
+                // Never a value that only starts one already saved ("+3859155" of "+385915550101"), and a new
+                // value clears the once-seen starts of it saved while it was being typed.
+                if (entries.values.any { it.kind == kind && it.count >= 1 && keyOf(it.value, kind).let { k -> k.length > key.length && k.startsWith(key) } }) return
                 if (countedThisField.add(key)) {
+                    entries.entries.removeAll { (k, e) -> e.kind == kind && e.count <= 1 && k != key && key.startsWith(k) }
                     val e = entries[key]
                     if (e != null) e.count++ else entries[key] = Entry(value, 1, kind)
                     changed = true
