@@ -272,7 +272,18 @@ class NlpManager(context: Context) {
                     currentWord = content.currentWordText,
                     isIncognito = keyboardManager.activeState.isIncognitoMode,
                 )
-            }.getOrDefault(emptyList()).filter { hit -> hit.word.any { it.isLetter() } }.map { hit ->
+            }.getOrDefault(emptyList()).filter { hit ->
+                // SwiftKey offers a word it does not know only once it has been used more than once, and never
+                // a known misspelling (live test 7.11.2026: one typed "goverment" came back first for good).
+                val shipped = dev.patrickgold.florisboard.dictate.nlp.MaShippedWords
+                // His own corrections (tier 4) and what Haiku taught (tier 0) always pass.
+                hit.word.any { it.isLetter() } && (
+                    hit.tier !in 1..3 || (
+                        !shipped.isMisspelling(hit.word) &&
+                            (hit.count >= 2 || shipped.isKnown(hit.word) || !shipped.isLoaded("en"))
+                        )
+                    )
+            }.map { hit ->
                 WordSuggestionCandidate(
                     text = hit.word,
                     secondaryText = null,

@@ -55,6 +55,20 @@ object MaShippedWords {
 
     fun isLoaded(lang: String): Boolean = byLang.containsKey(lang)
 
+    /** Whether any shipped dictionary has [word] (Croatian also without diacritics). */
+    fun isKnown(word: String): Boolean {
+        val l = word.lowercase()
+        return byLang.values.any { it.containsKey(l) || it.containsKey(fold(l)) }
+    }
+
+    private val misspellings = ConcurrentHashMap<String, Boolean>()
+
+    /** Called with the shipped list of common misspellings (wrong spellings, lowercase). */
+    fun putMisspellings(words: Collection<String>) { words.forEach { misspellings[it] = true } }
+
+    /** Whether [word] is a known misspelling ("recieve"), which the personal model must never offer back. */
+    fun isMisspelling(word: String): Boolean = misspellings.containsKey(word.lowercase())
+
     /** True when [word] is clearly a word of [lang] rather than of the other shipped language. */
     fun leans(lang: String, word: String): Boolean {
         if (word.length < 3) return false

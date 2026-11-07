@@ -314,6 +314,7 @@ class LatinLanguageProvider(context: Context) : SpellingProvider, SuggestionProv
                     val tab = line.indexOf('\t')
                     if (tab > 0) map[line.substring(0, tab)] = line.substring(tab + 1).split('|').filter { it.isNotBlank() }
                 }
+                dev.patrickgold.florisboard.dictate.nlp.MaShippedWords.putMisspellings(map.keys)
                 map as Map<String, List<String>>
             }.getOrDefault(emptyMap()).also { cache[lang] = it }
         }
