@@ -126,3 +126,9 @@ checksums verified) replaced Parakeet, which is deleted from the phone on start.
 AssemblyAI / Whisper / AssemblyAI with Whisper as fallback (default). The fallback catches any failure: no key,
 refused key, no connection, timeout, server error. The model downloads from that screen. Gate:
 scripts/test_transcription_model.py (18 checks). Not yet run live: the 1 GB download and a Whisper transcription.
+
+> Don't change anything, parquet should be fine.But just test parquet with artificially created voices with edge TTS.And see if everything working fine through emulator.And even you can combine the tests you type with par by with voice and you can see how Words are corrected. by our algorithm for creating words.
+
+**Status:** saved first (7.11.2026, 23:50 UTC). Read as: Parakeet stays the on-device model (the Whisper Turbo swap is
+undone, the Transcription model setting stays, its on-device engine is Parakeet); test it on the emulator with
+edge-tts voices, English and Croatian, and with typing after the dictation.
