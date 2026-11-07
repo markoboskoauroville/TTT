@@ -116,3 +116,7 @@ uses only suggestions computed for the word being typed.
 > Please continue testing until five aam.
 
 **Status:** saved first. 5 am taken as 05:00 CET = 04:00 UTC on 8.11.2026, same clock as "midnight" before.
+
+> Please update TTT app to use offline transcription services using Whisper Turbo Model. It means you need to remove the old model and use a whisper toolbo and in settings I need to have a switch. Transcription model is the settings entry. Inside I have assembly AI and Whisper. So there are options either assembly AI, either whisper or whisper as a fallback if assembly AI get rejected or is not happening for some reason
+
+**Status:** saved first (7.11.2026, 23:00 UTC).
