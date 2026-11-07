@@ -128,8 +128,8 @@ object MaTypingLanguage {
         if (!enabled()) return MaLanguage.active()
         val decided = decide(
             textBefore,
-            knowsEn = { MaNgram.knowsIn(MaWordLanguage.EN, it) },
-            knowsHr = { MaNgram.knowsIn(MaWordLanguage.HR, it) },
+            knowsEn = { MaNgram.knowsIn(MaWordLanguage.EN, it) || MaShippedWords.leans(MaWordLanguage.EN, it) },
+            knowsHr = { MaNgram.knowsIn(MaWordLanguage.HR, it) || MaShippedWords.leans(MaWordLanguage.HR, it) },
         )
         val language = decided ?: last ?: MaLanguage.active()
         last = language
@@ -142,8 +142,8 @@ object MaTypingLanguage {
         // A space at the end, so the last word counts as finished.
         return decide(
             "$text ",
-            knowsEn = { MaNgram.knowsIn(MaWordLanguage.EN, it) },
-            knowsHr = { MaNgram.knowsIn(MaWordLanguage.HR, it) },
+            knowsEn = { MaNgram.knowsIn(MaWordLanguage.EN, it) || MaShippedWords.leans(MaWordLanguage.EN, it) },
+            knowsHr = { MaNgram.knowsIn(MaWordLanguage.HR, it) || MaShippedWords.leans(MaWordLanguage.HR, it) },
         ) ?: last ?: MaLanguage.active()
     }
 

@@ -207,6 +207,7 @@ class LatinLanguageProvider(context: Context) : SpellingProvider, SuggestionProv
             cache[lang] ?: run {
                 val loaded = Json.decodeFromString(wordDataSerializer, readDict(lang))
                 cache[lang] = loaded
+                if (lang in GlideDictionaryCatalog.BUNDLED) dev.patrickgold.florisboard.dictate.nlp.MaShippedWords.put(lang, loaded)
                 loaded
             }
         }
@@ -673,6 +674,10 @@ class LatinLanguageProvider(context: Context) : SpellingProvider, SuggestionProv
         resolvedDictLang.clear()
         maybeDownloadDict(subtype)
         wordDataFor(subtype)
+        // Both shipped languages, so the typing-language detection can read them (MaShippedWords, 7.11.2026).
+        for (lang in GlideDictionaryCatalog.BUNDLED) {
+            if (!dev.patrickgold.florisboard.dictate.nlp.MaShippedWords.isLoaded(lang)) runCatching { wordDataForLang(lang) }
+        }
         Unit
     }
 
