@@ -209,6 +209,9 @@ class NlpManager(context: Context) {
     @Volatile
     private var holdNextSuggest = false
 
+    @Volatile
+    private var suggestJob: kotlinx.coroutines.Job? = null
+
     fun suggest(subtype: Subtype, content: EditorContent) {
         if (holdNextSuggest) {
             holdNextSuggest = false
@@ -228,7 +231,11 @@ class NlpManager(context: Context) {
             ?: if (typing in dev.patrickgold.florisboard.ime.nlp.latin.GlideDictionaryCatalog.BUNDLED) {
                 subtype.copy(primaryLocale = dev.patrickgold.florisboard.lib.FlorisLocale.from(typing))
             } else null
-        scope.launch {
+        // One suggestion job at a time: a keystroke cancels the one before it (7.11.2026, ANR on the
+        // emulator: four jobs ran at once, all building spelling candidates, and the garbage they made
+        // stalled the main thread for 5 s). LatinLanguageProvider checks for cancellation between phases.
+        suggestJob?.cancel()
+        suggestJob = scope.launch {
             val emojiSuggestions = when {
                 prefs.emoji.suggestionEnabled.get() -> {
                     emojiSuggestionProvider.suggest(

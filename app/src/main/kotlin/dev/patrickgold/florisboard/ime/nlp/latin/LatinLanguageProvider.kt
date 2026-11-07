@@ -60,7 +60,9 @@ class LatinLanguageProvider(context: Context) : SpellingProvider, SuggestionProv
         // them out, and the max word length for the (more expensive) distance-2 fallback.
         private const val CORRECTION_MAX = 3
         private const val CORRECTION_RESERVE = 3
-        private const val MAX_DISTANCE2_LEN = 12
+        // 8, not 12 (7.11.2026): distance 2 of a 12-letter word is hundreds of thousands of strings per keystroke,
+        // and their garbage stalled the main thread into an ANR on a slow phone.
+        private const val MAX_DISTANCE2_LEN = 8
 
         // Keyboard-proximity noisy-channel model (Tier 1). Distances are in key-width² units.
         private const val PROX_SIGMA2 = 1.0         // touch variance (~1 key-width std): near mis-taps cost little
@@ -708,6 +710,22 @@ class LatinLanguageProvider(context: Context) : SpellingProvider, SuggestionProv
     // "čovjek", "sto" for "što", "kuca" for "kuća", "dosao" for "došao", "djak" for "đak". SwiftKey offers
     // the diacritic form at once; this does the same, driven only by the dictionary.
 
+    /** Whether [word] starts with [foldedPrefix] once its diacritics are folded, without allocating. */
+    private fun foldedStartsWith(word: String, foldedPrefix: String): Boolean {
+        if (word.length < foldedPrefix.length) return false
+        for (i in foldedPrefix.indices) {
+            val c = when (val ch = word[i].lowercaseChar()) {
+                'č', 'ć' -> 'c'
+                'š' -> 's'
+                'ž' -> 'z'
+                'đ' -> 'd'
+                else -> ch
+            }
+            if (c != foldedPrefix[i].lowercaseChar()) return false
+        }
+        return true
+    }
+
     /** [text] with Croatian diacritics replaced by their plain letters (č/ć → c, š → s, ž → z, đ → d). */
     private fun foldCroatian(text: String): String {
         if (text.none { it in "čćšžđČĆŠŽĐ" }) return text
@@ -1002,6 +1020,7 @@ class LatinLanguageProvider(context: Context) : SpellingProvider, SuggestionProv
             }
         }
 
+        kotlinx.coroutines.yield()   // a newer keystroke cancels this one here (7.11.2026)
         // Whether the composed word is valid in any of the user's keyboard languages (multilingual, #190);
         // computed up front because it also decides whether to reserve strip slots for spelling fixes.
         val isKnown = isKnownWord(word, subtype)
@@ -1036,7 +1055,7 @@ class LatinLanguageProvider(context: Context) : SpellingProvider, SuggestionProv
         for (dictWord in rankedWordsFor(subtype)) {
             if (pool.size >= COMPLETION_POOL) break
             val matches = if (foldDiacritics) {
-                dictWord.length >= word.length && foldCroatian(dictWord.substring(0, word.length)).equals(typedFolded, ignoreCase = true)
+                foldedStartsWith(dictWord, typedFolded)
             } else {
                 dictWord.startsWith(word, ignoreCase = true)
             }
@@ -1090,6 +1109,7 @@ class LatinLanguageProvider(context: Context) : SpellingProvider, SuggestionProv
         // only when nothing else already filled the strip, so intentional input and words-in-progress aren't
         // swapped. Distance 2 is a suggestions-only fallback when distance 1 finds nothing (too uncertain to
         // swap in silently). #190: never correct a word valid in any configured language.
+        kotlinx.coroutines.yield()
         if (autoCorrectOn && !isKnown && word.length >= 3) {
             val hadCandidatesBefore = out.isNotEmpty() // Croatian restoration and/or prefix completions
             val prevWord = contextWord(content, subtype)
