@@ -89,6 +89,11 @@ object MaAddressBook {
     fun initialize(context: Context) {
         val f = File(context.filesDir, "ma_addresses.tsv")
         file = f
+        val app = context.applicationContext
+        scope.launch {
+            delay(CONTACTS_DELAY_MS)
+            importContacts(app)
+        }
         scope.launch {
             runCatching { if (f.exists()) f.readLines() else emptyList() }.getOrDefault(emptyList()).forEach { line ->
                 val parts = line.split('\t')
@@ -215,6 +220,61 @@ object MaAddressBook {
                         a.substringBefore('@').split('.', '_', '-').any { p -> p.startsWith(token, ignoreCase = true) })
             }
             .sortedByDescending { it.second }.map { it.first }.take(limit).toList()
+    }
+
+    // --- The phone's contacts (opt-in) ---------------------------------------------------------------
+
+    private const val CONTACTS_DELAY_MS = 8_000L
+
+    /** Contact names, kept apart from the typed values: never written to the file, re-read at each start. */
+    private val contactNames = HashSet<String>()
+
+    /**
+     * Reads names, emails and numbers from the phone's contacts, only if Contacts was allowed for TTT in
+     * Android settings (the permission is declared, never asked for). Values already typed keep their
+     * counts; contact values join with a count of 1, so what he actually types still comes first.
+     */
+    fun importContacts(context: Context) {
+        if (context.checkSelfPermission(android.Manifest.permission.READ_CONTACTS) !=
+            android.content.pm.PackageManager.PERMISSION_GRANTED
+        ) return
+        runCatching {
+            val cr = context.contentResolver
+            val data = android.provider.ContactsContract.Data.CONTENT_URI
+            val mime = android.provider.ContactsContract.Data.MIMETYPE
+            val emailType = android.provider.ContactsContract.CommonDataKinds.Email.CONTENT_ITEM_TYPE
+            val phoneType = android.provider.ContactsContract.CommonDataKinds.Phone.CONTENT_ITEM_TYPE
+            val nameCol = android.provider.ContactsContract.Data.DISPLAY_NAME_PRIMARY
+            val valueCol = android.provider.ContactsContract.Data.DATA1
+            cr.query(data, arrayOf(mime, valueCol, nameCol), "$mime IN (?, ?)", arrayOf(emailType, phoneType), null)?.use { c ->
+                while (c.moveToNext()) {
+                    val kind = if (c.getString(0) == emailType) EMAIL_KIND else PHONE_KIND
+                    val value = c.getString(1)?.trim().orEmpty()
+                    val name = c.getString(2)?.trim().orEmpty()
+                    synchronized(lock) {
+                        if (value.isNotEmpty()) {
+                            val key = keyOf(value, kind)
+                            if (key.isNotEmpty() && entries[key] == null) entries[key] = Entry(value, 1, kind)
+                        }
+                        if (name.length >= 2 && name.any { it.isLetter() }) contactNames.add(name)
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * Contact names for a capitalised word being typed ("Mar" → "Marko Boško", "Marta"): only when he
+     * started the word with a capital, the way a name is written, so ordinary words are never crowded out.
+     */
+    fun names(textBefore: CharSequence, limit: Int = 2): List<String> {
+        val word = textBefore.takeLastWhile { it.isLetter() }.toString()
+        if (word.length < 2 || !word.first().isUpperCase()) return emptyList()
+        val names = synchronized(lock) { contactNames.toList() }
+        return names.asSequence()
+            .filter { n -> n.split(' ').any { it.startsWith(word, ignoreCase = false) && !it.equals(word) } }
+            .sortedBy { it.length }
+            .take(limit).toList()
     }
 
     /** "385912345678" is typed at home as "0912345678": the national forms of an international number. */

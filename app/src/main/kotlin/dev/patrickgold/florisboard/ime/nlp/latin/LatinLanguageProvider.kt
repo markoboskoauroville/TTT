@@ -111,6 +111,10 @@ class LatinLanguageProvider(context: Context) : SpellingProvider, SuggestionProv
         // of ln(bigram count + 1) against the 0..LM_SPAN frequency prior (tuned against SwiftKey, 7.11.2026).
         private const val COMPLETION_POOL = 40
         private const val COMPLETION_CONTEXT_WEIGHT = 0.45
+        // Trigram context: weight of ln(trigram count + 1), and the lead a follower of the two words gets over a
+        // follower of the last word alone (simulated against SwiftKey's choices, 7.11.2026).
+        private const val TRIGRAM_WEIGHT = 0.6
+        private const val TRIGRAM_LEAD = 2.0
         // The phrase slot: the follower must be seen this often and take this share of what follows the word.
         private const val PHRASE_MIN_COUNT = 40L
         private const val PHRASE_MIN_SHARE = 0.4
@@ -242,6 +246,45 @@ class LatinLanguageProvider(context: Context) : SpellingProvider, SuggestionProv
         }
         map
     }.getOrDefault(emptyMap())
+
+    // Trigram context (7.11.2026, tuned against SwiftKey): "w1 w2 w3" -> count from ime/dict/<lang>_trigrams.txt,
+    // conversational (OpenSubtitles). SwiftKey reads two words back: "thank you" -> "for", "let me" -> "know",
+    // where one word ("you", "me") says little. [byContext] lists the followers of "w1 w2", most frequent first.
+    private class Trigrams(val counts: Map<String, Long>, val byContext: Map<String, List<Pair<String, Long>>>)
+
+    private val trigramsByLang = guardedByLock { mutableMapOf<String, Trigrams>() }
+
+    private suspend fun trigramsFor(subtype: Subtype): Trigrams {
+        val lang = dictLangFor(subtype)
+        return trigramsByLang.withLock { cache -> cache[lang] ?: loadTrigrams(lang).also { cache[lang] = it } }
+    }
+
+    private fun loadTrigrams(lang: String): Trigrams = runCatching {
+        val counts = HashMap<String, Long>(70_000)
+        val byContext = HashMap<String, MutableList<Pair<String, Long>>>(40_000)
+        appContext.assets.readText("ime/dict/${lang}_trigrams.txt").lineSequence().forEach { line ->
+            val tab = line.indexOf('\t')
+            if (tab <= 0) return@forEach
+            val key = line.substring(0, tab)
+            val n = line.substring(tab + 1).toLongOrNull() ?: return@forEach
+            val cut = key.lastIndexOf(' ')
+            if (cut <= 0) return@forEach
+            counts[key] = n
+            byContext.getOrPut(key.substring(0, cut)) { ArrayList(4) }.add(key.substring(cut + 1) to n)
+        }
+        byContext.values.forEach { list -> list.sortByDescending { it.second } }
+        Trigrams(counts, byContext)
+    }.getOrDefault(Trigrams(emptyMap(), emptyMap()))
+
+    /** The two words before the one being composed ("thank you"), lowercased, or null. */
+    private fun previousTwoWordsOf(content: EditorContent): String? {
+        val before = content.textBeforeSelection.removeSuffix(content.composingText).toString()
+        // Only within the sentence: "...end. Thank you" has no two-word context across the full stop.
+        val sentence = before.substringAfterLast('.').substringAfterLast('!').substringAfterLast('?').substringAfterLast('\n')
+        val words = sentence.lowercase().split(Regex("[^\\p{L}']+")).filter { it.isNotEmpty() }
+        if (words.size < 2) return null
+        return words[words.size - 2] + " " + words[words.size - 1]
+    }
 
     /** The word right before the one being composed, lowercased — the context for the bigram model. */
     private fun previousWordOf(content: EditorContent): String? {
@@ -483,14 +526,24 @@ class LatinLanguageProvider(context: Context) : SpellingProvider, SuggestionProv
 
         val index = lowerIndexFor(subtype)
         val prefix = "$prevWord "
+        // Two words back first (SwiftKey: "thank you" -> "for", "see you" -> "later"): a follower of the
+        // pair scores its trigram count on top of its bigram count, plus a flat lead over bigram-only ones.
+        val prev2 = previousTwoWordsOf(content)
+        val triFollowers = if (prev2 != null) trigramsFor(subtype).byContext[prev2].orEmpty() else emptyList()
+        val scores = HashMap<String, Double>()
+        for ((k, v) in bigrams) {
+            if (k.startsWith(prefix)) scores[k.substring(prefix.length)] = COMPLETION_CONTEXT_WEIGHT * ln((v + 1).toDouble())
+        }
+        for ((w, n) in triFollowers) {
+            scores[w] = (scores[w] ?: 0.0) + TRIGRAM_WEIGHT * ln((n + 1).toDouble()) + TRIGRAM_LEAD
+        }
         // No unigram fallback on purpose: without a matching bigram the strip would fill with generic filler
         // ("the", "and", "of") that carries no information about what the user is writing.
-        return bigrams.asSequence()
-            .filter { it.key.startsWith(prefix) }
+        return scores.entries.asSequence()
             .sortedByDescending { it.value }
             .take(maxCandidateCount)
             .mapNotNull { entry ->
-                val candidate = entry.key.substring(prefix.length)
+                val candidate = entry.key
                 if (candidate.isBlank()) return@mapNotNull null
                 val text = index.canonical[candidate] ?: candidate
                 WordSuggestionCandidate(
@@ -876,8 +929,13 @@ class LatinLanguageProvider(context: Context) : SpellingProvider, SuggestionProv
         }
         val completionPrev = previousWordOf(content)
         val completionBigrams = if (completionPrev != null) bigramsFor(subtype) else emptyMap()
+        val completionPrev2 = if (completionPrev != null) previousTwoWordsOf(content) else null
+        val completionTri = if (completionPrev2 != null) trigramsFor(subtype).counts else emptyMap()
         val ranked = if (completionBigrams.isEmpty()) pool else pool.sortedByDescending { w ->
-            lmPrior(data[w] ?: 0) + COMPLETION_CONTEXT_WEIGHT * ln(((completionBigrams["$completionPrev ${w.lowercase()}"] ?: 0L) + 1L).toDouble())
+            val lw = w.lowercase()
+            lmPrior(data[w] ?: 0) +
+                COMPLETION_CONTEXT_WEIGHT * ln(((completionBigrams["$completionPrev $lw"] ?: 0L) + 1L).toDouble()) +
+                TRIGRAM_WEIGHT * ln(((completionTri["$completionPrev2 $lw"] ?: 0L) + 1L).toDouble())
         }
         for (dictWord in ranked) {
             if (out.size >= completionCap) break

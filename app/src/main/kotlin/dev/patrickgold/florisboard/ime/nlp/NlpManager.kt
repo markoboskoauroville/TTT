@@ -301,6 +301,9 @@ class NlpManager(context: Context) {
             val addresses = if (keyboardManager.activeState.isIncognitoMode) emptyList() else
                 dev.patrickgold.florisboard.dictate.nlp.MaAddressBook.suggest(
                     content.textBeforeSelection, isEmailField, isPhoneField,
+                ).plus(
+                    // Contact names for a capitalised word ("Mar" → "Marko Boško"), opt-in (MaAddressBook).
+                    dev.patrickgold.florisboard.dictate.nlp.MaAddressBook.names(content.textBeforeSelection),
                 ).map { address ->
                     WordSuggestionCandidate(
                         text = address, secondaryText = null, confidence = 1.0,
