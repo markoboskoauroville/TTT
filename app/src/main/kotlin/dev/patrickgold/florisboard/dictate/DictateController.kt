@@ -732,11 +732,18 @@ object DictateController {
 
     fun isRepromptRecording(): Boolean = repromptRecording
 
+    /** True while the recording in hand was started by the WA key (7.11.2026): its transcript goes to MaWhatsApp. */
+    @Volatile
+    private var whatsappRecording = false
+
+    fun isWhatsAppRecording(): Boolean = whatsappRecording
+
     fun onMicClick(
         context: Context,
         target: OutputTarget = OutputTarget.IME,
         translate: Boolean = false,
         reprompt: Boolean = false,
+        whatsapp: Boolean = false,
     ) {
         // The bar is a leftover from a discard that is still animating — acting on it would stop a
         // recording that no longer exists.
@@ -749,8 +756,9 @@ object DictateController {
             is UiState.Rewording -> cancelRewording()
             else -> {
                 outputTarget = target
-                translateRecording = translate && !reprompt
-                repromptRecording = reprompt
+                translateRecording = translate && !reprompt && !whatsapp
+                repromptRecording = reprompt && !whatsapp
+                whatsappRecording = whatsapp
                 startRecording(context)
             }
         }
@@ -1995,6 +2003,19 @@ object DictateController {
         // is typed: a streamed preview is taken back, and the field's text is reshaped, or, when the
         // field is empty, the message he asked for is written (MaReprompt, sent bare, code words
         // included). Not kept in the history as a dictation; kept in Reprompt's own list.
+        // WA BY VOICE (7.11.2026): the transcript is an instruction for WhatsApp, run by Sonnet (MaWhatsApp).
+        // Nothing of it is typed; a streamed preview is taken back.
+        if (whatsappRecording && !live) {
+            whatsappRecording = false
+            val outSink = sink(appContext)
+            if (finalizeViaComposing && realtimeShown.isNotEmpty()) {
+                outSink.clearDictationPreview(realtimeShown.toString())
+                realtimeShown.setLength(0)
+            }
+            _state.value = UiState.Idle
+            MaWhatsApp.run(appContext, rawText.trim())
+            return
+        }
         if (repromptRecording && !live) {
             repromptRecording = false
             val outSink = sink(appContext)

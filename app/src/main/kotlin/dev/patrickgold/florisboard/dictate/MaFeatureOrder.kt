@@ -452,6 +452,12 @@ enum class MaFeatureKey(val id: String, val label: String) {
      * or dictated, and Claude applies it to the text in the field, in place (MaReprompt).
      */
     REPROMPT("reprompt", "Reprompt"),
+    /**
+     * WA (7.11.2026): WhatsApp control. Like RE, a press records an instruction and a second press sends
+     * it, but to Claude Sonnet working WhatsApp (MaWhatsApp): find a person, read the chat, write the
+     * message. It never sends. A long press stops a running task.
+     */
+    WHATSAPP("whatsapp", "WhatsApp control"),
 
     VOLUME_KEYS("volume_keys", "Volume keys"),
 
@@ -698,6 +704,7 @@ val MaFeatureKey.group: MaFeatureGroup
         MaFeatureKey.RECORD_EN,
         MaFeatureKey.RECORD_EN_HR,
         MaFeatureKey.REPROMPT,
+        MaFeatureKey.WHATSAPP,
         MaFeatureKey.SEND,
         -> MaFeatureGroup.DICTATION
 

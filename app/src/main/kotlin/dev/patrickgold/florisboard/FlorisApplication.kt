@@ -166,6 +166,7 @@ class FlorisApplication : Application() {
             DictateLegacyMigrator.keepPredictionRowOn()
             DictateLegacyMigrator.addTranslateKeyIfNeeded()
             DictateLegacyMigrator.addRepromptKeyIfNeeded()
+            DictateLegacyMigrator.addWhatsAppKeyIfNeeded()
             MaLog.initialize(this@FlorisApplication)
             MaNgram.initialize(this@FlorisApplication)
             dev.patrickgold.florisboard.dictate.nlp.MaAddressBook.initialize(this@FlorisApplication)

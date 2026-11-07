@@ -17,6 +17,7 @@
 package dev.patrickgold.florisboard.dictate.ui
 
 import dev.patrickgold.florisboard.dictate.MaReprompt
+import dev.patrickgold.florisboard.dictate.MaWhatsApp
 import androidx.compose.foundation.layout.offset
 import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.foundation.layout.Spacer
@@ -1559,6 +1560,37 @@ fun MaFeatureRow(
                             Icon(
                                 imageVector = Icons.Default.AutoAwesome,
                                 contentDescription = MaReprompt.NAME,
+                                tint = fg,
+                                modifier = Modifier.size(11.dp).offset(y = (-5).dp),
+                            )
+                        }
+                    }
+                }
+
+                MaFeatureKey.WHATSAPP -> {
+                    // WA (MaWhatsApp, 7.11.2026): like RE, a press records the instruction in English and a
+                    // second press sends it, here to Sonnet working WhatsApp. Live ring while recording or
+                    // while Sonnet works; a long press stops the task. It never sends.
+                    val rec = DictateController.state.collectAsState().value as?
+                        DictateController.UiState.Recording
+                    val recordingThis = rec != null && DictateController.isWhatsAppRecording()
+                    val working = MaWhatsApp.busy.value
+                    ThemedKey(
+                        code = KeyCode.NOOP,
+                        modifier = keyMod,
+                        ring = if (recordingThis || working) MaRecordOutlineLive else MaRecordOutline,
+                        onClick = {
+                            if (rec == null) MaLanguage.set(context, MaLanguage.EN)
+                            DictateController.onMicClick(context, whatsapp = true)
+                            MaMessage.show(if (rec == null) "WhatsApp: say what to do" else "WhatsApp: sending to Sonnet")
+                        },
+                        onLongClick = { MaWhatsApp.stop() },
+                    ) { fg ->
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text(text = "WA", color = fg, fontSize = 15.sp, fontWeight = FontWeight.Bold)
+                            Icon(
+                                imageVector = Icons.Default.AutoAwesome,
+                                contentDescription = MaWhatsApp.NAME,
                                 tint = fg,
                                 modifier = Modifier.size(11.dp).offset(y = (-5).dp),
                             )

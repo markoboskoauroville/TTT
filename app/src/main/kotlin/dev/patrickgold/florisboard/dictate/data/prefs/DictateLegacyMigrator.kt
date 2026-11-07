@@ -767,6 +767,20 @@ object DictateLegacyMigrator {
         prefs.dictate.maRepromptKeyAdded.set(true)
     }
 
+    /** The WA key on his rows, once (7.11.2026), right after RE. Afterwards his to move or remove. */
+    suspend fun addWhatsAppKeyIfNeeded() {
+        val prefs by FlorisPreferenceStore
+        if (prefs.dictate.maWhatsAppKeyAdded.get()) return
+        val raw = prefs.dictate.maRows.get()
+        val rows = if (raw.isBlank()) MaRows.defaultRows() else MaRows.parse(raw)
+        val next = MaRows.withKeyAfter(
+            rows, MaFeatureKey.WHATSAPP,
+            listOf(MaFeatureKey.REPROMPT, MaFeatureKey.RECORD_EN_HR, MaFeatureKey.RECORD_EN),
+        )
+        if (next != rows) prefs.dictate.maRows.set(MaRows.serialize(next))
+        prefs.dictate.maWhatsAppKeyAdded.set(true)
+    }
+
     suspend fun keepPredictionRowOn() {
         val prefs by FlorisPreferenceStore
         if (!prefs.suggestion.enabled.get()) prefs.suggestion.enabled.set(true)
