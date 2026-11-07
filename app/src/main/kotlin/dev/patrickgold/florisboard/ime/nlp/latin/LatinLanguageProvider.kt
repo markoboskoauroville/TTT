@@ -434,8 +434,14 @@ class LatinLanguageProvider(context: Context) : SpellingProvider, SuggestionProv
      */
     private fun acceptedDictLangs(subtype: Subtype): List<String> {
         val active = dictLangFor(subtype)
-        if (!prefs.suggestion.multilingualTyping.get()) return listOf(active)
+        // English and Croatian both ship (7.11.2026) and the typing language moves between them by itself:
+        // a word valid in either is a word, as in SwiftKey's multilingual typing, so "sam" in an English
+        // sentence or "time" in a Croatian one is never "corrected" into the other language.
+        val bothShipped = runCatching { prefs.dictate.maDetectTypingLanguage.get() }.getOrDefault(false)
+        if (!prefs.suggestion.multilingualTyping.get() && !bothShipped) return listOf(active)
         val langs = LinkedHashSet<String>().apply { add(active) }
+        if (bothShipped) langs.addAll(GlideDictionaryCatalog.BUNDLED)
+        if (!prefs.suggestion.multilingualTyping.get()) return langs.toList()
         runCatching { subtypeManager.subtypes.forEach { langs.add(dictLangFor(it)) } }
         return langs.toList()
     }
@@ -1064,6 +1070,17 @@ class LatinLanguageProvider(context: Context) : SpellingProvider, SuggestionProv
             if (touchCorrections == null && distance1Empty && word.length <= MAX_DISTANCE2_LEN) {
                 corrections = correctionsFor(word, index, CORRECTION_MAX, allowDistance2 = true, ctx)
             }
+            // Nothing in this language: the other shipped one may know it ("hvla" typed right after English
+            // is Croatian "hvala"; SwiftKey answers from both at once). Offered, never swapped in silently.
+            var fromOtherLanguage = false
+            if (corrections.isEmpty()) {
+                val activeLang = dictLangFor(subtype)
+                for (lang in acceptedDictLangs(subtype)) {
+                    if (lang == activeLang) continue
+                    val other = correctionsFor(word, lowerIndexForLang(lang), CORRECTION_MAX, allowDistance2 = false) { 0.0 }
+                    if (other.isNotEmpty()) { corrections = other; fromOtherLanguage = true; break }
+                }
+            }
             // What may be swapped in *silently* (the strip always shows everything either way).
             val topTouchCost = touchCorrections?.topCost
             val allowAutoCommit = when {
@@ -1071,6 +1088,7 @@ class LatinLanguageProvider(context: Context) : SpellingProvider, SuggestionProv
                 // the `hadCandidatesBefore` gate, which suppressed 2.7 % of otherwise correct fixes merely
                 // because the typo prefixed some dictionary word — while a bare "a correction exists" rule
                 // would rewrite 30 % of correctly typed names.
+                fromOtherLanguage -> false
                 topTouchCost != null -> topTouchCost <= AUTO_COMMIT_MAX_TOUCH_COST
                 // A dropped or doubled letter: the beam cannot see it and the taps say nothing either way,
                 // so keep the conservative classic rule.
