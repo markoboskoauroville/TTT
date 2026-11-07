@@ -399,6 +399,7 @@ architectual	architectural
 archtype	archetype
 archtypes	archetypes
 aready	already
+arent	aren't
 areodynamics	aerodynamics
 argubly	arguably
 arguement	argument
@@ -1050,6 +1051,7 @@ corrisponds	corresponds
 costitution	constitution
 coucil	council
 coudl	could|cloud
+couldnt	couldn't
 councellor	councillor|counselor|councilor
 councellors	councillors|counselors|councilors
 counries	countries
@@ -1318,6 +1320,7 @@ dominaton	domination
 dominent	dominant
 dominiant	dominant
 donig	doing
+dont	don't
 dosen't	doesn't
 doub	doubt|daub
 doulbe	double
@@ -1777,6 +1780,7 @@ gutteral	guttural
 gya	gay
 habaeus	habeas
 habeus	habeas
+hadnt	hadn't
 haemorrage	haemorrhage
 haev	have|heave
 halarious	hilarious
@@ -1804,6 +1808,7 @@ harrassing	harassing
 harrassment	harassment
 harrassments	harassments
 hasnt	hasn't
+havent	haven't
 haviest	heaviest
 headquarer	headquarter
 headquater	headquarter
@@ -1820,6 +1825,7 @@ helpfull	helpful
 helpped	helped
 hemmorhage	hemorrhage
 herad	heard|Hera
+heres	here's
 heridity	heredity
 heroe	hero
 heros	heroes
@@ -1859,6 +1865,7 @@ hosited	hoisted
 hospitible	hospitable
 hounour	honour
 housr	hours|house
+hows	how's
 howver	however
 hsitorians	historians
 hstory	history
@@ -1894,6 +1901,11 @@ hypocrasy	hypocrisy
 hypocricy	hypocrisy
 hypocrit	hypocrite
 hypocrits	hypocrites
+i	I
+i'd	I'd
+i'll	I'll
+i'm	I'm
+i've	I've
 iconclastic	iconoclastic
 idaeidae	idea
 idaes	ideas
@@ -1911,6 +1923,7 @@ illiegal	illegal
 illution	illusion
 ilness	illness
 ilogical	illogical
+im	I'm
 imagenary	imaginary
 imagin	imagine
 imaginery	imaginary|imagery
@@ -2134,6 +2147,7 @@ isnt	isn't
 issueing	issuing
 itnroduced	introduced
 iunior	junior
+ive	I've
 iwll	will
 iwth	with
 jeapardy	jeopardy
@@ -2430,6 +2444,7 @@ muscels	mussels|muscles
 muscial	musical
 muscician	musician
 muscicians	musicians
+mustnt	mustn't
 mutiliated	mutilated
 myraid	myriad
 mysef	myself
@@ -2449,6 +2464,7 @@ neccessities	necessities
 necesarily	necessarily
 necesary	necessary
 necessiate	necessitate
+neednt	needn't
 neglible	negligible
 negligable	negligible
 negociate	negotiate
@@ -3430,7 +3446,7 @@ shorly	shortly
 shortwhile	short while
 shoudl	should
 shoudln	should|shouldn't
-shouldnt	should not
+shouldnt	shouldn't
 shreak	shriek
 shrinked	shrunk
 sicne	since
@@ -3787,6 +3803,8 @@ testiclular	testicular
 testomony	testimony
 tghe	the
 thast	that|that's
+thatll	that'll
+thats	that's
 theather	theater
 theese	these
 theif	thief
@@ -3796,8 +3814,11 @@ themslves	themselves
 ther	there|their|the
 therafter	thereafter
 therby	thereby
+theres	there's
 theri	their
+theyll	they'll
 theyre	they're
+theyve	they've
 thgat	that
 thge	the
 thier	their
@@ -4104,12 +4125,16 @@ weilded	wielded
 wendsay	Wednesday
 wensday	Wednesday
 wereabouts	whereabouts
+werent	weren't
+weve	we've
 whant	want
 whants	wants
+whats	what's
 whcih	which
 wheras	whereas
 wherease	whereas
 whereever	wherever
+wheres	where's
 whic	which
 whihc	which
 whith	with
@@ -4117,6 +4142,7 @@ whlch	which
 whn	when
 wholey	wholly
 wholy	wholly|holy
+whos	who's
 whta	what
 whther	whether
 wich	which|witch
@@ -4150,6 +4176,7 @@ workststion	workstation
 worls	world
 worstened	worsened
 woudl	would
+wouldnt	wouldn't
 wresters	wrestlers
 wriet	write
 writen	written
@@ -4172,8 +4199,11 @@ yera	year
 yeras	years
 yersa	years
 yotube	youtube
+youll	you'll
+youre	you're
 youseff	yousef
 youself	yourself
+youve	you've
 yrea	year
 ytou	you
 yuo	you

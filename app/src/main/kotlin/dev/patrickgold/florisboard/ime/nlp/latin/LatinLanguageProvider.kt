@@ -316,7 +316,10 @@ class LatinLanguageProvider(context: Context) : SpellingProvider, SuggestionProv
                     val tab = line.indexOf('\t')
                     if (tab > 0) map[line.substring(0, tab)] = line.substring(tab + 1).split('|').filter { it.isNotBlank() }
                 }
-                dev.patrickgold.florisboard.dictate.nlp.MaShippedWords.putMisspellings(map.keys)
+                // Case-only fixes ("i" → "I") are not misspellings: "i" is also Croatian for "and".
+                dev.patrickgold.florisboard.dictate.nlp.MaShippedWords.putMisspellings(
+                    map.filter { (k, v) -> v.none { it.equals(k, ignoreCase = true) } }.keys,
+                )
                 map as Map<String, List<String>>
             }.getOrDefault(emptyMap()).also { cache[lang] = it }
         }
@@ -887,9 +890,16 @@ class LatinLanguageProvider(context: Context) : SpellingProvider, SuggestionProv
         // seperate, untill, because the English dictionary itself contained them). The Wikipedia list of common
         // misspellings ships as ime/dict/<lang>_misspellings.txt (wrong → right, "|" between alternatives); a
         // misspelling with one fix is swapped in on space, like SwiftKey; with several they are offered.
-        if (prefs.suggestion.autoCorrect.get() && word.length >= 2) {
+        if (prefs.suggestion.autoCorrect.get() && word.isNotEmpty()) {
             val fixes = misspellingsFor(subtype)[word.lowercase()]
-            if (fixes != null) {
+            // A fix that only changes the case ("i" → "I", "i'm" → "I'm") takes the typed word's place.
+            if (fixes != null && fixes.size == 1 && fixes[0].equals(word, ignoreCase = true)) {
+                if (fixes[0] != word) {
+                    out[word.lowercase()] = WordSuggestionCandidate(
+                        text = fixes[0], confidence = 1.0, isEligibleForAutoCommit = true, sourceProvider = this,
+                    )
+                }
+            } else if (fixes != null) {
                 out.putIfAbsent(
                     word.lowercase(),
                     WordSuggestionCandidate(text = word, confidence = 1.0, isEligibleForAutoCommit = false, sourceProvider = this),
