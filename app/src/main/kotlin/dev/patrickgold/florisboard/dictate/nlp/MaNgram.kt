@@ -244,13 +244,17 @@ object MaNgram {
      */
     fun onCommit(text: String, isIncognito: Boolean) {
         if (isIncognito || text.isEmpty()) return
-        if (text.length > 1) {
+        // One word committed whole (the composing word when it is finished, or a suggestion picked) joins
+        // the sentence being collected, like typed letters do (7.11.2026: learned alone, typing never taught
+        // which word follows which: no bigrams, no names after names). A transcript stays a unit of its own.
+        val oneWord = text.length in 2..40 && text.trimEnd().none { it.isWhitespace() }
+        if (text.length > 1 && !oneWord) {
             learn(text, isIncognito)
             return
         }
-        val ch = text[0]
+        val ch = text.last()
         val ready: String? = synchronized(pendingLock) {
-            pending.append(ch)
+            pending.append(text)
             when {
                 ch in SENTENCE_ENDS || pending.length >= MAX_PENDING -> {
                     val out = pending.toString()
@@ -443,16 +447,21 @@ object MaNgram {
             // typed twice was never offered. A capitalised word neither shipped dictionary knows, seen at least
             // twice, is offered from the start: from its first letters, and after the word it follows
             // ("Zvjezdana " → "Kovačević").
+            // A name has no language: a name committed on its own is filed by the word gate, often under
+            // the other language (live test: "Ximenka" went to the Croatian model while "we saw Xim" asked
+            // the English one), so both models are asked.
             val (two, one) = active.contextOf(context)
-            active.predict(
-                previousTwo = two,
-                previousOne = one,
-                prefix = word,
-                weight = { recent.weight(it, day) },
-                skip = { w ->
-                    fixes.isTypo(w) || w.firstOrNull()?.isUpperCase() != true || MaShippedWords.isKnown(w)
-                },
-            ).filter { it.count >= 2 }
+            LANGUAGES.flatMap { lang ->
+                modelFor(lang).predict(
+                    previousTwo = two,
+                    previousOne = one,
+                    prefix = word,
+                    weight = { recent.weight(it, day) },
+                    skip = { w ->
+                        fixes.isTypo(w) || w.firstOrNull()?.isUpperCase() != true || MaShippedWords.isKnown(w)
+                    },
+                )
+            }.filter { it.count >= 2 }.distinctBy { it.word.lowercase() }.sortedByDescending { it.count }.take(PREDICT_LIMIT)
         }
         // A word he has corrected before: what he meant comes first, in the case he is typing.
         // Ahead of the totalWords gate, because one correction is already certain knowledge.
