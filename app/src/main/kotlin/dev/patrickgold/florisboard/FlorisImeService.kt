@@ -444,10 +444,19 @@ class FlorisImeService : LifecycleInputMethodService() {
         val editorInfo = FlorisEditorInfo.wrap(info)
         // Another field of the same app: the one being left is "closed" for the address book, so an email
         // or number typed there is saved (live test 7.11.2026: moving from Email to Text saved nothing,
-        // because a web page switches fields by RESTARTING the input, so restarts count too).
+        // because a web page switches fields by RESTARTING the input). But a web page also restarts the
+        // input in the middle of typing, and counting those saved halves ("+385915"): a restart counts as
+        // leaving only when the new field's text does not continue the old one.
         runCatching {
             val c = editorInstance.activeContent
-            dev.patrickgold.florisboard.dictate.nlp.MaAddressBook.observe(
+            val oldText = c.textBeforeSelection.toString()
+            val newText = if (android.os.Build.VERSION.SDK_INT >= 30) {
+                info.getInitialTextBeforeCursor(400, 0)?.toString().orEmpty()
+            } else ""
+            // Same field when one text carries the other's last characters (one keystroke apart either way).
+            val sameField = restarting && newText.isNotEmpty() && oldText.isNotEmpty() &&
+                (newText.contains(oldText.takeLast(40).dropLast(1)) || oldText.contains(newText.takeLast(40).dropLast(1)))
+            if (!sameField) dev.patrickgold.florisboard.dictate.nlp.MaAddressBook.observe(
                 c.textBeforeSelection, c.textAfterSelection,
                 keyboardManager.activeState.isIncognitoMode, fieldClosing = true,
             )
