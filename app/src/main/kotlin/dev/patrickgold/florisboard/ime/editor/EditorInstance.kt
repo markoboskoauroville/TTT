@@ -341,12 +341,12 @@ class EditorInstance(context: Context) : AbstractEditorInstance(context) {
         // typed ("marko.bo", "091 23"), not only its last word ("bo"), which would leave
         // "marko.marko.bosko@gmail.com".
         val book = dev.patrickgold.florisboard.dictate.nlp.MaAddressBook
-        if ((text.contains('@') || book.isPhone(text)) && content.selection.isCursorMode) {
+        if (book.isSaved(text) && content.selection.isCursorMode) {
             val ic = dev.patrickgold.florisboard.FlorisImeService.currentInputConnection() ?: return false
             val headLength = book.spanToReplace(content.textBeforeSelection, text)
             val tail = if (text.contains('@')) content.textAfterSelection.takeWhile {
                 it.isLetterOrDigit() || it in book.ADDRESS_CHARS
-            } else content.textAfterSelection.takeWhile { it.isDigit() }
+            } else content.textAfterSelection.takeWhile { it.isLetterOrDigit() }
             val space = if (activeState.keyVariation == KeyVariation.NORMAL) SPACE else ""
             phantomSpace.setInactive()
             ic.beginBatchEdit()

@@ -45,6 +45,10 @@ import java.io.File
  * of the same app focused). **Offered** first in the strip; an empty email field offers the most used
  * addresses, an empty phone field the most used numbers, and "my email is" / "moj broj je" offer one's own.
  *
+ * Also web addresses (www…, https://…, name.tld/…) and IBANs (checked with their ISO checksum), offered
+ * from their first characters, in a URL field, or after "IBAN" / "moj račun je" (7.11.2026: "find more
+ * such useful shortcuts to present the right information at the right time").
+ *
  * One small file, `ma_addresses.tsv` (value, count, kind). Never learned in incognito mode.
  */
 object MaAddressBook {
@@ -57,6 +61,11 @@ object MaAddressBook {
 
     private const val EMAIL_KIND = "e"
     private const val PHONE_KIND = "p"
+    private const val URL_KIND = "u"
+    private const val IBAN_KIND = "i"
+
+    /** Characters a web address is made of (besides letters and digits). */
+    private const val URL_CHARS = "._-/:%?=&#~+"
 
     private const val PHONE_MIN_DIGITS = 6
     private const val PHONE_MAX_DIGITS = 15
@@ -65,6 +74,9 @@ object MaAddressBook {
     private val EMAIL = Regex("""[A-Za-z0-9._%+-]+@[A-Za-z0-9-]+(\.[A-Za-z0-9-]+)*\.[A-Za-z]{2,}""")
     private val PHONE = Regex("""(?<![\w@.])\+?\(?\d[\d \-/()]{4,22}\d(?![\w@])""")
     private val DATE_LIKE = Regex("""^\d{1,4}([./]\d{1,4}){2}$""")
+    private val URL = Regex("""(?i)(?<![@\w.])((https?://)?(www\.)?[a-z0-9-]+(\.[a-z0-9-]+)*\.(com|net|org|hr|eu|io|ai|app|dev|co|uk|de|at|si|ba|rs|it|fr|info|me|tv|in|ly|gg|xyz|online|site|shop|store)(/[^\s]*)?)(?![\w@])""")
+    private val IBAN = Regex("""(?<![A-Za-z0-9])[A-Z]{2}\d{2}(?: ?[A-Z0-9]{4}){2,7}(?: ?[A-Z0-9]{1,4})?(?![A-Za-z0-9])""")
+    private val ASK_IBAN = Regex("""(?i)\b(iban|moj (žiro |ziro |tekući |tekuci )?račun je|moj (ziro |tekuci )?racun je|account number is|uplati na|uplatite na)\s*:?\s*$""")
 
     /** "my email is", "moj mail je": the next word is one's own address or number. */
     private val ASK_EMAIL = Regex("""(?i)\b(my e-?mail( address)? is|e-?mail me at|moj (e-?)?mail je|mail mi je|moja (e-?)?mail adresa je)\s*$""")
@@ -111,8 +123,49 @@ object MaAddressBook {
         s.forEachIndexed { i, c -> if (c.isDigit() || (c == '+' && i == 0)) append(c) }
     }
 
-    private fun keyOf(value: String, kind: String): String =
-        if (kind == PHONE_KIND) digitsOf(value.trim()) else value.lowercase()
+    private fun keyOf(value: String, kind: String): String = when (kind) {
+        PHONE_KIND -> digitsOf(value.trim())
+        IBAN_KIND -> "iban:" + value.filter { it.isLetterOrDigit() }.uppercase()
+        URL_KIND -> "url:" + bareUrl(value)
+        else -> value.lowercase()
+    }
+
+    /** "https://www.Example.com/" → "example.com": how a web address is compared. */
+    private fun bareUrl(s: String): String =
+        s.trim().lowercase().removePrefix("https://").removePrefix("http://").removePrefix("www.").trimEnd('/')
+
+    /** ISO 13616 check: an IBAN typed with a wrong digit is not saved. */
+    private fun validIban(compact: String): Boolean {
+        if (compact.length !in 15..34) return false
+        val moved = compact.substring(4) + compact.substring(0, 4)
+        var rest = 0
+        for (c in moved) {
+            val v = if (c.isDigit()) c - '0' else if (c in 'A'..'Z') c - 'A' + 10 else return false
+            rest = if (v >= 10) (rest * 100 + v) % 97 else (rest * 10 + v) % 97
+        }
+        return rest == 1
+    }
+
+    /** The web address being typed right before the cursor, or "" when it is not one. */
+    fun trailingUrl(textBefore: CharSequence): String {
+        var i = textBefore.length
+        while (i > 0 && (textBefore[i - 1].isLetterOrDigit() || textBefore[i - 1] in URL_CHARS)) i--
+        val run = textBefore.substring(i)
+        if (run.contains('@')) return ""
+        val l = run.lowercase()
+        return if (l.startsWith("www") || l.startsWith("http") || (run.contains('.') && run.length >= 4)) run else ""
+    }
+
+    /** The IBAN being typed right before the cursor ("HR12 2340 00"), or "". */
+    fun trailingIban(textBefore: CharSequence): String {
+        var i = textBefore.length
+        while (i > 0 && (textBefore[i - 1].isLetterOrDigit() || textBefore[i - 1] == ' ')) i--
+        // From the first word that looks like the start of an IBAN: two capitals, two digits.
+        val run = textBefore.substring(i)
+        val start = Regex("""[A-Z]{2}\d{2}""").find(run)?.range?.first ?: return ""
+        val tail = run.substring(start)
+        return if (tail.filter { it.isLetterOrDigit() }.length >= 4 && (start == 0 || run[start - 1] == ' ')) tail else ""
+    }
 
     /** The run of address characters right before the cursor: what is being typed if it is an address. */
     fun trailingToken(textBefore: CharSequence): String {
@@ -135,11 +188,21 @@ object MaAddressBook {
     }
 
     /** How many characters before the cursor a picked [candidate] replaces (0: not an address or number). */
-    fun spanToReplace(textBefore: CharSequence, candidate: String): Int = when {
-        candidate.contains('@') -> trailingToken(textBefore).length
-        isPhone(candidate) -> trailingPhone(textBefore).length
+    fun spanToReplace(textBefore: CharSequence, candidate: String): Int = when (kindOf(candidate)) {
+        EMAIL_KIND -> trailingToken(textBefore).length
+        PHONE_KIND -> trailingPhone(textBefore).length
+        URL_KIND -> trailingUrl(textBefore).length
+        IBAN_KIND -> trailingIban(textBefore).length
         else -> 0
     }
+
+    /** The kind of a saved value ([candidate] as offered in the strip), or null when it is not one. */
+    private fun kindOf(candidate: String): String? = synchronized(lock) {
+        listOf(EMAIL_KIND, PHONE_KIND, URL_KIND, IBAN_KIND).firstOrNull { k -> entries[keyOf(candidate, k)]?.kind == k }
+    }
+
+    /** Whether [text] is a saved email, number, web address or IBAN (so the strip commits it whole). */
+    fun isSaved(text: String): Boolean = kindOf(text) != null
 
     /** Whether [text] is one of the saved phone numbers (so the strip knows how to commit it). */
     fun isPhone(text: String): Boolean {
@@ -170,6 +233,13 @@ object MaAddressBook {
             }
         }
         for (m in EMAIL.findAll(text)) count(m.value.trimEnd('.', '-'), EMAIL_KIND, m.range.last, typingEmail)
+        val typingUrl = !fieldClosing && trailingUrl(before).isNotEmpty()
+        for (m in URL.findAll(text)) count(m.value.trimEnd('.', ',', ')'), URL_KIND, m.range.last, typingUrl)
+        val typingIban = !fieldClosing && trailingIban(before).isNotEmpty() && !before.endsWith(" ")
+        for (m in IBAN.findAll(text)) {
+            val compact = m.value.filter { it.isLetterOrDigit() }
+            if (validIban(compact)) count(m.value.trim(), IBAN_KIND, m.range.last, typingIban)
+        }
         for (m in PHONE.findAll(text)) {
             val value = m.value.trim()
             val digits = value.count { it.isDigit() }
@@ -186,7 +256,13 @@ object MaAddressBook {
      * What to offer for the text before the cursor: saved addresses or numbers that complete what is being
      * typed, most used first. [isEmailField] / [isPhoneField] make an empty field offer the most used ones.
      */
-    fun suggest(textBefore: CharSequence, isEmailField: Boolean, isPhoneField: Boolean, limit: Int = 3): List<String> {
+    fun suggest(
+        textBefore: CharSequence,
+        isEmailField: Boolean,
+        isPhoneField: Boolean,
+        isUrlField: Boolean = false,
+        limit: Int = 3,
+    ): List<String> {
         val all = synchronized(lock) { entries.values.map { Triple(it.value, it.count, it.kind) } }
         if (all.isEmpty()) return emptyList()
         fun top(kind: String) = all.filter { it.third == kind }.sortedByDescending { it.second }.map { it.first }.take(limit)
@@ -194,6 +270,26 @@ object MaAddressBook {
         // Shortcuts: "my email is " → one's addresses, "moj broj je " → one's numbers.
         if (ASK_EMAIL.containsMatchIn(before)) return top(EMAIL_KIND)
         if (ASK_PHONE.containsMatchIn(before)) return top(PHONE_KIND)
+        if (ASK_IBAN.containsMatchIn(before)) return top(IBAN_KIND)
+
+        val iban = trailingIban(before)
+        if (iban.isNotEmpty()) {
+            val typed = iban.filter { it.isLetterOrDigit() }.uppercase()
+            val hits = all.filter { it.third == IBAN_KIND }
+                .filter { (v, _, _) -> v.filter { c -> c.isLetterOrDigit() }.uppercase().let { it.startsWith(typed) && it != typed } }
+                .sortedByDescending { it.second }.map { it.first }.take(limit)
+            if (hits.isNotEmpty()) return hits
+        }
+
+        val url = trailingUrl(before)
+        if (url.isNotEmpty() || (isUrlField && before.isBlank())) {
+            if (url.isEmpty()) return top(URL_KIND)
+            val typed = bareUrl(url)
+            val hits = all.filter { it.third == URL_KIND }
+                .filter { (v, _, _) -> bareUrl(v).let { it.startsWith(typed) && it != typed } || (typed.length >= 3 && v.lowercase().startsWith(url.lowercase()) && !v.equals(url, true)) }
+                .sortedByDescending { it.second }.map { it.first }.take(limit)
+            if (hits.isNotEmpty() || url.lowercase().startsWith("www") || url.lowercase().startsWith("http")) return hits
+        }
 
         val phone = trailingPhone(before)
         if (phone.isNotEmpty() || (isPhoneField && before.isBlank())) {
