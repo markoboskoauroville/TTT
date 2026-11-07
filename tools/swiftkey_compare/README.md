@@ -15,6 +15,7 @@ Needs `tesseract-ocr` with `eng` and `hrv`.
 - `run3.py` types the typo set (`cases3.py`) with a space and reads what ended up in the box.
 - `compare.py <swiftkey-tag> <ttt-tag>` scores: is SwiftKey's word in TTT's strip / top three.
 - `res_skref.json`, `res_sk2ref.json`: SwiftKey's answers, OCR corrected by eye (diacritics).
+- `smoke.sh <build>`: install a build fresh, type, and fail on any crash in logcat. Run it first, every build.
 - `phone.py`: email learned in the Email box and recalled in Text; a number recalled from "09155" and after
   "my number is".
 - `simulate.py`: the ranking re-implemented in Python over the shipped dictionaries, to tune weights offline.
