@@ -294,11 +294,27 @@ class NlpManager(context: Context) {
             // learns as he writes. That is the honest state of it, and it fills.
             // The typing language decides now (MaTypingLanguage); with detection off it is the badge.
             val providerAgrees = shippedSubtype != null
+            val isEmailField = keyboardManager.activeState.keyVariation ==
+                dev.patrickgold.florisboard.ime.text.key.KeyVariation.EMAIL_ADDRESS
+            val addresses = if (keyboardManager.activeState.isIncognitoMode) emptyList() else
+                dev.patrickgold.florisboard.dictate.nlp.MaAddressBook.suggest(
+                    dev.patrickgold.florisboard.dictate.nlp.MaAddressBook.trailingToken(content.textBeforeSelection),
+                    isEmailField,
+                ).map { address ->
+                    WordSuggestionCandidate(
+                        text = address, secondaryText = null, confidence = 1.0,
+                        isEligibleForAutoCommit = false, sourceProvider = null,
+                    )
+                }
             internalSuggestionsGuard.withLock {
                 if (internalSuggestions.first < reqTime) {
                     internalSuggestions = reqTime to buildList {
-                        addAll(emojiSuggestions)
-                        addAll(personal)
+                        // Saved email addresses first, whole (MaAddressBook, Marko 7.11.2026: "TTT must nicely
+                        // save all email addresses"): "mar" or "marko.b" offers marko.bosko@gmail.com, and an
+                        // empty email field offers the most used ones.
+                        addAll(addresses)
+                        addAll(emojiSuggestions.takeIf { addresses.isEmpty() }.orEmpty())
+                        addAll(personal.filter { p -> addresses.none { it.text.toString().equals(p.text.toString(), true) } })
                         if (providerAgrees) {
                             val seen = personal.map { it.text.toString().lowercase() }.toSet()
                             addAll(suggestions.filter { it.text.toString().lowercase() !in seen })

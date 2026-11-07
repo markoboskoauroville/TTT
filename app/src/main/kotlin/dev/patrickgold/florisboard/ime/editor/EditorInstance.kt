@@ -144,6 +144,11 @@ class EditorInstance(context: Context) : AbstractEditorInstance(context) {
         // The personal model watches the text for a word typed, cut back and typed again: a typo and
         // its correction (MaCorrections). Only observes.
         MaNgram.observeText(activeContent.textBeforeSelection.toString(), keyboardManager.activeState.isIncognitoMode)
+        // Email addresses are kept whole (MaAddressBook, Marko 7.11.2026): counted once the cursor left them.
+        dev.patrickgold.florisboard.dictate.nlp.MaAddressBook.observe(
+            activeContent.textBeforeSelection, activeContent.textAfterSelection,
+            keyboardManager.activeState.isIncognitoMode, fieldClosing = false,
+        )
     }
 
     override fun determineComposingEnabled(): Boolean {
@@ -332,6 +337,23 @@ class EditorInstance(context: Context) : AbstractEditorInstance(context) {
         //
         // Apostrophes and hyphens count as part of the word, so `don't` and `well-known` are
         // replaced whole rather than losing their tail to the next commit.
+        // An email address from MaAddressBook replaces the whole address being typed ("marko.bo"), not
+        // only its last word ("bo"), which would leave "marko.marko.bosko@gmail.com".
+        if (text.contains('@') && content.selection.isCursorMode) {
+            val ic = dev.patrickgold.florisboard.FlorisImeService.currentInputConnection() ?: return false
+            val head = dev.patrickgold.florisboard.dictate.nlp.MaAddressBook.trailingToken(content.textBeforeSelection)
+            val tail = content.textAfterSelection.takeWhile {
+                it.isLetterOrDigit() || it in dev.patrickgold.florisboard.dictate.nlp.MaAddressBook.ADDRESS_CHARS
+            }
+            val space = if (activeState.keyVariation == KeyVariation.NORMAL) SPACE else ""
+            phantomSpace.setInactive()
+            ic.beginBatchEdit()
+            ic.finishComposingText()
+            ic.deleteSurroundingText(head.length, tail.length)
+            ic.commitText(text + space, 1)
+            ic.endBatchEdit()
+            return true
+        }
         if (!content.composing.isValid && content.selection.isCursorMode && content.selection.isValid) {
             val head = content.textBeforeSelection.takeLastWhile { it.isLetterOrDigit() || it == '\'' || it == '-' }
             val tail = content.textAfterSelection.takeWhile { it.isLetterOrDigit() || it == '\'' || it == '-' }

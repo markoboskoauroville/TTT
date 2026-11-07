@@ -594,6 +594,14 @@ class FlorisImeService : LifecycleInputMethodService() {
         // His corrections to the last dictation are read now, while this field is still the one
         // connected. Not when only the keyboard hides: he may bring it back to fix the same text.
         MaDictationCorrections.settle(editorInstance.activeInfo)
+        // The field closes: every complete email address in it is saved whole (MaAddressBook, 7.11.2026).
+        runCatching {
+            val c = editorInstance.activeContent
+            dev.patrickgold.florisboard.dictate.nlp.MaAddressBook.observe(
+                c.textBeforeSelection, c.textAfterSelection,
+                keyboardManager.activeState.isIncognitoMode, fieldClosing = true,
+            )
+        }
         super.onFinishInput()
         editorInstance.handleFinishInput()
         NlpInlineAutofill.clearInlineSuggestions()

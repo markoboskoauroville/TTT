@@ -168,6 +168,7 @@ class FlorisApplication : Application() {
             DictateLegacyMigrator.addRepromptKeyIfNeeded()
             MaLog.initialize(this@FlorisApplication)
             MaNgram.initialize(this@FlorisApplication)
+            dev.patrickgold.florisboard.dictate.nlp.MaAddressBook.initialize(this@FlorisApplication)
             MaDictationCorrections.initialize(this@FlorisApplication)
             // After initialize, which loads whatever the model already knows, so the backfill adds
             // to it rather than racing the load and being overwritten by it.
