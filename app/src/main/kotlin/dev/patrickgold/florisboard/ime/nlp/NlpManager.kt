@@ -296,10 +296,11 @@ class NlpManager(context: Context) {
             val providerAgrees = shippedSubtype != null
             val isEmailField = keyboardManager.activeState.keyVariation ==
                 dev.patrickgold.florisboard.ime.text.key.KeyVariation.EMAIL_ADDRESS
+            val isPhoneField = keyboardManager.activeState.keyboardMode ==
+                dev.patrickgold.florisboard.ime.keyboard.KeyboardMode.PHONE
             val addresses = if (keyboardManager.activeState.isIncognitoMode) emptyList() else
                 dev.patrickgold.florisboard.dictate.nlp.MaAddressBook.suggest(
-                    dev.patrickgold.florisboard.dictate.nlp.MaAddressBook.trailingToken(content.textBeforeSelection),
-                    isEmailField,
+                    content.textBeforeSelection, isEmailField, isPhoneField,
                 ).map { address ->
                     WordSuggestionCandidate(
                         text = address, secondaryText = null, confidence = 1.0,

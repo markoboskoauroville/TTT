@@ -337,19 +337,21 @@ class EditorInstance(context: Context) : AbstractEditorInstance(context) {
         //
         // Apostrophes and hyphens count as part of the word, so `don't` and `well-known` are
         // replaced whole rather than losing their tail to the next commit.
-        // An email address from MaAddressBook replaces the whole address being typed ("marko.bo"), not
-        // only its last word ("bo"), which would leave "marko.marko.bosko@gmail.com".
-        if (text.contains('@') && content.selection.isCursorMode) {
+        // An email address or phone number from MaAddressBook replaces the whole address or number being
+        // typed ("marko.bo", "091 23"), not only its last word ("bo"), which would leave
+        // "marko.marko.bosko@gmail.com".
+        val book = dev.patrickgold.florisboard.dictate.nlp.MaAddressBook
+        if ((text.contains('@') || book.isPhone(text)) && content.selection.isCursorMode) {
             val ic = dev.patrickgold.florisboard.FlorisImeService.currentInputConnection() ?: return false
-            val head = dev.patrickgold.florisboard.dictate.nlp.MaAddressBook.trailingToken(content.textBeforeSelection)
-            val tail = content.textAfterSelection.takeWhile {
-                it.isLetterOrDigit() || it in dev.patrickgold.florisboard.dictate.nlp.MaAddressBook.ADDRESS_CHARS
-            }
+            val headLength = book.spanToReplace(content.textBeforeSelection, text)
+            val tail = if (text.contains('@')) content.textAfterSelection.takeWhile {
+                it.isLetterOrDigit() || it in book.ADDRESS_CHARS
+            } else content.textAfterSelection.takeWhile { it.isDigit() }
             val space = if (activeState.keyVariation == KeyVariation.NORMAL) SPACE else ""
             phantomSpace.setInactive()
             ic.beginBatchEdit()
             ic.finishComposingText()
-            ic.deleteSurroundingText(head.length, tail.length)
+            ic.deleteSurroundingText(headLength, tail.length)
             ic.commitText(text + space, 1)
             ic.endBatchEdit()
             return true

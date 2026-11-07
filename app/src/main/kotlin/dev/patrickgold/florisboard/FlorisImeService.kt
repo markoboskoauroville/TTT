@@ -442,6 +442,15 @@ class FlorisImeService : LifecycleInputMethodService() {
         super.onStartInput(info, restarting)
         if (info == null) return
         val editorInfo = FlorisEditorInfo.wrap(info)
+        // Another field of the same app: the one being left is "closed" for the address book, so an email
+        // or number typed there is saved (live test 7.11.2026: moving from Email to Text saved nothing).
+        if (!restarting) runCatching {
+            val c = editorInstance.activeContent
+            dev.patrickgold.florisboard.dictate.nlp.MaAddressBook.observe(
+                c.textBeforeSelection, c.textAfterSelection,
+                keyboardManager.activeState.isIncognitoMode, fieldClosing = true,
+            )
+        }
         editorInstance.handleStartInput(editorInfo)
         // A new field starts from the badge, not from the language of the last field (MaTypingLanguage).
         if (!restarting) MaTypingLanguage.reset()
