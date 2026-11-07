@@ -49,3 +49,24 @@ Every request word for word, saved and pushed before any code (MANTRA_MANIFEST r
 
 **Status:** done 1.11.2026 (site/build.py): banner = img/hero.jpg with the TTT keys and the line on it, the introduction with Download the latest version, the technical part, the bowl. The lifestyle picture is still needed (a placeholder comment marks its place): a person using TTT in real life, to be made in Gemini.
 **Status, 1.11.2026 (later):** the lifestyle picture is in (made in Gemini, lifestyle.jpg); the page order is complete.
+
+## 7.11.2026: tune TTT to SwiftKey, live on two Pixel emulators; Croatian ships instead of German; emails, numbers and more
+
+> "Please, now we are need to basically reverse engineer, or we can say use Microsoft Swift Keyboard to improve our TTT keyboard. Each, which means in one emulator load Swift Keyboard and open some text editor to type into it. On another, open the same text editor and TTT. And you need to compare how Swift keyboard is predicting the words. And if the same word is not predicted inside my TTT, you need to adjust algorithms so it fits the same algorithm from Swift. So you need to go back and forth and tune TTT to fit predictions from Swift. And also TTT must nicely save all email addresses and names. You need to figure out how by testing it live. Swift is doing all these things better than TTT. So idea is to bring TTT to the level of Swift in key— in predictions of the word, and for both English and Croatian." (Marko, 7.11.2026; later: "keep going until midnight")
+
+> "Please, if TTT ships with German, you need to change the source code. Don't ship German, ship Croatian. Remove German from the source code." (Marko, 7.11.2026)
+
+> "Also, our app needs to recognize 3 categories of text: normal text, email addresses, and phone numbers. And when I'm typing number, if I'm starting with certain digits, it needs to recognize it's the phone number and just pull it out of the database. Email is the same. Please build, upgrade our TTT to have this. I think this is how SwiftKey is working because when I type phone number or email address, it immediately recognizes it now for me from the database. and find more such useful shortcuts to present the right information at the right time" (Marko, 7.11.2026)
+
+1. Pixel 1 (SwiftKey 9.13, signed in to his Microsoft account, English + Croatian) and Pixel 2 (TTT) type the same 56 phrases into the same page; TTT is tuned until it offers what SwiftKey offers.
+2. Croatian replaces German in the APK; German is removed from the keyboard's dictionaries.
+3. Email addresses, phone numbers (and names) are kept whole and offered as soon as they are started.
+
+**Status (7.11.2026, builds 447–458):**
+- German out, Croatian in: de.json removed; hr.json, hr_bigrams.txt, hr_trigrams.txt bundled; German umlaut/ß restoration replaced by Croatian diacritic restoration (c→č/ć, s→š, z→ž, dj→đ; sto→Što, kuca→Kuća swapped on space when the diacritic form is ≥20 points commoner, like SwiftKey). Speech-to-text keeps German as a dictation language (that is the transcription list, not the keyboard).
+- Croatian actually reaches the strip: under the HR badge (his profile has only en-US) the shipped engine was dropped; now it reads the same keyboard with the Croatian dictionary. Bundled files win over older downloads (a downloaded old Croatian list kept answering "dobro → prihvaćen").
+- Typing language: the two shipped dictionaries now count as evidence (on a fresh phone "good m" was read as Croatian and offered "mogu, mislim").
+- Ranking like SwiftKey: completions ranked by the previous one and two words (bigrams + trigrams), conversational data from OpenSubtitles merged into the bigrams, trigrams new (tools/glide-dict/subtitle_pairs.py, merge_bigrams.py, subtitle_triples.py, make_trigrams.py). Croatian completion ignores diacritics (cov → čovjek). A phrase in the third slot when one word clearly follows (going to, want to, end of). Simulated on SwiftKey's own choices for the 56 phrases: 35 → 65 of 100 SwiftKey words in TTT's top three.
+- MaAddressBook: emails, phone numbers, web addresses and IBANs (checksum-checked) saved whole when the field is left or the cursor moves past them; offered first from their first characters (091 55 also finds +385 91 555…), in empty email / phone / URL fields, and after "my email is", "moj broj je", "IBAN", "moj račun je". Contacts: opt-in (READ_CONTACTS declared, never asked; allow it in Android settings → TTT → Permissions), then contact emails, numbers and names (a capitalised "Mar" → "Marko …") join.
+- Live: build 452 on the emulator: 37 of 100 SwiftKey words in TTT's strip (448: 28), by OCR; "laku n" → noć, "good m" → morning, "do you w" → want / want to, "thank you " → for. Phone number saved and offered after "my number is" (454).
+- SwiftKey itself: emoji predictions switched off; it has no setting for more than three suggestions (the arrow at the left of its bar opens more).
