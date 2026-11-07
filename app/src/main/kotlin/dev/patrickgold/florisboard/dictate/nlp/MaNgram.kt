@@ -438,7 +438,21 @@ object MaNgram {
                 skip = { fixes.isTypo(it) },
             )
         } else {
-            emptyList()
+            // NAMES BEFORE THE GATE (7.11.2026, SwiftKey parity: "TTT must nicely save all email addresses
+            // and names"). Below MIN_WORDS_BEFORE_PREDICTING the model stays silent, so on a new phone a name
+            // typed twice was never offered. A capitalised word neither shipped dictionary knows, seen at least
+            // twice, is offered from the start: from its first letters, and after the word it follows
+            // ("Zvjezdana " → "Kovačević").
+            val (two, one) = active.contextOf(context)
+            active.predict(
+                previousTwo = two,
+                previousOne = one,
+                prefix = word,
+                weight = { recent.weight(it, day) },
+                skip = { w ->
+                    fixes.isTypo(w) || w.firstOrNull()?.isUpperCase() != true || MaShippedWords.isKnown(w)
+                },
+            ).filter { it.count >= 2 }
         }
         // A word he has corrected before: what he meant comes first, in the case he is typing.
         // Ahead of the totalWords gate, because one correction is already certain knowledge.
