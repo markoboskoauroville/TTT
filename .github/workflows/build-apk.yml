@@ -174,8 +174,10 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release list --limit 200 --json tagName,createdAt \
-            --jq 'sort_by(.createdAt) | reverse | .[2:] | .[].tagName' | while read -r tag; do
+          # By build number, not createdAt: GitHub dates a release by its commit, so when builds finish
+          # out of order (7.11.2026: 473, 474, 476 at once) the newest build was the one deleted.
+          gh release list --limit 200 --json tagName \
+            --jq '[.[] | select(.tagName | test("^build-[0-9]+$"))] | sort_by(.tagName | ltrimstr("build-") | tonumber) | reverse | .[2:] | .[].tagName' | while read -r tag; do
             [ -z "$tag" ] && continue
             gh release delete "$tag" --yes --cleanup-tag || true
             echo "removed $tag"
