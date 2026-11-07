@@ -140,7 +140,9 @@ object MaWhatsApp {
         MaMessage.show("WhatsApp: working on it")
         job = scope.launch {
             val report = runCatching { agent(context.applicationContext, service, key, words) }
-                .getOrElse { e -> "stopped (${e.javaClass.simpleName})" }
+                .getOrElse { e ->
+                    if (e is kotlinx.coroutines.CancellationException) "stopped" else "stopped: ${e.message ?: e.javaClass.simpleName}"
+                }
             busy.value = false
             MaMessage.show("WhatsApp: $report")
         }
@@ -310,7 +312,13 @@ When done, or if you cannot do it, call finish with one short sentence for Marko
             .build()
         http.newCall(request).execute().use { r ->
             val text = r.body?.string().orEmpty()
-            if (!r.isSuccessful) error("HTTP ${r.code}")
+            if (!r.isSuccessful) error(
+                when (r.code) {
+                    401, 403 -> "the Anthropic key was refused"
+                    429 -> "Anthropic is busy or the limit is reached, try again"
+                    else -> "Anthropic answered ${r.code}"
+                },
+            )
             return json.parseToJsonElement(text).jsonObject
         }
     }
