@@ -264,8 +264,14 @@ object MaNgram {
                 else -> null
             }
         }
-        if (ready != null) learn(ready, isIncognito)
+        if (ready != null) {
+            dlog("sentence ready: ${ready.length} chars")
+            learn(ready, isIncognito)
+        }
     }
+
+    /** Log lines for the live tests (tag MaNgram): lengths and counts only, never the words. */
+    private fun dlog(msg: String) { runCatching { android.util.Log.i("MaNgram", msg) } }
 
     /** A picked suggestion: [typed] (the letters so far, already collected) becomes [picked] in the sentence. */
     fun onReplaceWord(typed: String, picked: String, isIncognito: Boolean) {
@@ -337,6 +343,7 @@ object MaNgram {
                 }
             }
             modelFor(badge).learn(text)
+            dlog("learned ${text.length} chars into $badge (model now ${modelFor(badge).totalWords} words)")
             val day = today()
             MaNgramModel.tokenize(text).forEach { recencyFor(badge).touch(it, day) }
             scheduleSave()
@@ -471,6 +478,7 @@ object MaNgram {
                     },
                 )
             }.filter { it.count >= 2 }.distinctBy { it.word.lowercase() }.sortedByDescending { it.count }.take(PREDICT_LIMIT)
+                .also { if (word.isNotEmpty()) dlog("names for a ${word.length}-letter prefix: ${it.size}") }
         }
         // A word he has corrected before: what he meant comes first, in the case he is typing.
         // Ahead of the totalWords gate, because one correction is already certain knowledge.
