@@ -338,6 +338,7 @@ class NlpManager(context: Context) {
             }.getOrDefault(emptyList())
             internalSuggestionsGuard.withLock {
                 if (internalSuggestions.first < reqTime) {
+                    suggestedForWord = content.currentWordText
                     internalSuggestions = reqTime to buildList {
                         // Saved email addresses first, whole (MaAddressBook, Marko 7.11.2026: "TTT must nicely
                         // save all email addresses"): "mar" or "marko.b" offers marko.bosko@gmail.com, and an
@@ -372,6 +373,7 @@ class NlpManager(context: Context) {
         val reqTime = SystemClock.uptimeMillis()
         holdNextSuggest = holdNext
         runBlocking {
+            suggestedForWord = null
             internalSuggestions = reqTime to suggestions
         }
     }
@@ -383,7 +385,15 @@ class NlpManager(context: Context) {
         }
     }
 
+    /** The word the shown suggestions were computed for; null when they were set directly. */
+    @Volatile
+    private var suggestedForWord: String? = null
+
     fun getAutoCommitCandidate(): SuggestionCandidate? {
+        // Only a fix computed for the word now being typed (live test 7.11.2026, a slow phone: space came
+        // before the suggestions for "is" were ready, and the fix for "i", "I", replaced "is").
+        val forWord = suggestedForWord
+        if (forWord != null && !forWord.equals(editorInstance.activeContent.currentWordText, ignoreCase = true)) return null
         return activeCandidates.firstOrNull { it.isEligibleForAutoCommit }
     }
 

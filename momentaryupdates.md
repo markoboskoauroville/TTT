@@ -107,3 +107,8 @@ dobor → dobro, prijatlj → prijatelj).
 mozda → možda, vidmo → vidimo, prijatlj → prijatelj, kuca → kuća. Still missed: "zasot", "nemma" in a fresh
 field after English, because an unknown word keeps the last language. Now the last language is left when it has no
 usable word one edit away and the other has (zasot → Croatian, becuase after Croatian → English).
+
+**Status (7.11.2026, 22:40 UTC, build 494):** 0 ANR. Typos: 20/30 fixed (SwiftKey 16), now also hvla → hvala,
+nemma → nemam. Set 1: 62/100. Address book: kbt → email, 09155 → number, "my number is" → number. Found a race on a
+slow phone: space before the suggestions for "is" were ready committed the fix for "i" ("I"). Auto-correction now
+uses only suggestions computed for the word being typed.
