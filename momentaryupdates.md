@@ -112,3 +112,7 @@ usable word one edit away and the other has (zasot → Croatian, becuase after C
 nemma → nemam. Set 1: 62/100. Address book: kbt → email, 09155 → number, "my number is" → number. Found a race on a
 slow phone: space before the suggestions for "is" were ready committed the fix for "i" ("I"). Auto-correction now
 uses only suggestions computed for the word being typed.
+
+> Please continue testing until five aam.
+
+**Status:** saved first. 5 am taken as 05:00 CET = 04:00 UTC on 8.11.2026, same clock as "midnight" before.
