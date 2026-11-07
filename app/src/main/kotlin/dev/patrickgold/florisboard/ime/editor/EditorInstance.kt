@@ -145,10 +145,13 @@ class EditorInstance(context: Context) : AbstractEditorInstance(context) {
         // its correction (MaCorrections). Only observes.
         MaNgram.observeText(activeContent.textBeforeSelection.toString(), keyboardManager.activeState.isIncognitoMode)
         // Email addresses are kept whole (MaAddressBook, Marko 7.11.2026): counted once the cursor left them.
-        dev.patrickgold.florisboard.dictate.nlp.MaAddressBook.observe(
-            activeContent.textBeforeSelection, activeContent.textAfterSelection,
-            keyboardManager.activeState.isIncognitoMode, fieldClosing = false,
-        )
+        // Guarded: the address book must never take the keyboard down (build 473 did, on every letter).
+        runCatching {
+            dev.patrickgold.florisboard.dictate.nlp.MaAddressBook.observe(
+                activeContent.textBeforeSelection, activeContent.textAfterSelection,
+                keyboardManager.activeState.isIncognitoMode, fieldClosing = false,
+            )
+        }
     }
 
     override fun determineComposingEnabled(): Boolean {
