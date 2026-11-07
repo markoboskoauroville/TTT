@@ -478,7 +478,6 @@ object MaNgram {
                     },
                 )
             }.filter { it.count >= 2 }.distinctBy { it.word.lowercase() }.sortedByDescending { it.count }.take(PREDICT_LIMIT)
-                .also { if (word.isNotEmpty()) dlog("names for a ${word.length}-letter prefix: ${it.size}") }
         }
         // A word he has corrected before: what he meant comes first, in the case he is typing.
         // Ahead of the totalWords gate, because one correction is already certain knowledge.
