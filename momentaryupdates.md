@@ -132,3 +132,7 @@ scripts/test_transcription_model.py (18 checks). Not yet run live: the 1 GB down
 **Status:** saved first (7.11.2026, 23:50 UTC). Read as: Parakeet stays the on-device model (the Whisper Turbo swap is
 undone, the Transcription model setting stays, its on-device engine is Parakeet); test it on the emulator with
 edge-tts voices, English and Croatian, and with typing after the dictation.
+
+**Status (7.11.2026, 23:58 UTC):** Whisper Turbo swap undone; Parakeet TDT 0.6B v3 is the on-device model again and
+is not deleted. Settings → Transcription model stays: AssemblyAI / Parakeet (on the phone) / AssemblyAI with Parakeet
+as fallback (default; any AssemblyAI failure). Next: edge-tts voices on the emulator.

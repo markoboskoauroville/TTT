@@ -44,11 +44,10 @@ import kotlinx.coroutines.launch
 import androidx.compose.runtime.collectAsState as collectFlow
 
 /**
- * Settings → Transcription model (Marko, 7.11.2026): "Inside I have AssemblyAI and Whisper. So there are
- * options either AssemblyAI, either Whisper or Whisper as a fallback if AssemblyAI gets rejected or is not
- * happening for some reason."
- *
- * Whisper is Whisper large-v3-turbo running on the phone (sherpa-onnx, int8, ~1 GB, downloaded here once).
+ * Settings → Transcription model (Marko, 7.11.2026): "either AssemblyAI, either Whisper or Whisper as a
+ * fallback if AssemblyAI gets rejected or is not happening for some reason". The on-device engine is Parakeet
+ * TDT 0.6B v3 (sherpa-onnx, int8, ~670 MB, downloaded here once): asked to compare it with Whisper Turbo, he
+ * chose to keep it ("parakeet should be fine"), being the faster of the two on a phone.
  * The choice is read by [MaProviders.transcriptionAccount] and [MaProviders.localFallbackProvider].
  */
 @Composable
@@ -64,7 +63,7 @@ fun MaTranscriptionScreen() = FlorisScreen {
         val downloads by LocalModelDownloads.state.collectFlow()
         val installedTick by LocalModelDownloads.installedTick.collectFlow()
         var deleteTick by remember { mutableStateOf(0) }
-        val spec = LocalModelCatalog.WHISPER_TURBO
+        val spec = LocalModelCatalog.PARAKEET_TDT_V3
         val installed = remember(installedTick, deleteTick) { LocalModelManager.isInstalled(context, spec.id) }
         val dl = downloads[spec.id]
 
@@ -103,18 +102,18 @@ fun MaTranscriptionScreen() = FlorisScreen {
             "In the cloud, needs the AssemblyAI key and a connection.",
         )
         option(
-            MaProviders.ENGINE_WHISPER, "Whisper",
-            "Whisper Turbo on this phone. Offline, nothing leaves the phone. Slower on long recordings.",
+            MaProviders.ENGINE_LOCAL, "Parakeet (on the phone)",
+            "Parakeet TDT on this phone. Offline, nothing leaves the phone.",
         )
         option(
-            MaProviders.ENGINE_FALLBACK, "AssemblyAI, Whisper as fallback",
+            MaProviders.ENGINE_FALLBACK, "AssemblyAI, Parakeet as fallback",
             "AssemblyAI first. When it is rejected or does not answer (no key, refused key, no " +
-                "connection, timeout, server error), the same recording goes to Whisper on the phone.",
+                "connection, timeout, server error), the same recording goes to Parakeet on the phone.",
         )
 
         Spacer(Modifier.height(16.dp))
         Text(
-            text = "Whisper model",
+            text = "On-device model",
             style = MaterialTheme.typography.titleSmall,
             modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
         )
@@ -123,7 +122,7 @@ fun MaTranscriptionScreen() = FlorisScreen {
                 installed -> "Downloaded."
                 dl != null && dl.error == null -> "Downloading, ${dl.percent} %. It continues if you leave this screen."
                 dl?.error != null -> "Download failed: ${dl.error}"
-                else -> "Not downloaded yet. Whisper and the fallback need it."
+                else -> "Not downloaded yet. Parakeet and the fallback need it."
             },
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -140,19 +139,19 @@ fun MaTranscriptionScreen() = FlorisScreen {
                 installed -> OutlinedButton(onClick = {
                     LocalModelManager.delete(context, spec.id)
                     deleteTick++
-                }) { Text("Delete (frees ~1 GB)") }
+                }) { Text("Delete (frees ~670 MB)") }
                 dl != null && dl.error == null -> OutlinedButton(onClick = {
                     LocalModelDownloads.cancel(spec.id)
                 }) { Text("Cancel download") }
                 else -> Button(onClick = {
                     if (dl?.error != null) LocalModelDownloads.clearError(spec.id)
                     LocalModelDownloads.start(context, spec)
-                }) { Text("Download Whisper Turbo (~1 GB)") }
+                }) { Text("Download Parakeet (~670 MB)") }
             }
         }
         if (!installed && engine != MaProviders.ENGINE_ASSEMBLYAI) {
             Text(
-                text = if (engine == MaProviders.ENGINE_WHISPER) {
+                text = if (engine == MaProviders.ENGINE_LOCAL) {
                     "Until the model is downloaded, dictation will ask for it."
                 } else {
                     "Until the model is downloaded, a failed AssemblyAI call ends in an error, as before."

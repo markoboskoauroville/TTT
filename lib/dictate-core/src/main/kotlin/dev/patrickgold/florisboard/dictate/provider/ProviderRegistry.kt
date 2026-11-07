@@ -473,9 +473,9 @@ object ProviderRegistry {
         transcriptionApi = TranscriptionApi.LOCAL_ONDEVICE,
         supportsDynamicModels = false,
         apiKeyUrl = null,
-        // Whisper Turbo, the one on-device model (7.11.2026); the id is its install directory.
-        defaultTranscriptionModel = "whisper-turbo",
-        curatedTranscriptionModels = listOf("whisper-turbo"),
+        // Parakeet TDT 0.6B v3, the one on-device model (Marko, 7.11.2026: "parakeet should be fine").
+        defaultTranscriptionModel = "parakeet-tdt-0.6b-v3",
+        curatedTranscriptionModels = listOf("parakeet-tdt-0.6b-v3"),
     )
 
     /** All built-in presets in display order. The custom option is added by the UI on top of these. */

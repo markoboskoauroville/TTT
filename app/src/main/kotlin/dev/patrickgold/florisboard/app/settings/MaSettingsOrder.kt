@@ -25,8 +25,8 @@ enum class MaSettingsEntry(val id: String, val title: String, val summary: Strin
     // Keys first in the NAME too, because the name is the thing he scans for and the keys are what
     // he comes here to do. The permissions are the once-ever half.
     PERMISSIONS("permissions", "API keys and permissions", "Everything the keyboard needs to work"),
-    // Marko, 7.11.2026: "Transcription model is the settings entry. Inside I have AssemblyAI and Whisper."
-    TRANSCRIPTION_MODEL("transcription_model", "Transcription model", "AssemblyAI, Whisper on the phone, or Whisper as fallback"),
+    // Marko, 7.11.2026: "Transcription model is the settings entry." The on-device engine is Parakeet.
+    TRANSCRIPTION_MODEL("transcription_model", "Transcription model", "AssemblyAI, Parakeet on the phone, or Parakeet as fallback"),
     SWITCHBOARD("switchboard", "Switchboard", "Every row the keyboard can show, in one place"),
     FEATURE_ROW("feature_row", "Feature row", "Three rows of keys, drag them into the order you want"),
     MAGIC("magic", "Magic finger", "What it presses on screen, and which it tries first"),

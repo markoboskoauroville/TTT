@@ -72,9 +72,9 @@ object MaProviders {
 
     /** The active transcription provider's stored credentials (keyring). */
 
-    /** The three choices of Settings → Transcription model (Marko, 7.11.2026). */
+    /** The three choices of Settings → Transcription model (Marko, 7.11.2026); on the phone = Parakeet. */
     const val ENGINE_ASSEMBLYAI = "assemblyai"
-    const val ENGINE_WHISPER = "whisper"
+    const val ENGINE_LOCAL = "local"
     const val ENGINE_FALLBACK = "fallback"
 
     /** Set once by FlorisApplication, for the install check above (settings resolution has no context). */
@@ -85,12 +85,12 @@ object MaProviders {
 
     fun transcriptionAccount(): ProviderAccount {
         val accounts = prefs.dictate.providerAccounts.get()
-        // Whisper chosen: every transcription runs on the phone, AssemblyAI is not called at all.
-        // Fallback with no AssemblyAI key at all: nothing to try first, so Whisper straight away.
+        // On the phone chosen: every transcription runs on Parakeet, AssemblyAI is not called at all.
+        // Fallback with no AssemblyAI key at all: nothing to try first, so Parakeet straight away.
         val engine = transcriptionEngine()
-        val whisperInstalled = appContext?.let { LocalModelManager.installedIds(it).isNotEmpty() } == true
-        if (engine == ENGINE_WHISPER ||
-            (engine == ENGINE_FALLBACK && whisperInstalled && accounts.getOrEmpty(MaRoles.TRANSCRIPTION).apiKey.isBlank())
+        val localInstalled = appContext?.let { LocalModelManager.installedIds(it).isNotEmpty() } == true
+        if (engine == ENGINE_LOCAL ||
+            (engine == ENGINE_FALLBACK && localInstalled && accounts.getOrEmpty(MaRoles.TRANSCRIPTION).apiKey.isBlank())
         ) {
             return localTranscriptionAccount()
         }
@@ -127,9 +127,9 @@ object MaProviders {
         return account.realtimeModel.takeIf {
             it.isNotBlank() && LocalModelManager.isInstalled(context, it)
         }
-            // A stored pick that is gone (Parakeet, retired 7.11.2026): whatever one-shot model is installed.
+            // A stored pick that is gone (an old Whisper id): whatever one-shot model is installed.
             ?: LocalModelManager.installedIds(context).firstOrNull { !LocalModelCatalog.isStreaming(it) && LocalModelCatalog.byId(it) != null }
-            ?: LocalModelCatalog.WHISPER_TURBO_ID
+            ?: LocalModelCatalog.PARAKEET_TDT_V3.id
     }
 
     /** The active rewording provider's stored credentials (keyring). */
@@ -260,8 +260,8 @@ object MaProviders {
         activePreset: ProviderPreset,
         error: DictateApiException,
     ): LocalTranscriptionProvider? {
-        // "Whisper as a fallback if AssemblyAI gets rejected or is not happening for some reason" (Marko,
-        // 7.11.2026): with that choice ANY failure of the cloud call falls back, a refused key and a server
+        // "as a fallback if AssemblyAI gets rejected or is not happening for some reason" (Marko,
+        // 7.11.2026; the on-device engine is Parakeet): with that choice ANY failure of the cloud call falls back, a refused key and a server
         // error as much as no network. The older switch keeps its narrower meaning (offline only).
         val engine = transcriptionEngine()
         val anyFailure = engine == ENGINE_FALLBACK
