@@ -90,3 +90,9 @@ Every request word for word, saved and pushed before any code (MANTRA_MANIFEST r
 
 **Status:** saved first.
 **Status (7.11.2026, build 477):** the WA✦ key sits after re✦ (placed once on his rows, then his to move). A press records the instruction in English, a second press sends it (RE's mechanism); a long press stops a running task. MaWhatsApp: Claude Sonnet (newest, the Anthropic key in TTT) reads WhatsApp through TTT's accessibility service (chats, names, messages, buttons and fields as a numbered list) and acts with tap / type / scroll / back / open_whatsapp, up to 15 steps, then one line in the message bar. It never sends: there is no send action, taps on send, voice message, call, video call, Pošalji are refused in code, typing only into text fields, actions only while WhatsApp is in front. Accessibility rather than wireless debugging: the phone needs no adb pairing (which Android drops on every Wi-Fi change), and the past conversation is read as text from the screen instead of a screenshot (screenshots would need a new capability on the service, and a capability added once made the service impossible to switch on). Checked on the emulator: the key is drawn and starts the recording; the emulator has no keys and no WhatsApp, so the Sonnet loop itself is first tried on his phone (Accessibility → TTT must be on).
+
+**Status (7.11.2026, 19:50 UTC, build 491 suite):** 0 ANR, set 1 60/100, set 2 34/73, address book recalled
+(kbt → email, 09155 → number, "my number is" → number). Regression found: Croatian spelling fixes (mozda → možda,
+hvla → hvala, kuca → kuća) stopped, because the personal model now learns typed words and its hit for the typed
+word went first. Fix: the shipped engine's spelling fix goes first unless the personal hit is his own correction
+(tier 4) or a Haiku word (tier 0).

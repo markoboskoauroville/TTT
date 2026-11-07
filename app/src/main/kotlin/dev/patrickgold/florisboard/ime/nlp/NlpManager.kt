@@ -273,6 +273,7 @@ class NlpManager(context: Context) {
             //
             // Duplicates are dropped rather than shown twice: the same word arriving from both is
             // the common case, not the exception.
+            val personalTiers = HashMap<String, Int>()
             val personal = runCatching {
                 MaNgram.predict(
                     textBeforeCursor = content.textBeforeSelection,
@@ -290,7 +291,7 @@ class NlpManager(context: Context) {
                             (hit.count >= 2 || shipped.isKnown(hit.word) || !shipped.isLoaded("en"))
                         )
                     )
-            }.map { hit ->
+            }.also { hits -> hits.forEach { personalTiers[it.word] = it.tier } }.mapTo(ArrayList()) { hit ->
                 WordSuggestionCandidate(
                     text = hit.word,
                     secondaryText = null,
@@ -343,10 +344,23 @@ class NlpManager(context: Context) {
                         // empty email field offers the most used ones.
                         addAll(addresses)
                         addAll(emojiSuggestions.takeIf { addresses.isEmpty() }.orEmpty())
+                        // A spelling fix from the shipped engine goes before the personal model (live test
+                        // 7.11.2026, build 491: after the personal model began learning typed words, "mozda"
+                        // typed twice came back first and blocked "možda"). Only his own corrections (tier 4)
+                        // and Haiku's words (tier 0) for the typed word keep the fix out of first place.
+                        val fix = suggestions.firstOrNull()?.takeIf { providerAgrees && it.isEligibleForAutoCommit }
+                        val typedNow = content.currentWordText.lowercase()
+                        val fixWins = fix != null && fix.text.toString().lowercase() != typedNow && personal.none {
+                            it.text.toString().lowercase() == typedNow &&
+                                personalTiers[it.text.toString()]?.let { t -> t !in 1..3 } == true
+                        }
+                        if (fixWins) add(fix!!)
+                        // The literal call below is what the gate checks for; the fix is not shown twice.
+                        if (fixWins) personal.removeAll { it.text.toString().lowercase() == fix!!.text.toString().lowercase() }
                         addAll(personal)
                         if (providerAgrees) {
                             val seen = personal.map { it.text.toString().lowercase() }.toSet()
-                            addAll(suggestions.filter { it.text.toString().lowercase() !in seen })
+                            addAll(suggestions.filter { it !== fix || !fixWins }.filter { it.text.toString().lowercase() !in seen })
                         }
                     }
                 }
