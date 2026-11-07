@@ -184,8 +184,9 @@ object MaAddressBook {
     fun trailingPhone(textBefore: CharSequence): String {
         var i = textBefore.length
         while (i > 0 && (textBefore[i - 1].isDigit() || textBefore[i - 1] in PHONE_CHARS)) i--
-        // Directly after a letter it is part of a word ("abc12"), not a number.
-        if (i > 0 && textBefore[i - 1].isLetter()) return ""
+        // Directly after a letter it is part of a word ("abc12"), not a number; after "call " it is one
+        // (live log 7.11.2026: the space was read as part of the run and "call +385…" as a word).
+        if (i > 0 && textBefore[i - 1].isLetter() && textBefore[i] != ' ') return ""
         val run = textBefore.substring(i).trimStart(' ', '-', '/', ')')
         if (run.isEmpty()) return ""
         val digits = run.count { it.isDigit() }
