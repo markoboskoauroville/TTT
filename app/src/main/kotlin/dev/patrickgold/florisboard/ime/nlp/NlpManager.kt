@@ -313,7 +313,7 @@ class NlpManager(context: Context) {
                 dev.patrickgold.florisboard.ime.text.key.KeyVariation.EMAIL_ADDRESS
             val isPhoneField = keyboardManager.activeState.keyboardMode ==
                 dev.patrickgold.florisboard.ime.keyboard.KeyboardMode.PHONE
-            val addresses = if (keyboardManager.activeState.isIncognitoMode) emptyList() else
+            val addresses = if (keyboardManager.activeState.isIncognitoMode) emptyList() else runCatching {
                 dev.patrickgold.florisboard.dictate.nlp.MaAddressBook.suggest(
                     content.textBeforeSelection, isEmailField, isPhoneField,
                     isUrlField = keyboardManager.activeState.keyVariation ==
@@ -327,6 +327,7 @@ class NlpManager(context: Context) {
                         isEligibleForAutoCommit = false, sourceProvider = null,
                     )
                 }
+            }.getOrDefault(emptyList())
             internalSuggestionsGuard.withLock {
                 if (internalSuggestions.first < reqTime) {
                     internalSuggestions = reqTime to buildList {
