@@ -214,6 +214,10 @@ class EditorInstance(context: Context) : AbstractEditorInstance(context) {
     }
 
     override fun commitChar(char: String): Boolean {
+        // Typed letters reach the personal model too (7.11.2026: only commitText reported to it, so
+        // typing was never learned, only dictation; names typed twice never came back). Collected into
+        // the sentence, learned at its end; backspace takes them out again (MaNgram.onDelete).
+        MaNgram.onCommit(char, keyboardManager.activeState.isIncognitoMode)
         val isInsertAutoSpaceBeforeChar = shouldInsertAutoSpaceBefore(char)
         val isInsertAutoSpaceAfterChar = shouldInsertAutoSpaceAfter(char)
         val isDeletePreviousSpace = isInsertAutoSpaceAfterChar && autoSpace.isActive
@@ -303,6 +307,13 @@ class EditorInstance(context: Context) : AbstractEditorInstance(context) {
         val text = candidate.text.toString()
         if (text.isEmpty() || activeInfo.isRawInputEditor) return false
         val content = activeContent
+        // The picked word replaces the half-typed one in the sentence the personal model is collecting
+        // (the letters typed so far reached it through commitChar). Addresses and numbers stay out of it.
+        if (!dev.patrickgold.florisboard.dictate.nlp.MaAddressBook.isSaved(text)) {
+            val typedSoFar = if (content.composing.isValid) content.composingText.toString()
+                else content.textBeforeSelection.takeLastWhile { it.isLetterOrDigit() || it == '\'' || it == '-' }.toString()
+            MaNgram.onReplaceWord(typedSoFar, text, keyboardManager.activeState.isIncognitoMode)
+        }
         // MA TWIST: a picked suggestion gets a REAL trailing space, not a promised one.
         //
         // Upstream only armed the phantom space here, which means the gap appears at the moment the

@@ -267,6 +267,15 @@ object MaNgram {
         if (ready != null) learn(ready, isIncognito)
     }
 
+    /** A picked suggestion: [typed] (the letters so far, already collected) becomes [picked] in the sentence. */
+    fun onReplaceWord(typed: String, picked: String, isIncognito: Boolean) {
+        if (isIncognito || picked.isEmpty()) return
+        synchronized(pendingLock) {
+            if (typed.isNotEmpty() && pending.endsWith(typed)) pending.setLength(pending.length - typed.length)
+            pending.append(picked)
+        }
+    }
+
     /** Hands over whatever sentence is half-written, for when the keyboard is closing. */
     fun flushPending(isIncognito: Boolean) {
         val ready: String? = synchronized(pendingLock) {
