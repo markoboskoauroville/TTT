@@ -282,6 +282,26 @@ class LatinLanguageProvider(context: Context) : SpellingProvider, SuggestionProv
         Trigrams(counts, byContext)
     }.getOrDefault(Trigrams(emptyMap(), emptyMap()))
 
+    /**
+     * The previous word as the context models know it. In Croatian a word typed without its diacritics is
+     * read as its commonest diacritic form ("radis" → "radiš"), else "sto radis " found no followers at all
+     * (live test 7.11.2026); the bigrams and trigrams are keyed by the correct spelling.
+     */
+    private suspend fun contextWord(content: EditorContent, subtype: Subtype): String? =
+        previousWordOf(content)?.let { restoreForContext(it, subtype) }
+
+    private suspend fun contextTwoWords(content: EditorContent, subtype: Subtype): String? =
+        previousTwoWordsOf(content)?.split(' ')?.map { restoreForContext(it, subtype) }?.joinToString(" ")
+
+    private suspend fun restoreForContext(word: String, subtype: Subtype): String {
+        if (!isCroatianSubtype(subtype)) return word
+        val index = lowerIndexFor(subtype)
+        if (index.freq.containsKey(word)) return word
+        return croatianSpellingVariants(word)
+            .mapNotNull { v -> index.freq[v.lowercase()]?.let { v.lowercase() to it } }
+            .maxByOrNull { it.second }?.first ?: word
+    }
+
     /** The two words before the one being composed ("thank you"), lowercased, or null. */
     private fun previousTwoWordsOf(content: EditorContent): String? {
         val before = content.textBeforeSelection.removeSuffix(content.composingText).toString()
@@ -526,7 +546,7 @@ class LatinLanguageProvider(context: Context) : SpellingProvider, SuggestionProv
         // Only directly after a completed word: a trailing space means the previous word is finished, while
         // a cursor sitting mid-word or right after punctuation gives nothing meaningful to continue from.
         if (!content.textBeforeSelection.endsWith(" ")) return emptyList()
-        val prevWord = previousWordOf(content) ?: return emptyList()
+        val prevWord = contextWord(content, subtype) ?: return emptyList()
         val bigrams = bigramsFor(subtype)
         if (bigrams.isEmpty()) return emptyList()
 
@@ -534,7 +554,7 @@ class LatinLanguageProvider(context: Context) : SpellingProvider, SuggestionProv
         val prefix = "$prevWord "
         // Two words back first (SwiftKey: "thank you" -> "for", "see you" -> "later"): a follower of the
         // pair scores its trigram count on top of its bigram count, plus a flat lead over bigram-only ones.
-        val prev2 = previousTwoWordsOf(content)
+        val prev2 = contextTwoWords(content, subtype)
         val triFollowers = if (prev2 != null) trigramsFor(subtype).byContext[prev2].orEmpty() else emptyList()
         val scores = HashMap<String, Double>()
         for ((k, v) in bigrams) {
@@ -807,7 +827,7 @@ class LatinLanguageProvider(context: Context) : SpellingProvider, SuggestionProv
                 index.freq[v.lowercase()]?.let { f -> Triple(v, f, index.canonical[v.lowercase()] ?: v) }
             }
             if (variants.isNotEmpty()) {
-                val prevWord = previousWordOf(content)
+                val prevWord = contextWord(content, subtype)
                 val bigrams = if (prevWord != null) bigramsFor(subtype) else emptyMap()
                 val ctx = bigramContextScore(prevWord, bigrams)
                 val ranked = variants.sortedByDescending { (v, f, _) -> ln((f + 1).toDouble()) + ctx(v.lowercase()) }
@@ -939,9 +959,9 @@ class LatinLanguageProvider(context: Context) : SpellingProvider, SuggestionProv
             }
             if (matches) pool.add(dictWord)
         }
-        val completionPrev = previousWordOf(content)
+        val completionPrev = contextWord(content, subtype)
         val completionBigrams = if (completionPrev != null) bigramsFor(subtype) else emptyMap()
-        val completionPrev2 = if (completionPrev != null) previousTwoWordsOf(content) else null
+        val completionPrev2 = if (completionPrev != null) contextTwoWords(content, subtype) else null
         val completionTri = if (completionPrev2 != null) trigramsFor(subtype).counts else emptyMap()
         // Words that follow the previous word(s) join the pool even when they are not among the most frequent
         // COMPLETION_POOL words of that prefix: "happy b" → birthday, "koliko k" → košta (SwiftKey, held-out
@@ -990,7 +1010,7 @@ class LatinLanguageProvider(context: Context) : SpellingProvider, SuggestionProv
         // swap in silently). #190: never correct a word valid in any configured language.
         if (autoCorrectOn && !isKnown && word.length >= 3) {
             val hadCandidatesBefore = out.isNotEmpty() // Croatian restoration and/or prefix completions
-            val prevWord = previousWordOf(content)
+            val prevWord = contextWord(content, subtype)
             val bigrams = if (prevWord != null) bigramsFor(subtype) else emptyMap()
             val ctx = bigramContextScore(prevWord, bigrams)
             // Preferred: decode from the actual tap positions (issue #242). Falls back to edit distance
