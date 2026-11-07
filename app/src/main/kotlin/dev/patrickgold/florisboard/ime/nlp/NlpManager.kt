@@ -314,7 +314,7 @@ class NlpManager(context: Context) {
                         // empty email field offers the most used ones.
                         addAll(addresses)
                         addAll(emojiSuggestions.takeIf { addresses.isEmpty() }.orEmpty())
-                        addAll(personal.filter { p -> addresses.none { it.text.toString().equals(p.text.toString(), true) } })
+                        addAll(personal)
                         if (providerAgrees) {
                             val seen = personal.map { it.text.toString().lowercase() }.toSet()
                             addAll(suggestions.filter { it.text.toString().lowercase() !in seen })
