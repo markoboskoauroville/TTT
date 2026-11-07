@@ -3084,7 +3084,29 @@ object DictateController {
         // is still one fragment dropped into a field; two words can be two sentences.
         val inner = trimmed.dropLast(1)
         if (inner.any { it == '.' || it == '!' || it == '?' || it == '\n' }) return text
-        return trimmed.lowercase().trimEnd('.', ',', '!', '?', ';', ':') + " "
+        return maFragmentStart(trimmed).trimEnd('.', ',', '!', '?', ';', ':') + " "
+    }
+
+    /**
+     * A one-sentence dictation as a fragment: only its first word loses the capital the recogniser gave
+     * it, and only when it is an ordinary word. The whole text used to be lowercased, which turned "I will
+     * call you" into "i will call you" and "see you on Friday, Marko" into "...friday, marko" (Parakeet
+     * test with edge-tts voices, 7.11.2026). "I" and its contractions, and a first word no shipped
+     * dictionary knows in lower case (a name), keep their capitals; words after the first are left alone.
+     */
+    private fun maFragmentStart(text: String): String {
+        val end = text.indexOfFirst { !(it.isLetter() || it == '\'' || it == '’') }.let { if (it < 0) text.length else it }
+        val first = text.substring(0, end)
+        if (first.isEmpty() || !first[0].isUpperCase()) return text
+        val lower = first.lowercase()
+        if (lower == "i" || lower.startsWith("i'") || lower.startsWith("i’")) return text
+        val isName = first.drop(1).all { it.isLowerCase() || it == '\'' || it == '’' } &&
+            dev.patrickgold.florisboard.dictate.nlp.MaShippedWords.isLoaded("en") &&
+            !dev.patrickgold.florisboard.dictate.nlp.MaShippedWords.isKnown(lower)
+        if (isName) return text
+        // An acronym ("USA", "OK") keeps its capitals too.
+        if (first.length > 1 && first.all { it.isUpperCase() }) return text
+        return first[0].lowercaseChar() + text.substring(1)
     }
 
     /**

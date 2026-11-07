@@ -136,3 +136,14 @@ edge-tts voices, English and Croatian, and with typing after the dictation.
 **Status (7.11.2026, 23:58 UTC):** Whisper Turbo swap undone; Parakeet TDT 0.6B v3 is the on-device model again and
 is not deleted. Settings → Transcription model stays: AssemblyAI / Parakeet (on the phone) / AssemblyAI with Parakeet
 as fallback (default; any AssemblyAI failure). Next: edge-tts voices on the emulator.
+
+**Status (8.11.2026, 00:50 CET, build 501): Parakeet with edge-tts voices on Pixel 2.** The Transcription model screen
+works; Parakeet downloaded inside the app (~4 min) and was chosen. Six generated sentences (3 English, 3 Croatian, edge-tts
+Guy/Jenny/Aria/Srećko/Gabrijela) went through TTT's pending-file path: 5 exact, diacritics included ("Možeš li mi poslati
+adresu restorana"). "Danas je lijep dan, idemo na kavu" came out as "dana see alip dan, idem on a cable": Parakeet itself
+mishears it; the sherpa-onnx inside TTT (1.13.3) gives exactly that on the VM too, 2.0.1 comes closer ("Dana se lipdan,
+e demonaku"). In the app Parakeet took 11-14 s per 3 s sentence on this overloaded 2-core VM (2.3-8.7 s run directly on
+the VM). Typing after a dictation: "see you t" → too, tomorrow; "and the ph" → phone; "i pon" → ponovno, ponekad;
+"hvala ti n" → na. Two fixes: (1) a one-sentence dictation was lowercased whole ("i will call you", "friday", "marko"):
+now only its first word, and not "I" or a name; (2) personal words with no context ("the", "to") no longer go before the
+shipped engine's top two.

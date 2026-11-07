@@ -358,10 +358,27 @@ class NlpManager(context: Context) {
                         if (fixWins) add(fix!!)
                         // The literal call below is what the gate checks for; the fix is not shown twice.
                         if (fixWins) personal.removeAll { it.text.toString().lowercase() == fix!!.text.toString().lowercase() }
+                        // A personal word with no context behind it (tier 1, a plain unigram) waits behind the
+                        // shipped engine's top two when that engine has answers: "see you t" offered "the" and
+                        // "to" from the personal model before "too", "tomorrow" (Parakeet + typing test,
+                        // 7.11.2026). Personal words that match the previous words (tiers 2-3), his corrections
+                        // and a capitalised word being typed (names) keep first place.
+                        val shippedRest = if (providerAgrees) suggestions.filter { it !== fix || !fixWins } else emptyList()
+                        val typingName = content.currentWordText.firstOrNull()?.isUpperCase() == true
+                        val loose = if (shippedRest.size >= 2 && !typingName) {
+                            personal.filter { personalTiers[it.text.toString()] == dev.patrickgold.florisboard.dictate.nlp.MaNgramModel.TIER_UNIGRAM }
+                        } else emptyList()
+                        personal.removeAll(loose.toSet())
                         addAll(personal)
                         if (providerAgrees) {
-                            val seen = personal.map { it.text.toString().lowercase() }.toSet()
-                            addAll(suggestions.filter { it !== fix || !fixWins }.filter { it.text.toString().lowercase() !in seen })
+                            val seen = personal.mapTo(HashSet()) { it.text.toString().lowercase() }
+                            val shipped = shippedRest.filter { it.text.toString().lowercase() !in seen }
+                            addAll(shipped.take(2))
+                            shipped.take(2).forEach { seen.add(it.text.toString().lowercase()) }
+                            loose.filter { seen.add(it.text.toString().lowercase()) }.forEach { add(it) }
+                            addAll(shipped.drop(2).filter { it.text.toString().lowercase() !in seen })
+                        } else {
+                            addAll(loose)
                         }
                     }
                 }
