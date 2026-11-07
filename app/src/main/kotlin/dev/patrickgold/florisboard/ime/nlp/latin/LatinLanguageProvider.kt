@@ -335,6 +335,28 @@ class LatinLanguageProvider(context: Context) : SpellingProvider, SuggestionProv
         return words[words.size - 2] + " " + words[words.size - 1]
     }
 
+    // The bigrams by their first word ("thank" → [(you, n), …], most frequent first), built once per language,
+    // so the next-word row, the phrase slot and the completion pool look followers up instead of scanning
+    // all 80k pairs on every keystroke (7.11.2026; the emulator's strip lagged behind the typing).
+    private val followersByLang = guardedByLock { mutableMapOf<String, Map<String, List<Pair<String, Long>>>>() }
+
+    private suspend fun followersFor(subtype: Subtype): Map<String, List<Pair<String, Long>>> {
+        val lang = dictLangFor(subtype)
+        val bigrams = bigramsFor(subtype)
+        return followersByLang.withLock { cache ->
+            cache[lang] ?: run {
+                val m = HashMap<String, MutableList<Pair<String, Long>>>(20_000)
+                for ((k, v) in bigrams) {
+                    val sp = k.indexOf(' ')
+                    if (sp <= 0) continue
+                    m.getOrPut(k.substring(0, sp)) { ArrayList(4) }.add(k.substring(sp + 1) to v)
+                }
+                m.values.forEach { list -> list.sortByDescending { it.second } }
+                (m as Map<String, List<Pair<String, Long>>>).also { cache[lang] = it }
+            }
+        }
+    }
+
     /** The word right before the one being composed, lowercased — the context for the bigram model. */
     private fun previousWordOf(content: EditorContent): String? {
         val before = content.textBeforeSelection.removeSuffix(content.composingText).trimEnd()
@@ -401,6 +423,7 @@ class LatinLanguageProvider(context: Context) : SpellingProvider, SuggestionProv
                 rankedWordsByLang.withLock { it.clear() }
                 lowerIndexByLang.withLock { it.clear() }
                 bigramsByLang.withLock { it.clear() }
+                followersByLang.withLock { it.clear() }
                 prefixIndexByLang.withLock { it.clear() }
             }
         }
@@ -580,14 +603,13 @@ class LatinLanguageProvider(context: Context) : SpellingProvider, SuggestionProv
         if (bigrams.isEmpty()) return emptyList()
 
         val index = lowerIndexFor(subtype)
-        val prefix = "$prevWord "
         // Two words back first (SwiftKey: "thank you" -> "for", "see you" -> "later"): a follower of the
         // pair scores its trigram count on top of its bigram count, plus a flat lead over bigram-only ones.
         val prev2 = contextTwoWords(content, subtype)
         val triFollowers = if (prev2 != null) trigramsFor(subtype).byContext[prev2].orEmpty() else emptyList()
         val scores = HashMap<String, Double>()
-        for ((k, v) in bigrams) {
-            if (k.startsWith(prefix)) scores[k.substring(prefix.length)] = COMPLETION_CONTEXT_WEIGHT * ln((v + 1).toDouble())
+        for ((w, v) in followersFor(subtype)[prevWord].orEmpty()) {
+            scores[w] = COMPLETION_CONTEXT_WEIGHT * ln((v + 1).toDouble())
         }
         for ((w, n) in triFollowers) {
             scores[w] = (scores[w] ?: 0.0) + TRIGRAM_WEIGHT * ln((n + 1).toDouble()) + TRIGRAM_LEAD
@@ -1035,8 +1057,7 @@ class LatinLanguageProvider(context: Context) : SpellingProvider, SuggestionProv
                 } else f.startsWith(word, ignoreCase = true))
             val inPool = pool.mapTo(HashSet()) { it.lowercase() }
             val followers = ArrayList<String>()
-            val key = "$completionPrev "
-            for (k in completionBigrams.keys) if (k.startsWith(key)) followers.add(k.substring(key.length))
+            followersFor(subtype)[completionPrev]?.forEach { followers.add(it.first) }
             if (completionPrev2 != null) trigramsFor(subtype).byContext[completionPrev2]?.forEach { followers.add(it.first) }
             for (f in followers) {
                 if (f in inPool || !matchesTyped(f)) continue
@@ -1160,17 +1181,11 @@ class LatinLanguageProvider(context: Context) : SpellingProvider, SuggestionProv
     private suspend fun phraseFor(word: String, subtype: Subtype): String? {
         val bigrams = bigramsFor(subtype)
         if (bigrams.isEmpty()) return null
-        val key = word.lowercase() + " "
-        var best: String? = null
-        var bestN = 0L
-        var total = 0L
-        for ((k, v) in bigrams) {
-            if (!k.startsWith(key)) continue
-            total += v
-            if (v > bestN) { bestN = v; best = k }
-        }
-        if (best == null || bestN < PHRASE_MIN_COUNT || bestN < PHRASE_MIN_SHARE * total) return null
-        val next = best.substring(key.length)
+        val list = followersFor(subtype)[word.lowercase()].orEmpty()
+        if (list.isEmpty()) return null
+        val total = list.sumOf { it.second }
+        val (next, bestN) = list.first()
+        if (bestN < PHRASE_MIN_COUNT || bestN < PHRASE_MIN_SHARE * total) return null
         if (next.isBlank()) return null
         return "$word ${lowerIndexFor(subtype).canonical[next] ?: next}"
     }
