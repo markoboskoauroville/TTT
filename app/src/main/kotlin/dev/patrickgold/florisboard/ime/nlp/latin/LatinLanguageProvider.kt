@@ -305,8 +305,10 @@ class LatinLanguageProvider(context: Context) : SpellingProvider, SuggestionProv
     private val misspellingsByLang = guardedByLock { mutableMapOf<String, Map<String, List<String>>>() }
 
     /** wrong → [right, …] for [subtype]'s language, from ime/dict/<lang>_misspellings.txt (empty if none). */
-    private suspend fun misspellingsFor(subtype: Subtype): Map<String, List<String>> {
-        val lang = dictLangFor(subtype)
+    private suspend fun misspellingsFor(subtype: Subtype): Map<String, List<String>> =
+        misspellingsForLang(dictLangFor(subtype))
+
+    private suspend fun misspellingsForLang(lang: String): Map<String, List<String>> {
         return misspellingsByLang.withLock { cache ->
             cache[lang] ?: runCatching {
                 val map = HashMap<String, List<String>>(5_000)
@@ -780,6 +782,7 @@ class LatinLanguageProvider(context: Context) : SpellingProvider, SuggestionProv
         // Both shipped languages, so the typing-language detection can read them (MaShippedWords, 7.11.2026).
         for (lang in GlideDictionaryCatalog.BUNDLED) {
             if (!dev.patrickgold.florisboard.dictate.nlp.MaShippedWords.isLoaded(lang)) runCatching { wordDataForLang(lang) }
+            runCatching { misspellingsForLang(lang) }   // the typing language reads them too
         }
         Unit
     }
