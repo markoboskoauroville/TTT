@@ -197,7 +197,9 @@ class LatinLanguageProvider(context: Context) : SpellingProvider, SuggestionProv
     /** Raw JSON for [lang]: a downloaded dictionary takes precedence over the bundled asset. */
     private fun readDict(lang: String): String {
         val downloaded = GlideDictionaryManager.dictFile(appContext, lang)
-        return if (downloaded.isFile && downloaded.length() > 0) {
+        // A bundled language reads the APK's own file, never an older download of it (live test 7.11.2026:
+        // a Croatian dictionary downloaded before Croatian was bundled kept answering in its place).
+        return if (lang !in GlideDictionaryCatalog.BUNDLED && downloaded.isFile && downloaded.length() > 0) {
             downloaded.readText()
         } else {
             appContext.assets.readText("ime/dict/$lang.json")
@@ -234,7 +236,9 @@ class LatinLanguageProvider(context: Context) : SpellingProvider, SuggestionProv
         // A downloaded per-language bigram file (issue: per-language Tier 2) takes precedence over the
         // bundled English asset — mirrors readDict for the unigram dictionaries.
         val downloaded = GlideDictionaryManager.bigramFile(appContext, lang)
-        val text = if (downloaded.isFile && downloaded.length() > 0) {
+        // Bundled bigrams win over a download made before they were bundled (Croatian, 7.11.2026: the old
+        // written-text pairs offered "dobro prihvaćen" where the shipped conversational ones say "dobro jutro").
+        val text = if (lang !in BigramCatalog.BUNDLED && downloaded.isFile && downloaded.length() > 0) {
             downloaded.readText()
         } else {
             appContext.assets.readText("ime/dict/${lang}_bigrams.txt")
