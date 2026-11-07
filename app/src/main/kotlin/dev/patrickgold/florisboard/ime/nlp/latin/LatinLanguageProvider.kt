@@ -111,6 +111,9 @@ class LatinLanguageProvider(context: Context) : SpellingProvider, SuggestionProv
         // of ln(bigram count + 1) against the 0..LM_SPAN frequency prior (tuned against SwiftKey, 7.11.2026).
         private const val COMPLETION_POOL = 40
         private const val COMPLETION_CONTEXT_WEIGHT = 0.45
+        // The phrase slot: the follower must be seen this often and take this share of what follows the word.
+        private const val PHRASE_MIN_COUNT = 40L
+        private const val PHRASE_MIN_SHARE = 0.4
         private const val MAX_DIACRITIC_VARIANTS = 192
         private val CROATIAN_DIACRITICS = mapOf(
             'c' to listOf('č', 'ć'), 's' to listOf('š'), 'z' to listOf('ž'), 'd' to listOf('đ'),
@@ -946,7 +949,42 @@ class LatinLanguageProvider(context: Context) : SpellingProvider, SuggestionProv
             }
         }
 
-        return out.values.take(maxCandidateCount)
+        // A two-word phrase in the third slot, the way SwiftKey offers "going to", "end of", "reći da" (Marko,
+        // 7.11.2026: tune TTT to SwiftKey). Only when one word clearly follows the leading suggestion.
+        val list = out.values.toMutableList()
+        if (prefs.suggestion.nextWordPrediction.get()) {
+            val lead = list.firstOrNull { c ->
+                val t = c.text.toString()
+                !t.contains(' ') && (!t.equals(word, ignoreCase = true) || isKnown)
+            }?.text?.toString()
+            val phrase = lead?.let { phraseFor(it, subtype) }
+            if (phrase != null && list.none { it.text.toString().equals(phrase, ignoreCase = true) }) {
+                list.add(
+                    minOf(2, list.size),
+                    WordSuggestionCandidate(text = phrase, confidence = 0.5, isEligibleForAutoCommit = false, sourceProvider = this),
+                )
+            }
+        }
+        return list.take(maxCandidateCount)
+    }
+
+    /** "[word] next" when one word clearly follows [word] in the bigram data, else null. */
+    private suspend fun phraseFor(word: String, subtype: Subtype): String? {
+        val bigrams = bigramsFor(subtype)
+        if (bigrams.isEmpty()) return null
+        val key = word.lowercase() + " "
+        var best: String? = null
+        var bestN = 0L
+        var total = 0L
+        for ((k, v) in bigrams) {
+            if (!k.startsWith(key)) continue
+            total += v
+            if (v > bestN) { bestN = v; best = k }
+        }
+        if (best == null || bestN < PHRASE_MIN_COUNT || bestN < PHRASE_MIN_SHARE * total) return null
+        val next = best.substring(key.length)
+        if (next.isBlank()) return null
+        return "$word ${lowerIndexFor(subtype).canonical[next] ?: next}"
     }
 
     override suspend fun notifySuggestionAccepted(subtype: Subtype, candidate: SuggestionCandidate) {
