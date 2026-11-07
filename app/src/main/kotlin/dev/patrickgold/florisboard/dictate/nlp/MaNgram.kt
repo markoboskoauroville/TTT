@@ -473,6 +473,10 @@ object MaNgram {
         // three hundred.
         if (word.isEmpty()) return personal
         if (language != MaLanguage.HR) return personal
+        // Since 7.11.2026 the Croatian dictionary ships in the APK and the shipped engine ranks it by the
+        // previous word as well (LatinLanguageProvider, NlpManager falls back to it under the HR badge).
+        // This frequency-only list would fill the strip before that engine speaks, so it stands aside.
+        if ("hr" in dev.patrickgold.florisboard.ime.nlp.latin.GlideDictionaryCatalog.BUNDLED) return personal
         val appCtx = appContext ?: return personal
         val already = personal.mapTo(HashSet()) { it.word.lowercase() }
         return personal + MaBaseDictionary.suggest(

@@ -222,6 +222,12 @@ class NlpManager(context: Context) {
         val typing = MaTypingLanguage.of(content.textBeforeSelection)
         val shippedSubtype = if (subtype.primaryLocale.language.lowercase() == typing) subtype
             else subtypeManager.subtypes.firstOrNull { it.primaryLocale.language.lowercase() == typing }
+            // No installed keyboard in that language, but its dictionary ships in the APK (Croatian, since
+            // 7.11.2026): the same keyboard, read with that language's dictionary. Marko's profile has only
+            // en-US, so under the HR badge the shipped engine used to be dropped entirely.
+            ?: if (typing in dev.patrickgold.florisboard.ime.nlp.latin.GlideDictionaryCatalog.BUNDLED) {
+                subtype.copy(primaryLocale = dev.patrickgold.florisboard.lib.FlorisLocale.from(typing))
+            } else null
         scope.launch {
             val emojiSuggestions = when {
                 prefs.emoji.suggestionEnabled.get() -> {
