@@ -47,7 +47,7 @@ data class LocalModelSpec(
 
 /**
  * The fixed catalog of on-device models offered for download: one-shot recognizers (Whisper, NeMo
- * Parakeet). Streaming models were removed, so this list is Parakeet only. All int8-quantised
+ * Parakeet). Streaming models were removed; since 7.11.2026 this list is Whisper Turbo only. All int8-quantised
  * sherpa-onnx builds.
  *
  * **Attribution / licensing:** every model here comes from an upstream project under a license that
@@ -70,43 +70,33 @@ object LocalModelCatalog {
         "9e2449e1087496d8d4caba907f23e0bd3f78d91fa552479bb9c23ac09cbb1fd6",
     )
 
+    /** Hugging Face home of the sherpa-onnx export of Whisper large-v3-turbo (int8). */
+    private const val HF_TURBO = "https://huggingface.co/csukuangfj/sherpa-onnx-whisper-turbo/resolve/main"
 
-
-
-
-
+    /** Install-dir id of Whisper Turbo; also the value stored as the local provider's model. */
+    const val WHISPER_TURBO_ID = "whisper-turbo"
 
     /**
-     * ~670 MB. NVIDIA Parakeet TDT 0.6B v3 (issue #154) — a NeMo *transducer* (encoder/decoder/joiner),
-     * not Whisper. Covers 25 European languages; typically faster and more accurate than the small
-     * Whisper variants. Exported to ONNX (int8) by the sherpa-onnx project. Licensing: the Parakeet
-     * weights are CC-BY-4.0 (NVIDIA); sherpa-onnx export is Apache-2.0 — both allow redistribution.
+     * ~1 GB. OpenAI Whisper large-v3-turbo, int8, exported to ONNX by the sherpa-onnx project
+     * (Marko, 7.11.2026: "use offline transcription services using Whisper Turbo Model ... remove the old
+     * model"). It replaces Parakeet TDT 0.6B v3 (25 European languages, ~670 MB). Licensing: the Whisper
+     * weights are MIT (OpenAI), the sherpa-onnx export is Apache-2.0; both allow redistribution.
+     * Sizes and SHA-256 are the Hugging Face LFS values, verified after download.
      */
-    val PARAKEET_TDT_V3 = LocalModelSpec(
-        id = "parakeet-tdt-0.6b-v3",
-        displayName = "Parakeet TDT 0.6B v3",
-        description = "25 European languages · ~670 MB",
+    val WHISPER_TURBO = LocalModelSpec(
+        id = WHISPER_TURBO_ID,
+        displayName = "Whisper Turbo",
+        description = "Whisper large-v3-turbo · 99 languages, Croatian included · ~1 GB",
         files = listOf(
-            LocalModelFile("$REL/parakeet-tdt-0.6b-v3-encoder.int8.onnx", LocalTranscriptionProvider.ENCODER, 652_184_281, "acfc2b4456377e15d04f0243af540b7fe7c992f8d898d751cf134c3a55fd2247"),
-            LocalModelFile("$REL/parakeet-tdt-0.6b-v3-decoder.int8.onnx", LocalTranscriptionProvider.DECODER, 11_845_275, "179e50c43d1a9de79c8a24149a2f9bac6eb5981823f2a2ed88d655b24248db4e"),
-            LocalModelFile("$REL/parakeet-tdt-0.6b-v3-joiner.int8.onnx", LocalTranscriptionProvider.JOINER, 6_355_277, "3164c13fc2821009440d20fcb5fdc78bff28b4db2f8d0f0b329101719c0948b3"),
-            LocalModelFile("$REL/parakeet-tdt-0.6b-v3-tokens.txt", LocalTranscriptionProvider.TOKENS, 93_939, "d58544679ea4bc6ac563d1f545eb7d474bd6cfa467f0a6e2c1dc1c7d37e3c35d"),
+            LocalModelFile("$HF_TURBO/turbo-encoder.int8.onnx", LocalTranscriptionProvider.ENCODER, 674_716_297, "b02dcdf54f348741e93fe732b67d933c8dcb6735655f710640143081db38878b"),
+            LocalModelFile("$HF_TURBO/turbo-decoder.int8.onnx", LocalTranscriptionProvider.DECODER, 361_080_764, "20accd02388482eb3a46bd615631adfdc85e1eb2c7db9ea3f02a40ffe6b81547"),
+            LocalModelFile("$HF_TURBO/turbo-tokens.txt", LocalTranscriptionProvider.TOKENS, 816_730, "b34b360dbb493e781e479794586d661700670d65564001f23024971d1f2fa126"),
             VAD_FILE,
         ),
     )
 
-
-
-
-
-
-
-
-
-
-
-
-
+    /** Install-dir ids of models no longer offered, deleted from the phone on start (they were ~670 MB). */
+    val RETIRED_IDS = listOf("parakeet-tdt-0.6b-v3")
 
     /** Install-dir id of the on-device Smart Turn v3 classifier (issue #191). */
     const val SMART_TURN_ID = "smart-turn-v3"
@@ -130,14 +120,14 @@ object LocalModelCatalog {
     )
 
     /**
-     * All catalog models in display order: Parakeet first (best overall), then the German-specialized
-     * Parakeet only. The streaming (Kroko) family and the Whisper family are both gone; the
+     * All catalog models in display order: Whisper Turbo only (7.11.2026). The streaming (Kroko) family
+     * and Parakeet are gone; the
      * accessors below still exist because the picker and the provider code branch on them, and an
      * empty streaming list is the honest way to say "no live models" without touching that code:
      * [LocalModelSection] relies on this order to know where that heading goes.
      */
     val all: List<LocalModelSpec> = listOf(
-        PARAKEET_TDT_V3,
+        WHISPER_TURBO,
     )
 
     fun byId(id: String): LocalModelSpec? = all.firstOrNull { it.id == id }

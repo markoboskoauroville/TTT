@@ -169,6 +169,16 @@ class FlorisApplication : Application() {
             DictateLegacyMigrator.addWhatsAppKeyIfNeeded()
             MaLog.initialize(this@FlorisApplication)
             MaNgram.initialize(this@FlorisApplication)
+            dev.patrickgold.florisboard.dictate.MaProviders.appContext = this@FlorisApplication
+            // Retired on-device models (Parakeet, 7.11.2026: Whisper Turbo replaced it) are ~670 MB each: deleted.
+            Thread {
+                dev.patrickgold.florisboard.dictate.provider.LocalModelCatalog.RETIRED_IDS.forEach {
+                    runCatching {
+                        dev.patrickgold.florisboard.dictate.provider.LocalTranscriptionProvider
+                            .modelDir(this@FlorisApplication, it).deleteRecursively()
+                    }
+                }
+            }.start()
             dev.patrickgold.florisboard.dictate.nlp.MaAddressBook.initialize(this@FlorisApplication)
             MaDictationCorrections.initialize(this@FlorisApplication)
             // After initialize, which loads whatever the model already knows, so the backfill adds

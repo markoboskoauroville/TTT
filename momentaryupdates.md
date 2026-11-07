@@ -120,3 +120,9 @@ uses only suggestions computed for the word being typed.
 > Please update TTT app to use offline transcription services using Whisper Turbo Model. It means you need to remove the old model and use a whisper toolbo and in settings I need to have a switch. Transcription model is the settings entry. Inside I have assembly AI and Whisper. So there are options either assembly AI, either whisper or whisper as a fallback if assembly AI get rejected or is not happening for some reason
 
 **Status:** saved first (7.11.2026, 23:00 UTC).
+
+**Status (7.11.2026, 23:40 UTC):** built. Whisper Turbo (large-v3-turbo, sherpa-onnx int8, ~1 GB from Hugging Face,
+checksums verified) replaced Parakeet, which is deleted from the phone on start. Settings → **Transcription model**:
+AssemblyAI / Whisper / AssemblyAI with Whisper as fallback (default). The fallback catches any failure: no key,
+refused key, no connection, timeout, server error. The model downloads from that screen. Gate:
+scripts/test_transcription_model.py (18 checks). Not yet run live: the 1 GB download and a Whisper transcription.

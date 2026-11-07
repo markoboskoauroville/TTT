@@ -22,6 +22,7 @@ import dev.patrickgold.florisboard.dictate.provider.ProviderPreset
 import dev.patrickgold.florisboard.dictate.provider.ProviderRegistry
 import dev.patrickgold.florisboard.dictate.provider.TranscriptionApi
 import dev.patrickgold.florisboard.dictate.provider.LocalModelManager
+import dev.patrickgold.florisboard.dictate.provider.LocalModelCatalog
 
 /**
  * Which provider does which job, and on which path.
@@ -71,8 +72,28 @@ object MaProviders {
 
     /** The active transcription provider's stored credentials (keyring). */
 
+    /** The three choices of Settings → Transcription model (Marko, 7.11.2026). */
+    const val ENGINE_ASSEMBLYAI = "assemblyai"
+    const val ENGINE_WHISPER = "whisper"
+    const val ENGINE_FALLBACK = "fallback"
+
+    /** Set once by FlorisApplication, for the install check above (settings resolution has no context). */
+    @Volatile
+    var appContext: Context? = null
+
+    fun transcriptionEngine(): String = prefs.dictate.maTranscriptionEngine.get()
+
     fun transcriptionAccount(): ProviderAccount {
         val accounts = prefs.dictate.providerAccounts.get()
+        // Whisper chosen: every transcription runs on the phone, AssemblyAI is not called at all.
+        // Fallback with no AssemblyAI key at all: nothing to try first, so Whisper straight away.
+        val engine = transcriptionEngine()
+        val whisperInstalled = appContext?.let { LocalModelManager.installedIds(it).isNotEmpty() } == true
+        if (engine == ENGINE_WHISPER ||
+            (engine == ENGINE_FALLBACK && whisperInstalled && accounts.getOrEmpty(MaRoles.TRANSCRIPTION).apiKey.isBlank())
+        ) {
+            return localTranscriptionAccount()
+        }
         // Resolved, not read. The stored id is a fallback for a setup with no AssemblyAI key; it is
         // never allowed to point transcription at the language provider. See MaRoles.
         val id = MaRoles.transcription(accounts, prefs.dictate.transcriptionProviderId.get())
@@ -105,7 +126,10 @@ object MaProviders {
         if (chosen.isNotBlank() && LocalModelManager.isInstalled(context, chosen)) return chosen
         return account.realtimeModel.takeIf {
             it.isNotBlank() && LocalModelManager.isInstalled(context, it)
-        } ?: chosen
+        }
+            // A stored pick that is gone (Parakeet, retired 7.11.2026): whatever one-shot model is installed.
+            ?: LocalModelManager.installedIds(context).firstOrNull { !LocalModelCatalog.isStreaming(it) && LocalModelCatalog.byId(it) != null }
+            ?: LocalModelCatalog.WHISPER_TURBO_ID
     }
 
     /** The active rewording provider's stored credentials (keyring). */
@@ -236,9 +260,16 @@ object MaProviders {
         activePreset: ProviderPreset,
         error: DictateApiException,
     ): LocalTranscriptionProvider? {
-        if (!prefs.dictate.localFallbackEnabled.get()) return null
+        // "Whisper as a fallback if AssemblyAI gets rejected or is not happening for some reason" (Marko,
+        // 7.11.2026): with that choice ANY failure of the cloud call falls back, a refused key and a server
+        // error as much as no network. The older switch keeps its narrower meaning (offline only).
+        val engine = transcriptionEngine()
+        val anyFailure = engine == ENGINE_FALLBACK
+        if (!anyFailure && !prefs.dictate.localFallbackEnabled.get()) return null
+        if (engine == ENGINE_ASSEMBLYAI) return null
         if (activePreset.transcriptionApi == TranscriptionApi.LOCAL_ONDEVICE) return null
-        if (error.kind != DictateApiException.Kind.NETWORK &&
+        if (!anyFailure &&
+            error.kind != DictateApiException.Kind.NETWORK &&
             error.kind != DictateApiException.Kind.TIMEOUT
         ) return null
         val localAccount = prefs.dictate.providerAccounts.get().getOrEmpty(ProviderRegistry.LOCAL.id)

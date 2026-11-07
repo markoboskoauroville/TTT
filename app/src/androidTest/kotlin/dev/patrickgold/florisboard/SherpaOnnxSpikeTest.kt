@@ -135,13 +135,13 @@ class SherpaOnnxSpikeTest {
     @Test
     fun downloadsInstallsAndTranscribes() {
         val runIt = InstrumentationRegistry.getArguments().getString("runDownloadTest") == "1"
-        assumeTrue("set runDownloadTest=1 to run the ~670 MB download test", runIt)
+        assumeTrue("set runDownloadTest=1 to run the ~1 GB download test", runIt)
         val m4a = File(dir, "test0.m4a")
         assumeTrue("test0.m4a not pushed to $dir — skipping", m4a.exists())
 
         val context = InstrumentationRegistry.getInstrumentation().targetContext
-        // Whisper is gone from the catalog; Parakeet is the only on-device family now.
-        val spec = LocalModelCatalog.PARAKEET_TDT_V3
+        // Whisper Turbo is the only on-device model now (7.11.2026, it replaced Parakeet).
+        val spec = LocalModelCatalog.WHISPER_TURBO
         LocalModelManager.delete(context, spec.id) // clean slate
 
         val start = System.currentTimeMillis()

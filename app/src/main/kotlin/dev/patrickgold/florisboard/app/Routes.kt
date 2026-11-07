@@ -79,6 +79,7 @@ import dev.patrickgold.florisboard.app.settings.dictate.MaCloudLogScreen
 import dev.patrickgold.florisboard.app.settings.dictate.MaNumberRowScreen
 import dev.patrickgold.florisboard.app.settings.dictate.MaReaderScreen
 import dev.patrickgold.florisboard.app.settings.dictate.MaVoiceFormatScreen
+import dev.patrickgold.florisboard.app.settings.dictate.MaTranscriptionScreen
 import dev.patrickgold.florisboard.app.settings.dictate.MaPredictionsScreen
 import dev.patrickgold.florisboard.app.settings.dictate.MaSwitchboardScreen
 import dev.patrickgold.florisboard.app.settings.dictate.MaBucketsScreen
@@ -184,6 +185,10 @@ object Routes {
         @Serializable
         @Deeplink("settings/dictate/voice-format")
         object MaVoiceFormat
+
+        @Serializable
+        @Deeplink("settings/dictate/transcription-model")
+        object MaTranscription
 
         @Serializable
         @Deeplink("settings/dictate/reader")
@@ -485,6 +490,7 @@ object Routes {
             composableWithDeepLink(Settings.MaShortcuts::class) { MaShortcutsScreen() }
             composableWithDeepLink(Settings.MaLog::class) { MaLogScreen() }
             composableWithDeepLink(Settings.MaVoiceFormat::class) { MaVoiceFormatScreen() }
+            composableWithDeepLink(Settings.MaTranscription::class) { MaTranscriptionScreen() }
             composableWithDeepLink(Settings.MaReader::class) { MaReaderScreen() }
             composableWithDeepLink(Settings.MaCloudLog::class) { MaCloudLogScreen() }
             composableWithDeepLink(Settings.MaNumberRow::class) { MaNumberRowScreen() }

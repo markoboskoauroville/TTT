@@ -268,6 +268,15 @@ abstract class FlorisPreferenceModel : PreferenceModel() {
             default = false,
         )
 
+        // Transcription model (Marko, 7.11.2026): "assemblyai" = AssemblyAI only, "whisper" = Whisper Turbo
+        // on the phone only, "fallback" = AssemblyAI, and Whisper Turbo whenever AssemblyAI is rejected or does
+        // not answer (no key, refused key, no network, timeout, server error). Whisper needs its ~1 GB
+        // download first; until then "fallback" behaves like "assemblyai". See MaProviders.
+        val maTranscriptionEngine = string(
+            key = "dictate__ma_transcription_engine",
+            default = "fallback",
+        )
+
 
         // --- Network proxy (roadmap 5.6) ---------------------------------------------------------
         // Optional proxy applied to *every* provider API call (transcription, rewording, model

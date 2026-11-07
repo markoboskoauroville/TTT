@@ -84,6 +84,8 @@ val MaSettingsEntry.icon: ImageVector
         // Shield, not Lock: `Icons.Default.Lock` is absent from the icon artifact this project
         // builds against, and a missing icon is a red build rather than a blank space.
         MaSettingsEntry.PERMISSIONS -> Icons.Default.Shield
+        // The microphone, proven in this file: the engine that hears the voice.
+        MaSettingsEntry.TRANSCRIPTION_MODEL -> Icons.Default.Mic
         MaSettingsEntry.SHORTCUTS -> Icons.Default.Keyboard
         // Spellcheck, already imported and proven in this file. A prompt is an instruction
         // about how text should read, which is the nearest thing to it in the set, and this file's
@@ -133,6 +135,7 @@ val MaSettingsEntry.route: Any
         MaSettingsEntry.MAGIC -> Routes.Settings.MaMagic
         MaSettingsEntry.VOICE_COMMANDS -> Routes.Settings.MaVoiceCommands
         MaSettingsEntry.PERMISSIONS -> Routes.Settings.MaPermissions
+        MaSettingsEntry.TRANSCRIPTION_MODEL -> Routes.Settings.MaTranscription
         MaSettingsEntry.SHORTCUTS -> Routes.Settings.MaShortcuts
         MaSettingsEntry.PROMPTS -> Routes.Settings.MaPrompts
         MaSettingsEntry.CLAUDE_COSTS -> Routes.Settings.MaClaudeCosts

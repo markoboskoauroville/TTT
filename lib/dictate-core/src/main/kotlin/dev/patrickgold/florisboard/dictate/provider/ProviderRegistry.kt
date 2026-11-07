@@ -473,9 +473,9 @@ object ProviderRegistry {
         transcriptionApi = TranscriptionApi.LOCAL_ONDEVICE,
         supportsDynamicModels = false,
         apiKeyUrl = null,
-        // Base is the recommended balance of accuracy/speed; tiny is offered for low-end devices.
-        defaultTranscriptionModel = "whisper-base",
-        curatedTranscriptionModels = listOf("whisper-base", "whisper-tiny"),
+        // Whisper Turbo, the one on-device model (7.11.2026); the id is its install directory.
+        defaultTranscriptionModel = "whisper-turbo",
+        curatedTranscriptionModels = listOf("whisper-turbo"),
     )
 
     /** All built-in presets in display order. The custom option is added by the UI on top of these. */
