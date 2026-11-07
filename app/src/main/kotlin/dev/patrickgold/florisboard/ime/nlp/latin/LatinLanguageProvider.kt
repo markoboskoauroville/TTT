@@ -104,10 +104,18 @@ class LatinLanguageProvider(context: Context) : SpellingProvider, SuggestionProv
         // prefix, a NUL character that no dictionary word can contain.
         private const val TYPED_WORD_KEY = "\u0000"
 
-        // German umlaut/ß restoration (issue #219): bound the variant generation so a long word with many
-        // a/o/u doesn't explode combinatorially (2^sites). Words needing more than this are left alone.
-        private const val MAX_UMLAUT_SITES = 6
-        private const val MAX_GERMAN_VARIANTS = 128
+        // Croatian diacritic restoration: bound the variant generation so a long word with many c/s/z/d
+        // doesn't explode combinatorially. Words needing more than this are left alone.
+        private const val MAX_DIACRITIC_SITES = 6
+        // Prefix completion: how many of the most frequent matches are re-ranked by context, and the weight
+        // of ln(bigram count + 1) against the 0..LM_SPAN frequency prior (tuned against SwiftKey, 7.11.2026).
+        private const val COMPLETION_POOL = 40
+        private const val COMPLETION_CONTEXT_WEIGHT = 0.45
+        private const val MAX_DIACRITIC_VARIANTS = 192
+        private val CROATIAN_DIACRITICS = mapOf(
+            'c' to listOf('č', 'ć'), 's' to listOf('š'), 'z' to listOf('ž'), 'd' to listOf('đ'),
+            'C' to listOf('Č', 'Ć'), 'S' to listOf('Š'), 'Z' to listOf('Ž'), 'D' to listOf('Đ'),
+        )
 
         // Legacy ISO-639 codes that java.util.Locale still reports; map them to the modern code the
         // dictionary files use.
@@ -561,64 +569,65 @@ class LatinLanguageProvider(context: Context) : SpellingProvider, SuggestionProv
      */
     private fun lmPrior(freq: Int): Double = (freq - 128).coerceAtLeast(0) / 127.0 * LM_SPAN
 
-    // --- German umlaut / ß restoration (issue #219) -------------------------------------------------
+    // --- Croatian diacritic restoration (Marko, 7.11.2026: "Don't ship German, ship Croatian") ---------
+    // Replaces the German umlaut/ß restoration. A Croatian typist often skips the diacritics: "covjek" for
+    // "čovjek", "sto" for "što", "kuca" for "kuća", "dosao" for "došao", "djak" for "đak". SwiftKey offers
+    // the diacritic form at once; this does the same, driven only by the dictionary.
 
-    /** True when [subtype] types German, so the umlaut/ß restoration below applies. */
-    private fun isGermanSubtype(subtype: Subtype): Boolean =
-        subtype.primaryLocale.language.equals("de", ignoreCase = true)
+    /** [text] with Croatian diacritics replaced by their plain letters (č/ć → c, š → s, ž → z, đ → d). */
+    private fun foldCroatian(text: String): String {
+        if (text.none { it in "čćšžđČĆŠŽĐ" }) return text
+        val sb = StringBuilder(text.length)
+        for (ch in text) sb.append(
+            when (ch) {
+                'č', 'ć' -> 'c'
+                'š' -> 's'
+                'ž' -> 'z'
+                'đ' -> 'd'
+                'Č', 'Ć' -> 'C'
+                'Š' -> 'S'
+                'Ž' -> 'Z'
+                'Đ' -> 'D'
+                else -> ch
+            },
+        )
+        return sb.toString()
+    }
+
+    /** True when [subtype] types Croatian (or the closely related Bosnian / Serbian Latin / Montenegrin). */
+    private fun isCroatianSubtype(subtype: Subtype): Boolean =
+        subtype.primaryLocale.language.lowercase() in setOf("hr", "bs", "sh", "cnr")
 
     /**
-     * ASCII / umlaut-less spellings of [word] a German typist might have meant: single vowels a/o/u →
-     * ä/ö/ü, the spelled-out digraphs ae/oe/ue → ä/ö/ü, and (when [allowSharpS]) ss → ß. Bounded so a long
-     * word doesn't explode combinatorially. Only the caller's dictionary decides which of these are real.
+     * Diacritic spellings of [word] a Croatian typist might have meant: c → č/ć, s → š, z → ž, d → đ, and the
+     * spelled-out dj → đ. Bounded so a long word doesn't explode combinatorially. Only the caller's dictionary
+     * decides which of these are real words.
      */
-    private fun germanSpellingVariants(word: String, allowSharpS: Boolean): List<String> {
+    private fun croatianSpellingVariants(word: String): List<String> {
         val out = LinkedHashSet<String>()
-        // First read ae/oe/ue as the umlaut the user spelled out (all occurrences at once), then run the
-        // single-vowel + ß expansion on both that collapsed form and the raw one.
-        val digraph = word
-            .replace("ae", "ä").replace("Ae", "Ä").replace("AE", "Ä")
-            .replace("oe", "ö").replace("Oe", "Ö").replace("OE", "Ö")
-            .replace("ue", "ü").replace("Ue", "Ü").replace("UE", "Ü")
-        // The collapsed digraph form itself is a candidate (ueber → über); the expansion below only adds
-        // further single-vowel / ß substitutions on top of it.
+        val digraph = word.replace("dj", "đ").replace("Dj", "Đ").replace("DJ", "Đ")
         if (digraph != word) out.add(digraph)
-        for (base in linkedSetOf(word, digraph)) expandGermanVariants(base, allowSharpS, out)
+        for (base in linkedSetOf(word, digraph)) expandCroatianVariants(base, out)
         out.remove(word)
         return out.toList()
     }
 
-    /** Adds every umlaut / ß substitution combination of [base] (bounded) to [out]. */
-    private fun expandGermanVariants(base: String, allowSharpS: Boolean, out: MutableSet<String>) {
-        // Each site: (index, replacement, consumed length). ss consumes two chars, an umlaut vowel one.
-        val sites = ArrayList<Triple<Int, String, Int>>()
-        var i = 0
-        while (i < base.length) {
-            if (allowSharpS && i + 1 < base.length && base[i] == 's' && base[i + 1] == 's') {
-                sites.add(Triple(i, "ß", 2)); i += 2; continue
-            }
-            when (base[i]) {
-                'a' -> sites.add(Triple(i, "ä", 1))
-                'o' -> sites.add(Triple(i, "ö", 1))
-                'u' -> sites.add(Triple(i, "ü", 1))
-                'A' -> sites.add(Triple(i, "Ä", 1))
-                'O' -> sites.add(Triple(i, "Ö", 1))
-                'U' -> sites.add(Triple(i, "Ü", 1))
-            }
-            i++
+    /** Adds every diacritic substitution combination of [base] (bounded) to [out]. */
+    private fun expandCroatianVariants(base: String, out: MutableSet<String>) {
+        // Each site: (index, the letters it may become). The plain letter itself is option 0.
+        val sites = ArrayList<Pair<Int, List<Char>>>()
+        base.forEachIndexed { i, ch ->
+            val opts = CROATIAN_DIACRITICS[ch]
+            if (opts != null) sites.add(i to listOf(ch) + opts)
         }
-        if (sites.isEmpty() || sites.size > MAX_UMLAUT_SITES) return
-        val n = sites.size
-        for (mask in 1 until (1 shl n)) {
-            if (out.size >= MAX_GERMAN_VARIANTS) return
+        if (sites.isEmpty() || sites.size > MAX_DIACRITIC_SITES) return
+        val counter = IntArray(sites.size)
+        while (out.size < MAX_DIACRITIC_VARIANTS) {
+            var k = 0
+            while (k < sites.size && ++counter[k] == sites[k].second.size) { counter[k] = 0; k++ }
+            if (k == sites.size) return            // every combination done
             val sb = StringBuilder(base)
-            // Apply the highest-index sites first so earlier indices stay valid when ss (2) becomes ß (1).
-            for (b in n - 1 downTo 0) {
-                if ((mask shr b) and 1 == 1) {
-                    val (idx, repl, len) = sites[b]
-                    sb.replace(idx, idx + len, repl)
-                }
-            }
+            sites.forEachIndexed { j, (idx, opts) -> sb.setCharAt(idx, opts[counter[j]]) }
             out.add(sb.toString())
         }
     }
@@ -714,20 +723,17 @@ class LatinLanguageProvider(context: Context) : SpellingProvider, SuggestionProv
                 dictWord
             }
 
-        // Dedup by lowercase key, preserving order: German umlaut/ß restoration first (so it leads the
+        // Dedup by lowercase key, preserving order: Croatian diacritic restoration first (so it leads the
         // strip), then the user's personal dictionary, then the main dictionary ranked by frequency.
         val out = LinkedHashMap<String, SuggestionCandidate>()
         val index = lowerIndexFor(subtype)
 
-        // German umlaut/ß restoration (issue #219) runs FIRST, so the correct spelling leads the strip and a
-        // non-word is auto-committed even when the ASCII form prefixes real words (fur→für). Because this
-        // fills [out], the generic edit-distance autocorrect below stands aside for these words, so a plain
-        // substitution never wins over the umlaut form (Madchen→Mädchen, not Machen). Dictionary-driven, so
-        // only real words are produced; a validly-typed word is never swapped, only offered (schon→schön).
-        // ß-restoration is off for Swiss German (de-CH), which has no ß.
-        if (prefs.suggestion.autoCorrect.get() && isGermanSubtype(subtype) && word.length >= 3) {
-            val allowSharpS = !subtype.primaryLocale.country.equals("CH", ignoreCase = true)
-            val variants = germanSpellingVariants(word, allowSharpS).mapNotNull { v ->
+        // Croatian diacritic restoration runs FIRST, so the correct spelling leads the strip and a non-word is
+        // auto-committed even when the plain form prefixes real words (covjek→čovjek). Because this fills
+        // [out], the generic edit-distance autocorrect below stands aside for these words. Dictionary-driven,
+        // so only real words are produced; a validly typed word is never swapped, only offered (sto→što).
+        if (prefs.suggestion.autoCorrect.get() && isCroatianSubtype(subtype) && word.length >= 2) {
+            val variants = croatianSpellingVariants(word).mapNotNull { v ->
                 index.freq[v.lowercase()]?.let { f -> Triple(v, f, index.canonical[v.lowercase()] ?: v) }
             }
             if (variants.isNotEmpty()) {
@@ -842,10 +848,31 @@ class LatinLanguageProvider(context: Context) : SpellingProvider, SuggestionProv
             }
         }
 
+        // Prefix completion, ranked like SwiftKey (Marko, 7.11.2026: "bring TTT to the level of Swift"):
+        // not by raw frequency alone but by frequency PLUS how often the word follows the previous one, so
+        // "thank y" offers "you" and "dobar d" offers "dan" first. The most frequent COMPLETION_POOL matches
+        // are collected, then re-ranked with the bigram context. In Croatian the match ignores diacritics,
+        // so "cov" completes to "čovjek" and "sto" to "što" as well, the way a Croatian types.
         val data = wordDataFor(subtype)
+        val foldDiacritics = isCroatianSubtype(subtype)
+        val typedFolded = if (foldDiacritics) foldCroatian(word) else word
+        val pool = ArrayList<String>(COMPLETION_POOL)
         for (dictWord in rankedWordsFor(subtype)) {
+            if (pool.size >= COMPLETION_POOL) break
+            val matches = if (foldDiacritics) {
+                dictWord.length >= word.length && foldCroatian(dictWord.substring(0, word.length)).equals(typedFolded, ignoreCase = true)
+            } else {
+                dictWord.startsWith(word, ignoreCase = true)
+            }
+            if (matches) pool.add(dictWord)
+        }
+        val completionPrev = previousWordOf(content)
+        val completionBigrams = if (completionPrev != null) bigramsFor(subtype) else emptyMap()
+        val ranked = if (completionBigrams.isEmpty()) pool else pool.sortedByDescending { w ->
+            lmPrior(data[w] ?: 0) + COMPLETION_CONTEXT_WEIGHT * ln(((completionBigrams["$completionPrev ${w.lowercase()}"] ?: 0L) + 1L).toDouble())
+        }
+        for (dictWord in ranked) {
             if (out.size >= completionCap) break
-            if (!dictWord.startsWith(word, ignoreCase = true)) continue
             val text = cased(dictWord)
             out.putIfAbsent(
                 text.lowercase(),
@@ -864,7 +891,7 @@ class LatinLanguageProvider(context: Context) : SpellingProvider, SuggestionProv
         // swapped. Distance 2 is a suggestions-only fallback when distance 1 finds nothing (too uncertain to
         // swap in silently). #190: never correct a word valid in any configured language.
         if (autoCorrectOn && !isKnown && word.length >= 3) {
-            val hadCandidatesBefore = out.isNotEmpty() // German restoration and/or prefix completions
+            val hadCandidatesBefore = out.isNotEmpty() // Croatian restoration and/or prefix completions
             val prevWord = previousWordOf(content)
             val bigrams = if (prevWord != null) bigramsFor(subtype) else emptyMap()
             val ctx = bigramContextScore(prevWord, bigrams)

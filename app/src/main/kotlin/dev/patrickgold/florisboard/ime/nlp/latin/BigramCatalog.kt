@@ -32,14 +32,13 @@ object BigramCatalog {
     const val REL = "https://github.com/DevEmperor/DictateKeyboard/releases/download/bigram-dicts-v1"
 
     /** Languages whose bigram file ships in the APK ([ime/dict/<lang>_bigrams.txt]) — never downloaded/deleted. */
-    val BUNDLED = setOf("en")
+    val BUNDLED = setOf("en", "hr")   // Marko, 7.11.2026: Croatian ships in the APK, German is gone
 
     val all: List<BigramDict> = listOf(
         BigramDict("bg", "$REL/bg_bigrams.txt", 1500236, "9393406839a3ef2f61dddedcde1ba670ddb010ad021471dce54193f18c7c3236"),
         BigramDict("ca", "$REL/ca_bigrams.txt", 938858, "82b4af96057cee467a164ffa73680fc9cb25ee0d9f4cea1a8eb06b1ac56ff164"),
         BigramDict("cs", "$REL/cs_bigrams.txt", 960186, "ed2a6551735c0dadb60ad78934784a5e16188af0c31835ea484b5d4eb7ac3899"),
         BigramDict("da", "$REL/da_bigrams.txt", 922016, "eb07fb6ac80c53e09485b6dbae210dc7917fee61bbedd6de096d553a78e2672a"),
-        BigramDict("de", "$REL/de_bigrams.txt", 989807, "52d906c15bab021d386e6bf2537a2090c321959f16f814de3b64357dffb33c67"),
         BigramDict("el", "$REL/el_bigrams.txt", 1619772, "ba6e8834112083c9257ab1dc09a27270f7b7868f0e9df6192faf20480f68c56d"),
         BigramDict("eo", "$REL/eo_bigrams.txt", 955857, "1096a6eccc275223a14e4dd5fa288fa13a5b986fa5040815ad919eae2f46ddb9"),
         BigramDict("es", "$REL/es_bigrams.txt", 949805, "b7cd13759f0dc7249f7f928ce8aff15077b4b112726ff3a0c5bfa182f045d7f4"),
@@ -47,7 +46,6 @@ object BigramCatalog {
         BigramDict("fa", "$REL/fa_bigrams.txt", 1276906, "1fbbd502d1ab923ea8e605086f586460a30c7eefd5e87309c5cd283e87acf20d"),
         BigramDict("fr", "$REL/fr_bigrams.txt", 969735, "a7c6f7cac5b8ec00db2435c9431fb25dd936bcbb10c1d0bb06398326128ea1e9"),
         BigramDict("he", "$REL/he_bigrams.txt", 1304054, "0f5189b27e88533527cd32d7497252b003bf43fbe6af9ccf34edc4e206cba7a9"),
-        BigramDict("hr", "$REL/hr_bigrams.txt", 922250, "9967f976ad960d3ab0cd4be33e6e1a664718b8415e5d8ce736c0daa138f4cec4"),
         BigramDict("hu", "$REL/hu_bigrams.txt", 1039602, "70298f46cd41f39140a73042576b1584cc835724ab38fadeda70e4ed142363d5"),
         BigramDict("hy", "$REL/hy_bigrams.txt", 1741206, "0a1643ae806a3ae4b521845c06cc6a49e8aecbdd092fbffd8c5c43f4bb8ef0dc"),
         BigramDict("is", "$REL/is_bigrams.txt", 986807, "bd9fb27249702ff84ce4dc5ed9ba3b5c8bc02a1ee7cbdb19bc304f470ed96152"),

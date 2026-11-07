@@ -41,7 +41,7 @@ object GlideDictionaryCatalog {
 
     /**
      * The downloadable dictionaries. Populated from `generate.py` output once the files are hosted.
-     * (English is intentionally absent — it is bundled in the APK.)
+     * (English and Croatian are intentionally absent — they are bundled in the APK. German is not offered, Marko 7.11.2026.)
      */
     val all: List<GlideDict> = listOf(
         GlideDict("bg", "Bulgarian · Български", "$REL/bg.json", 1794600, "fa3b438e428427e2ff6597d3db50593e3e045415099b520d203ef5e934e7f623"),
@@ -54,7 +54,6 @@ object GlideDictionaryCatalog {
         GlideDict("et", "Estonian · Eesti", "$REL/et.json", 1238171, "1a845ba70014ffcad5dbe3e6a90fe35e3b35cdf566ca82776d450887cdf27039"),
         GlideDict("fa", "Persian · فارسی", "$REL/fa.json", 480596, "ff83c40921458dc42b026a75e37cb1cd97070bd6841f1f8e1d5d111d38ffe923"),
         GlideDict("fr", "French · Français", "$REL/fr.json", 1082093, "ee78ad4cad149c62895fa5f285b638c16bc7ceb908a5d4e7f22ec825a2473ec3"),
-        GlideDict("hr", "Croatian · Hrvatski", "$REL/hr.json", 1128369, "1f01c211d27380a96564816a41b920980c8447dc30934e3b606422cc381347dd"),
         GlideDict("hu", "Hungarian · Magyar", "$REL/hu.json", 1419533, "d62b994d0f850214cd5d9ef16ff99aa9ac17150fe6bf5ec49b81821b3d3326ad"),
         GlideDict("hy", "Armenian · Հայերեն", "$REL/hy.json", 64323, "a8500f822bf91af56d93661c40cb45c9bbd38913d5d4152d0feeab3a9c8b0201"),
         GlideDict("is", "Icelandic · Íslenska", "$REL/is.json", 912647, "ccc6201d291df83ea2dbf87b9137e4e88ccd8363b99e402dd2e47cc01385218e"),
@@ -80,7 +79,7 @@ object GlideDictionaryCatalog {
     )
 
     /** Languages whose dictionary ships inside the APK (ime/dict/<lang>.json) and needs no download. */
-    val BUNDLED = setOf("en", "de")
+    val BUNDLED = setOf("en", "hr")   // Marko, 7.11.2026: "Don't ship German, ship Croatian."
 
     fun forLang(lang: String): GlideDict? =
         all.firstOrNull { it.lang.equals(lang, ignoreCase = true) }
