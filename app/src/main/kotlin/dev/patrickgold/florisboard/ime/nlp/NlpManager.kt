@@ -245,7 +245,9 @@ class NlpManager(context: Context) {
                 emojiSuggestions.isNotEmpty() && prefs.emoji.suggestionType.get().prefix.isNotEmpty() -> {
                     emptyList()
                 }
-                else -> {
+                // Guarded: a word engine that throws (live test 7.11.2026: a number being typed, "09155",
+                // left the strip frozen on the previous word) must not take the address book down with it.
+                else -> runCatching {
                     getSuggestionProvider(shippedSubtype ?: subtype).suggest(
                         subtype = shippedSubtype ?: subtype,
                         content = content,
@@ -253,7 +255,7 @@ class NlpManager(context: Context) {
                         allowPossiblyOffensive = true,
                         isPrivateSession = keyboardManager.activeState.isIncognitoMode,
                     )
-                }
+                }.getOrDefault(emptyList())
             }
             // The personal model goes in front of the shipped one.
             //
@@ -264,11 +266,13 @@ class NlpManager(context: Context) {
             //
             // Duplicates are dropped rather than shown twice: the same word arriving from both is
             // the common case, not the exception.
-            val personal = MaNgram.predict(
-                textBeforeCursor = content.textBeforeSelection,
-                currentWord = content.currentWordText,
-                isIncognito = keyboardManager.activeState.isIncognitoMode,
-            ).map { hit ->
+            val personal = runCatching {
+                MaNgram.predict(
+                    textBeforeCursor = content.textBeforeSelection,
+                    currentWord = content.currentWordText,
+                    isIncognito = keyboardManager.activeState.isIncognitoMode,
+                )
+            }.getOrDefault(emptyList()).filter { hit -> hit.word.any { it.isLetter() } }.map { hit ->
                 WordSuggestionCandidate(
                     text = hit.word,
                     secondaryText = null,

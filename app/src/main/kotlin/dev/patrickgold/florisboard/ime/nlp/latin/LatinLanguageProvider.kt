@@ -779,6 +779,9 @@ class LatinLanguageProvider(context: Context) : SpellingProvider, SuggestionProv
         // Word completion: prefix-match the word being composed against the dictionary, most frequent
         // first (issue #127 follow-up).
         val word = content.composingText
+        // A number being typed is not a word: the address book answers for it (MaAddressBook), the word
+        // engines have nothing to say and the touch decoder has no key positions for digits.
+        if (word.isNotEmpty() && word.none { it.isLetter() }) return emptyList()
         // Nothing being composed: offer likely continuations of the previous word instead (issue #245).
         if (word.isEmpty()) return nextWordPredictions(subtype, content, maxCandidateCount)
 

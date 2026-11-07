@@ -443,8 +443,9 @@ class FlorisImeService : LifecycleInputMethodService() {
         if (info == null) return
         val editorInfo = FlorisEditorInfo.wrap(info)
         // Another field of the same app: the one being left is "closed" for the address book, so an email
-        // or number typed there is saved (live test 7.11.2026: moving from Email to Text saved nothing).
-        if (!restarting) runCatching {
+        // or number typed there is saved (live test 7.11.2026: moving from Email to Text saved nothing,
+        // because a web page switches fields by RESTARTING the input, so restarts count too).
+        runCatching {
             val c = editorInstance.activeContent
             dev.patrickgold.florisboard.dictate.nlp.MaAddressBook.observe(
                 c.textBeforeSelection, c.textAfterSelection,
