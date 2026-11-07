@@ -302,6 +302,23 @@ class LatinLanguageProvider(context: Context) : SpellingProvider, SuggestionProv
             .maxByOrNull { it.second }?.first ?: word
     }
 
+    private val misspellingsByLang = guardedByLock { mutableMapOf<String, Map<String, List<String>>>() }
+
+    /** wrong → [right, …] for [subtype]'s language, from ime/dict/<lang>_misspellings.txt (empty if none). */
+    private suspend fun misspellingsFor(subtype: Subtype): Map<String, List<String>> {
+        val lang = dictLangFor(subtype)
+        return misspellingsByLang.withLock { cache ->
+            cache[lang] ?: runCatching {
+                val map = HashMap<String, List<String>>(5_000)
+                appContext.assets.readText("ime/dict/${lang}_misspellings.txt").lineSequence().forEach { line ->
+                    val tab = line.indexOf('\t')
+                    if (tab > 0) map[line.substring(0, tab)] = line.substring(tab + 1).split('|').filter { it.isNotBlank() }
+                }
+                map as Map<String, List<String>>
+            }.getOrDefault(emptyMap()).also { cache[lang] = it }
+        }
+    }
+
     /** The two words before the one being composed ("thank you"), lowercased, or null. */
     private fun previousTwoWordsOf(content: EditorContent): String? {
         val before = content.textBeforeSelection.removeSuffix(content.composingText).toString()
@@ -850,6 +867,30 @@ class LatinLanguageProvider(context: Context) : SpellingProvider, SuggestionProv
                             isEligibleForAutoCommit = i == 0 && f >= AUTOCORRECT_MIN_FREQ &&
                                 (!typedIsWord || f >= typedFreq + DIACRITIC_OVERRIDE_MARGIN),
                             sourceProvider = this,
+                        ),
+                    )
+                }
+            }
+        }
+
+        // Common misspellings (7.11.2026, SwiftKey test: TTT corrected none of becuase, recieve, definately,
+        // seperate, untill, because the English dictionary itself contained them). The Wikipedia list of common
+        // misspellings ships as ime/dict/<lang>_misspellings.txt (wrong → right, "|" between alternatives); a
+        // misspelling with one fix is swapped in on space, like SwiftKey; with several they are offered.
+        if (prefs.suggestion.autoCorrect.get() && word.length >= 2) {
+            val fixes = misspellingsFor(subtype)[word.lowercase()]
+            if (fixes != null) {
+                out.putIfAbsent(
+                    word.lowercase(),
+                    WordSuggestionCandidate(text = word, confidence = 1.0, isEligibleForAutoCommit = false, sourceProvider = this),
+                )
+                fixes.forEachIndexed { i, fix ->
+                    val text = cased(fix)
+                    out.putIfAbsent(
+                        text.lowercase(),
+                        WordSuggestionCandidate(
+                            text = text, confidence = 0.99,
+                            isEligibleForAutoCommit = i == 0 && fixes.size == 1, sourceProvider = this,
                         ),
                     )
                 }

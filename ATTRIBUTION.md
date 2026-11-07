@@ -47,3 +47,9 @@ word the user corrects is unlearned from the user history, and a word's weight d
 since it was last used (LatinIME's forgetting curve). No LatinIME code was copied; the Kotlin is
 written for this app. HeliBoard (GPL-3.0), which carries the same LatinIME learning today, was read
 for comparison only and nothing of it is included.
+
+- **Common English misspellings** (`app/src/main/assets/ime/dict/en_misspellings.txt`, 7.11.2026): derived from
+  [Wikipedia:Lists of common misspellings/For machines](https://en.wikipedia.org/wiki/Wikipedia:Lists_of_common_misspellings/For_machines),
+  CC BY-SA 4.0. See `en_misspellings_LICENSE.txt` beside it.
+- **Conversational word pairs and triples** (`*_bigrams.txt`, `*_trigrams.txt`, 7.11.2026): counted from the
+  OpenSubtitles v2018 monolingual corpora (OPUS, opus.nlpl.eu), English and Croatian, first 12 million lines each.
