@@ -68,6 +68,8 @@ object MaTypingLanguage {
         "ovaj", "ova", "neki", "svi", "sve", "mogu", "moze", "treba", "evo", "nego", "kao", "tako",
         "bok", "sad", "sada", "tu", "tamo", "gdje", "zasto", "jesi", "jesam", "nisam", "hocu",
         "necu", "volim", "idem", "dodi", "vidimo", "fala", "mene", "tebe", "nas", "vas",
+        // Spoken Croatian as typed in chats (SwiftKey held-out set 7.11.2026: "di si" was read as English).
+        "di", "ko", "sta", "jel", "javi", "idemo", "moram", "nemoj", "koliko", "zato", "isto",
     )
 
     /**
