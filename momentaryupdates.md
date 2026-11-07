@@ -70,6 +70,15 @@ Every request word for word, saved and pushed before any code (MANTRA_MANIFEST r
 - MaAddressBook: emails, phone numbers, web addresses and IBANs (checksum-checked) saved whole when the field is left or the cursor moves past them; offered first from their first characters (091 55 also finds +385 91 555…), in empty email / phone / URL fields, and after "my email is", "moj broj je", "IBAN", "moj račun je". Contacts: opt-in (READ_CONTACTS declared, never asked; allow it in Android settings → TTT → Permissions), then contact emails, numbers and names (a capitalised "Mar" → "Marko …") join.
 - Live: build 452 on the emulator: 37 of 100 SwiftKey words in TTT's strip (448: 28), by OCR; "laku n" → noć, "good m" → morning, "do you w" → want / want to, "thank you " → for. Phone number saved and offered after "my number is" (454).
 - SwiftKey itself: emoji predictions switched off; it has no setting for more than three suggestions (the arrow at the left of its bar opens more).
+**Status (7.11.2026, evening, builds 459–490):**
+- Typos: common misspellings were in the English dictionary itself (teh, recieve, goverment …): 45 removed, the Wikipedia list of common misspellings (CC BY-SA) ships as en_misspellings.txt and is swapped in on space, plus im → I'm, dont → don't, i → I. Both languages count as words, fixes from the other language are offered. Typo set (30): TTT ~20 fixed (SwiftKey ~16).
+- Live phrase sets (OCR, rescored): set 1 33 → 43 → 64 of 100 SwiftKey words in TTT's strip (448 → 452 → 480); held-out set 2 35 of 73.
+- The personal model never learned from typing (only commitText reported to it; letters go through commitChar): fixed, typed letters and picked words now build the sentence it learns. Names (capitalised, unknown to both dictionaries, used twice) are offered from the start, from both language models: "Xim" → Ximenka, checked live (489).
+- Address book checked live: email typed in the Email box recalled from "kbt"; number recalled from "09155" and after "my number is"; saved once, whole (no halves).
+- ANR found and fixed: every keystroke started a suggestion job and none was cancelled; with the spelling-fix generator running in three or four at once, garbage collection stalled the main thread for 5 s. Now one job at a time, distance-2 fixes only up to 8 letters, an allocation-free Croatian prefix compare. No ANR over 56 phrases since (486).
+- **Builds 473–477 crashed on the first letter** (address book, fixed in 479, guarded since; a gate test pins it). Use 480 or newer.
+- CI kept the wrong two releases when builds finished out of order (it deleted the newest, 476): now by build number.
+- Not from today and not fixed: on a very slow first start the keyboard can open before its layouts are indexed ("Extension org.florisboard.layouts not found", no letters) until TTT restarts. Seen only on the overloaded emulator.
 
 ## 7.11.2026: WA key, WhatsApp controlled by Sonnet, never sending
 
