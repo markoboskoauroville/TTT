@@ -102,3 +102,8 @@ mostly the test harness (Shift taps landing late typed "hVla", "zaSOt"); typed c
 work. A real gap: "zasot" → "zašto" (a swap plus a dropped diacritic). Croatian corrections are now also looked up with
 the diacritics folded away, so such a typo is one edit from its word (offline: zasot → zašto, nemma → nema,
 dobor → dobro, prijatlj → prijatelj).
+
+**Status (7.11.2026, 21:15 UTC, build 493):** Croatian typos now fixed live: dobor → dobro, sutar → sutra,
+mozda → možda, vidmo → vidimo, prijatlj → prijatelj, kuca → kuća. Still missed: "zasot", "nemma" in a fresh
+field after English, because an unknown word keeps the last language. Now the last language is left when it has no
+usable word one edit away and the other has (zasot → Croatian, becuase after Croatian → English).

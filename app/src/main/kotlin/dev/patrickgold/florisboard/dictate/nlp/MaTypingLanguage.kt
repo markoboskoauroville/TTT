@@ -45,6 +45,9 @@ object MaTypingLanguage {
     /** How many finished words before the cursor are read. A sentence's worth, not the whole field. */
     const val WINDOW_WORDS = 8
 
+    /** A near word this common (the auto-correction floor, 128..255 scale) can be what was meant. */
+    private const val NEAR_MIN = 170
+
     private const val CROATIAN_LETTERS = "čćžšđ"
 
     private val EN_SMALL = setOf(
@@ -139,7 +142,19 @@ object MaTypingLanguage {
             when {
                 MaShippedWords.isMisspelling(current) || MaShippedWords.leans(MaWordLanguage.EN, current) -> MaWordLanguage.EN
                 MaShippedWords.leans(MaWordLanguage.HR, current) -> MaWordLanguage.HR
-                else -> null
+                else -> {
+                    // A typo neither knows: leave the last language only when it has no usable word one edit
+                    // away and the other has ("zasot" → zašto after English; "sutar" stays Croatian although
+                    // English has "sugar").
+                    val en = MaShippedWords.nearestFreq(MaWordLanguage.EN, current)
+                    val hr = MaShippedWords.nearestFreq(MaWordLanguage.HR, current)
+                    val prev = last ?: MaLanguage.active()
+                    when {
+                        prev == MaWordLanguage.EN && en < NEAR_MIN && hr >= NEAR_MIN -> MaWordLanguage.HR
+                        prev == MaWordLanguage.HR && hr < NEAR_MIN && en >= NEAR_MIN -> MaWordLanguage.EN
+                        else -> null
+                    }
+                }
             }
         } else null
         val language = decided ?: byWord ?: last ?: MaLanguage.active()

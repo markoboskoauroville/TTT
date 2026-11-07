@@ -77,4 +77,26 @@ object MaShippedWords {
         val theirs = byLang[other]?.get(word.lowercase()) ?: 0
         return mine > 0 && mine >= theirs + MARGIN
     }
+
+    /**
+     * The commonest word of [lang] one edit from [word] (Croatian also without diacritics), 0 when none.
+     * For a typo neither language knows ("zasot", "nemma"): the language with the commoner near word is
+     * the one being typed (live test 7.11.2026: "nemma" in a fresh field became the English name "Emma").
+     */
+    fun nearestFreq(lang: String, word: String): Int {
+        val m = byLang[lang] ?: return 0
+        val w = fold(word.lowercase())
+        if (w.length < 4 || w.length > 12 || w.any { !it.isLetter() }) return 0
+        var best = 0
+        fun check(c: String) { val f = m[c] ?: return; if (f > best) best = f }
+        for (i in 0..w.length) {
+            if (i < w.length) check(w.removeRange(i, i + 1))
+            if (i + 1 < w.length) check(w.substring(0, i) + w[i + 1] + w[i] + w.substring(i + 2))
+            for (ch in 'a'..'z') {
+                if (i < w.length && ch != w[i]) check(w.substring(0, i) + ch + w.substring(i + 1))
+                check(w.substring(0, i) + ch + w.substring(i))
+            }
+        }
+        return best
+    }
 }
