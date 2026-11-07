@@ -98,6 +98,12 @@ object MaAddressBook {
     private var file: File? = null
     private var saveJob: Job? = null
 
+    /** A complete value sitting at the cursor is saved once it has stayed unchanged this long. */
+    private const val SETTLE_MS = 2_500L
+    private var settleJob: Job? = null
+
+    private fun log(msg: String) { runCatching { android.util.Log.i("MaAddressBook", msg) } }
+
     fun initialize(context: Context) {
         val f = File(context.filesDir, "ma_addresses.tsv")
         file = f
@@ -229,10 +235,28 @@ object MaAddressBook {
                 // value clears the once-seen starts of it saved while it was being typed.
                 if (entries.values.any { it.kind == kind && it.count >= 1 && keyOf(it.value, kind).let { k -> k.length > key.length && k.startsWith(key) } }) return
                 if (countedThisField.add(key)) {
+                    log("saved $kind ${value.length} chars (closing=$fieldClosing)")
                     entries.entries.removeAll { (k, e) -> e.kind == kind && e.count <= 1 && k != key && key.startsWith(k) }
                     val e = entries[key]
                     if (e != null) e.count++ else entries[key] = Entry(value, 1, kind)
                     changed = true
+                }
+            }
+        }
+        // A complete address or number at the cursor that then stays as it is: saved after SETTLE_MS (a web
+        // page's fields often never close the input, and he moves on without typing past it).
+        if (!fieldClosing) {
+            val atCursor = EMAIL.findAll(before).lastOrNull()?.takeIf { it.range.last == before.length - 1 }?.let { it.value to EMAIL_KIND }
+                ?: PHONE.findAll(before).lastOrNull()?.takeIf {
+                    it.range.last == before.length - 1 && it.value.count { c -> c.isDigit() } >= PHONE_MIN_DIGITS + 1
+                }?.let { it.value.trim() to PHONE_KIND }
+            settleJob?.cancel()
+            if (atCursor != null) {
+                val snapshot = before
+                settleJob = scope.launch {
+                    delay(SETTLE_MS)
+                    log("settled ${atCursor.second} ${atCursor.first.length} chars")
+                    observe(snapshot + " ", "", isIncognito = false, fieldClosing = false)
                 }
             }
         }
@@ -252,7 +276,10 @@ object MaAddressBook {
             if (DATE_LIKE.matches(value)) continue
             count(value, PHONE_KIND, m.range.last, typingPhone)
         }
-        if (fieldClosing) synchronized(lock) { countedThisField.clear() }
+        if (fieldClosing) {
+            log("field left")
+            synchronized(lock) { countedThisField.clear() }
+        }
         if (changed) scheduleSave()
     }
 
