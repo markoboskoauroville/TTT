@@ -96,3 +96,9 @@ Every request word for word, saved and pushed before any code (MANTRA_MANIFEST r
 hvla → hvala, kuca → kuća) stopped, because the personal model now learns typed words and its hit for the typed
 word went first. Fix: the shipped engine's spelling fix goes first unless the personal hit is his own correction
 (tier 4) or a Haiku word (tier 0).
+
+**Status (7.11.2026, 20:55 UTC, build 492):** English typos 16/20 fixed (SwiftKey 14). Croatian misses in the suite were
+mostly the test harness (Shift taps landing late typed "hVla", "zaSOt"); typed cleanly, mozda → možda and hvla → hvala
+work. A real gap: "zasot" → "zašto" (a swap plus a dropped diacritic). Croatian corrections are now also looked up with
+the diacritics folded away, so such a typo is one edit from its word (offline: zasot → zašto, nemma → nema,
+dobor → dobro, prijatlj → prijatelj).

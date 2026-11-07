@@ -399,6 +399,27 @@ class LatinLanguageProvider(context: Context) : SpellingProvider, SuggestionProv
 
     private val lowerIndexByLang = guardedByLock { mutableMapOf<String, LowerIndex>() }
 
+    // Croatian with the diacritics folded away ("zasto" → "zašto"), so a typo that also drops a diacritic is
+    // still one edit from its word (live test 7.11.2026: SwiftKey fixed "zasot" → "zašto", TTT did not).
+    @Volatile private var foldedHrIndex: LowerIndex? = null
+
+    private suspend fun foldedCroatianIndex(): LowerIndex {
+        foldedHrIndex?.let { return it }
+        val data = wordDataForLang("hr")
+        val freq = HashMap<String, Int>(data.size)
+        val canonical = HashMap<String, String>(data.size)
+        val alphabet = HashSet<Char>()
+        for ((word, f) in data) {
+            val key = foldCroatian(word.lowercase())
+            if ((freq[key] ?: -1) < f) {
+                freq[key] = f
+                canonical[key] = word
+            }
+            for (ch in key) if (ch.isLetter()) alphabet.add(ch)
+        }
+        return LowerIndex(freq, canonical, alphabet).also { foldedHrIndex = it }
+    }
+
     // Lexicographically sorted word list per language, used by the beam decoder to prune partial paths that
     // are no longer a prefix of any real word (issue #242). Shares its strings with the LowerIndex, so this
     // costs one array of references per language and no duplicated character data.
@@ -424,6 +445,7 @@ class LatinLanguageProvider(context: Context) : SpellingProvider, SuggestionProv
                 resolvedDictLang.clear()
                 rankedWordsByLang.withLock { it.clear() }
                 lowerIndexByLang.withLock { it.clear() }
+                foldedHrIndex = null
                 bigramsByLang.withLock { it.clear() }
                 followersByLang.withLock { it.clear() }
                 prefixIndexByLang.withLock { it.clear() }
@@ -1125,6 +1147,20 @@ class LatinLanguageProvider(context: Context) : SpellingProvider, SuggestionProv
             if (touchCorrections == null && distance1Empty && word.length <= MAX_DISTANCE2_LEN) {
                 corrections = correctionsFor(word, index, CORRECTION_MAX, allowDistance2 = true, ctx)
             }
+            // Croatian: one edit away once the diacritics are folded ("zasot" → zasto → "zašto") beats a fix that
+            // needs two plain edits or only the taps' guess. It is a real distance-1 fix, so it may be swapped in.
+            var foldedFix = false
+            if (isCroatianSubtype(subtype) && word.length >= 4) {
+                val folded = correctionsFor(foldCroatian(word.lowercase()), foldedCroatianIndex(), CORRECTION_MAX, allowDistance2 = false)
+                    .filter { (index.freq[it.lowercase()] ?: 0) >= AUTOCORRECT_MIN_FREQ && it.lowercase() != word.lowercase() }
+                val top = corrections.firstOrNull()
+                if (folded.isNotEmpty() && (top == null || distance1Empty ||
+                        (index.freq[folded[0].lowercase()] ?: 0) > (index.freq[top.lowercase()] ?: 0))
+                ) {
+                    corrections = (folded + corrections).distinctBy { it.lowercase() }.take(CORRECTION_MAX)
+                    foldedFix = true
+                }
+            }
             // Nothing in this language: the other shipped one may know it ("hvla" typed right after English
             // is Croatian "hvala"; SwiftKey answers from both at once). Offered, never swapped in silently.
             var fromOtherLanguage = false
@@ -1144,6 +1180,7 @@ class LatinLanguageProvider(context: Context) : SpellingProvider, SuggestionProv
                 // because the typo prefixed some dictionary word — while a bare "a correction exists" rule
                 // would rewrite 30 % of correctly typed names.
                 fromOtherLanguage -> false
+                foldedFix -> !hadCandidatesBefore
                 topTouchCost != null -> topTouchCost <= AUTO_COMMIT_MAX_TOUCH_COST
                 // A dropped or doubled letter: the beam cannot see it and the taps say nothing either way,
                 // so keep the conservative classic rule.
