@@ -196,3 +196,12 @@ voices. Stopped here: a further build plus a full suite (~1 h) would not finish 
 - Parakeet (sherpa 1.13.3, build 506): English right ("marco.bosco at gmail.com", fixed by MaSpokenEmail in the next build); **Croatian came out in Cyrillic** ("Можеш ли ми послати адрес у ресторана? Молим те."). Fix: MaCyrillic, every on-device result written in Croatian Latin.
 - The H key (record + translate) gave nothing for a Croatian clip and kept recording after the second press; stopped with send. Not yet looked into.
 - Setting put back to "AssemblyAI, Parakeet as fallback".
+
+## 8.11.2026 – Croatian or English only; names with k; one more hour of tests
+
+> Please look at these tests. When the voice is speaking Croatian, I get Cyrillic letters. Can you force the model to either talk Croatian— I mean, recognize Croatian or English, nothing in between?
+> and please keep on testing for next one hour
+> we are doing both tests now, voice recognition and correction algorithms
+> my name is spelled with k, and any dictation should convert marko with c to marko with k, bosko with c to bosko with k
+
+**Status:** saved first. Parakeet v3 has no language switch (it picks the language itself), so the output is forced instead: Cyrillic → Croatian Latin (MaCyrillic, commit 17bd7348). Names: MaNameSpelling, Marco → Marko, Bosco → Bosko in every dictation.
