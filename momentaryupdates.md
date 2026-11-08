@@ -260,3 +260,4 @@ voices. Stopped here: a further build plus a full suite (~1 h) would not finish 
 
 **Status:** saved first.
 **Status:** done — the small AssemblyAI/Parakeet name before HR/ENG is gone (the Talk-to keys stay silent).
+- Build 534 (2a2f6bde) installed on the Nothing Phone and the Pixel 7 (versionCode 1534).
