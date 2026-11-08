@@ -107,6 +107,7 @@ import androidx.compose.ui.unit.sp
 import dev.patrickgold.florisboard.R
 import dev.patrickgold.florisboard.app.FlorisPreferenceStore
 import dev.patrickgold.florisboard.dictate.MaLanguage
+import dev.patrickgold.florisboard.dictate.MaProviders
 import dev.patrickgold.florisboard.ime.text.key.KeyCode
 import dev.patrickgold.florisboard.dictate.DictateController
 import dev.patrickgold.florisboard.dictate.DictateRecordingAnimation
@@ -522,6 +523,18 @@ private fun MaUtilityKeys(modifier: Modifier = Modifier) {
     // The FAST/SLOW key that sat beside it is gone. Speed is a consequence of the language now
     // rather than a choice, and left as a control it could be set to exactly the combination that
     // ruins a dictation: FAST on Croatian, which returns fluent sentences that are the wrong words.
+    // The engine, in small letters before HR/ENG (Marko, 8.11.2026): "AssemblyAI" in the network's
+    // blue, "Parakeet" in the phone's amber, the same two colours as the Talk-to keys. Read once per
+    // recording: this key only exists while recording, so every new recording draws it afresh, after
+    // startRecording has set the engine for it.
+    val local = remember { MaProviders.transcribesLocally() }
+    Text(
+        text = if (local) "Parakeet" else "AssemblyAI",
+        color = if (local) MaEngineLocalAmber else MaEngineNetBlue,
+        fontSize = 9.sp,
+        maxLines = 1,
+        modifier = Modifier.padding(end = 3.dp),
+    )
     MaUtilityKey(label = languageBadge, modifier = modifier) { MaLanguage.toggle(context) }
 }
 

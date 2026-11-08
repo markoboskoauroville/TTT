@@ -224,3 +224,11 @@ voices. Stopped here: a further build plus a full suite (~1 h) would not finish 
 - Local corrections: MaCroatianFix (d8a67a3d, 526455b0, 6148d18f, 470127e1): Cyrillic → Latin, diacritics, one-edit mishearings scored with hr bigrams/trigrams, split words joined and re-split, rare words with a commoner twin, ikavian ije. Pixel 7, build 525, amber H: "Možeš li mi poslati adresu restorana? Molim te.", "žao mi je, danas nemam vremena za ručak", "kad stigneš kući, pošalji mi poruku" (518 wrote "stignes kuci, posalji").
 - VM virtual microphone: the redroid mic is a stub (silence); tools/vm_voice/vsay.sh speaks with edge-tts into TTT's pending folder and reads the result from the history database; 16-20 s per sentence once Parakeet is loaded.
 - Mac session (MANTRA_VOICE ears) took Parakeet + tools/hr_fix (hr_fix.py, spoken.py) and re-syncs when told.
+
+## 8.11.2026 – stop testing; engine name before HR/ENG while recording
+
+> please stop testing, write the latest updates if there are any, and then please close the session … there is something popping up when I'm recording this recorder. There is E and G badge. And just in a small font before E and G I want to have confirmation of the engine.
+
+**Status:** saved first. Testing stopped (page server on the VM stopped; the Pixel 7 keeps build 525, setting "AssemblyAI, Parakeet as fallback", Parakeet downloaded, adb reverse removed).
+- While recording, the HR/ENG key on the strip now has the engine in small letters before it: "AssemblyAI" in blue or "Parakeet" in amber (the Talk-to colours). Same rule as the request itself (MaProviders.transcribesLocally), so a Talk-to key, the setting "on the phone", and fallback without a key all show Parakeet.
+- Open: Marko turns on Accessibility → TTT himself (Speechify reader, WA key). Builds after 525 (vowel-shape scoring, this label) are on CI, not installed on the phone.
