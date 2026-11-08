@@ -191,4 +191,8 @@ voices. Stopped here: a further build plus a full suite (~1 h) would not finish 
 
 > Please also now for next 10 minutes using the engine for voice from the— this app TTT itself, Speechify Voices, test it how our local voice recognition engine Sherpa is working. Next 10 minutes only you need to talk speaker and recording microphone, debug this system and put in a manifest If any of API codes are missing, you need to ask the Cloud Code session inside macOS to transfer from the folder Downloads/API API codes as file to that phone and that load them automatically through file picker inside TTT.
 
-**Status:** saved first. Baseline on the real Pixel 7, build 506: 30/30 typos fixed.
+**Status:** done 06:50 (Pixel time). Keys were already on the phone (6 AssemblyAI, Anthropic, 21 Speechify), so nothing had to come from the Mac. Parakeet downloaded on the phone (~4 min on Wi-Fi). Turning on TTT's Accessibility service from adb was refused (security setting): Marko switches it on himself; without it TTT's reader cannot speak the screen, so the voices were edge-tts clips played by Chrome through the phone's speaker, recorded by TTT's E key (speaker → microphone, real acoustics).
+- AssemblyAI: "Please send the report to marco.bosco@gmail.com before Friday." / "I will call you tomorrow at half past 3 about the meeting."
+- Parakeet (sherpa 1.13.3, build 506): English right ("marco.bosco at gmail.com", fixed by MaSpokenEmail in the next build); **Croatian came out in Cyrillic** ("Можеш ли ми послати адрес у ресторана? Молим те."). Fix: MaCyrillic, every on-device result written in Croatian Latin.
+- The H key (record + translate) gave nothing for a Croatian clip and kept recording after the second press; stopped with send. Not yet looked into.
+- Setting put back to "AssemblyAI, Parakeet as fallback".

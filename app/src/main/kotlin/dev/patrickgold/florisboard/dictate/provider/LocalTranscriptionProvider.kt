@@ -21,6 +21,7 @@ import com.k2fsa.sherpa.onnx.SileroVadModelConfig
 import com.k2fsa.sherpa.onnx.Vad
 import com.k2fsa.sherpa.onnx.VadModelConfig
 import dev.patrickgold.florisboard.dictate.audio.AudioDecode
+import dev.patrickgold.florisboard.dictate.nlp.MaCyrillic
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.File
@@ -80,7 +81,7 @@ class LocalTranscriptionProvider(
             val language = request.language?.substringBefore('-')?.takeIf { it.isNotBlank() }.orEmpty()
 
             if (streaming) {
-                return@withContext TranscriptionResult(transcribeStreaming(samples).trim())
+                return@withContext TranscriptionResult(MaCyrillic.toLatin(transcribeStreaming(samples).trim()))
             }
 
             val text = try {
@@ -109,7 +110,8 @@ class LocalTranscriptionProvider(
                 )
             }
 
-            TranscriptionResult(text.trim())
+            // Parakeet writes Croatian heard as Serbian in Cyrillic (Pixel 7, 8.11.2026): Latin only.
+            TranscriptionResult(MaCyrillic.toLatin(text.trim()))
         }
 
     /**

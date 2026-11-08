@@ -49,6 +49,11 @@ check("gradle uses the 2.0.1 jar", gradle.count("sherpa-onnx-2.0.1.jar") == 2 an
 check("VAD segment start is Long since 2.0", "seg.start.toInt()" in gate)
 check("retag tool present", (ROOT / "tools/retag_elf_verneed.py").exists())
 
+cyr = (SRC / "dictate/nlp/MaCyrillic.kt").read_text()
+local = (SRC / "dictate/provider/LocalTranscriptionProvider.kt").read_text()
+check("Parakeet Cyrillic is written in Croatian Latin", local.count("MaCyrillic.toLatin(") == 2)
+check("Serbian letters map to Gaj Latin", "'ж' to \"ž\"" in cyr and "'љ' to \"lj\"" in cyr and "'џ' to \"dž\"" in cyr)
+
 if failures:
     for f in failures:
         print("FAIL", f)
