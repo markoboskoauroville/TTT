@@ -173,3 +173,10 @@ the emulator's timing, both fixed when typed alone). Set 1 62/100 (top 3: 30), s
 emulator's run-to-run noise of the best runs (65, 35). Address book: kbt → email, 09155 → both saved forms of the number
 (the dictated "0915550101" was saved too, as typed text is). Parakeet: on-device and as fallback, tested live with edge-tts
 voices. Stopped here: a further build plus a full suite (~1 h) would not finish before 5 am.
+
+## 8.11.2026 – install on the real Pixel 7
+
+> Please install on the phone over wireless debugging. The phone is Pixel 7, latest version of the TTT, and then summarize in voice and install on the same phone voice engine, latest what we had on the repositories, and tell me in voice summary of recent development and if more testing will help. i am on pixel 7, just to remind you
+> feel free to use tailscale to access this phone
+
+**Status:** saved first.
