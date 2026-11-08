@@ -147,3 +147,9 @@ the VM). Typing after a dictation: "see you t" → too, tomorrow; "and the ph" �
 "hvala ti n" → na. Two fixes: (1) a one-sentence dictation was lowercased whole ("i will call you", "friday", "marko"):
 now only its first word, and not "I" or a name; (2) personal words with no context ("the", "to") no longer go before the
 shipped engine's top two.
+
+**Status (8.11.2026, 01:45 CET, build 502):** best suite so far. 0 ANR; typos 25/30 fixed (SwiftKey ~16), every Croatian
+one; set 1 64/100, set 2 34/73; address book recalled. Parakeet + typing confirmed: "I will call you…" keeps its capital,
+"see you t" → too, tomorrow. Remaining misses wich, alot, seperate, accomodate: a misspelling with several fixes now
+swaps in the first when it is far commoner (which over witch, a lot over allot; 71 of 200 such entries), and a settled
+misspelling skips the edit-distance search so the fix is ready before space on a slow phone.

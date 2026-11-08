@@ -952,6 +952,9 @@ class LatinLanguageProvider(context: Context) : SpellingProvider, SuggestionProv
         // seperate, untill, because the English dictionary itself contained them). The Wikipedia list of common
         // misspellings ships as ime/dict/<lang>_misspellings.txt (wrong → right, "|" between alternatives); a
         // misspelling with one fix is swapped in on space, like SwiftKey; with several they are offered.
+        // Set when the list settles the word: the costlier edit-distance search below is then skipped, so on a
+        // slow phone the answer is ready before space (live test 7.11.2026: "seperate", "accomodate" missed).
+        var misspellingSettled = false
         if (prefs.suggestion.autoCorrect.get() && word.isNotEmpty()) {
             val fixes = misspellingsFor(subtype)[word.lowercase()]
             // A fix that only changes the case ("i" → "I", "i'm" → "I'm") takes the typed word's place.
@@ -966,13 +969,22 @@ class LatinLanguageProvider(context: Context) : SpellingProvider, SuggestionProv
                     word.lowercase(),
                     WordSuggestionCandidate(text = word, confidence = 1.0, isEligibleForAutoCommit = false, sourceProvider = this),
                 )
+                // With several fixes, the first is still swapped in when it is far commoner than every other
+                // (SwiftKey: wich → which not witch, alot → a lot not allot). A phrase counts as its rarest word.
+                fun fixFreq(f: String): Int =
+                    f.lowercase().split(' ').minOfOrNull { index.freq[it] ?: 0 } ?: 0
+                val dominant = fixes.size == 1 || (
+                    fixFreq(fixes[0]) >= AUTOCORRECT_MIN_FREQ &&
+                        fixes.drop(1).all { fixFreq(fixes[0]) >= fixFreq(it) + DIACRITIC_OVERRIDE_MARGIN }
+                    )
+                misspellingSettled = dominant
                 fixes.forEachIndexed { i, fix ->
                     val text = cased(fix)
                     out.putIfAbsent(
                         text.lowercase(),
                         WordSuggestionCandidate(
                             text = text, confidence = 0.99,
-                            isEligibleForAutoCommit = i == 0 && fixes.size == 1, sourceProvider = this,
+                            isEligibleForAutoCommit = i == 0 && dominant, sourceProvider = this,
                         ),
                     )
                 }
@@ -1132,7 +1144,7 @@ class LatinLanguageProvider(context: Context) : SpellingProvider, SuggestionProv
         // swapped. Distance 2 is a suggestions-only fallback when distance 1 finds nothing (too uncertain to
         // swap in silently). #190: never correct a word valid in any configured language.
         kotlinx.coroutines.yield()
-        if (autoCorrectOn && !isKnown && word.length >= 3) {
+        if (autoCorrectOn && !isKnown && word.length >= 3 && !misspellingSettled) {
             val hadCandidatesBefore = out.isNotEmpty() // Croatian restoration and/or prefix completions
             val prevWord = contextWord(content, subtype)
             val bigrams = if (prevWord != null) bigramsFor(subtype) else emptyMap()
