@@ -15,10 +15,14 @@
 #
 set -euo pipefail
 
-VERSION="1.13.3"
+VERSION="2.0.1"
 ORT_VERSION="1.24.3"
-# sha256 of sherpa-onnx-<VERSION>.aar from the GitHub release (verified 2026-06-22).
-AAR_SHA256="243ad797a3b6e75ebbeaf7a2ab4aec0777e7d71b730685abb762a120940b07b6"
+# sha256 of sherpa-onnx-<VERSION>.aar from the GitHub release (verified 2026-11-08).
+AAR_SHA256="a8d09d1d32f3eb8520482c6d3d43fae674681c5b050385967c70a3c2c9bf0ee7"
+# sherpa-onnx 2.0.1 ships ONNX Runtime 1.28.2 (symbols tagged VERS_1.28.2). The Java bridge stays
+# 1.24.3 (API level 24, which 1.28 serves); its version requirement is retagged to match below.
+ORT_BRIDGE_TAG="VERS_${ORT_VERSION}"
+ORT_RUNTIME_TAG="VERS_1.28.2"
 URL="https://github.com/k2-fsa/sherpa-onnx/releases/download/v${VERSION}/sherpa-onnx-${VERSION}.aar"
 ORT_AAR_SHA256="67397e4a970e75617f765d2015ceaf911917e1d822276cfb5792744e8085cbce"
 ORT_URL="https://repo1.maven.org/maven2/com/microsoft/onnxruntime/onnxruntime-android/${ORT_VERSION}/onnxruntime-android-${ORT_VERSION}.aar"
@@ -102,6 +106,12 @@ for abi in abis:
         shutil.copyfileobj(f, o)
 print("  extracted: classes.jar +", ", ".join(f"{a}/libonnxruntime4j_jni.so" for a in abis))
 PY
+
+echo "· Matching the ONNX Runtime bridge to the runtime sherpa-onnx ships ($ORT_RUNTIME_TAG) …"
+for abi in "${ABIS[@]}"; do
+  grep -q "$ORT_RUNTIME_TAG" "$JNI_ROOT/$abi/libonnxruntime.so" || { echo "libonnxruntime.so ($abi) is not $ORT_RUNTIME_TAG" >&2; exit 1; }
+  "$PYTHON_BIN" "$REPO_ROOT/tools/retag_elf_verneed.py" "$JNI_ROOT/$abi/libonnxruntime4j_jni.so" "$ORT_BRIDGE_TAG" "$ORT_RUNTIME_TAG"
+done
 
 echo "✓ sherpa-onnx $VERSION ready:"
 echo "    $JAR_DST"

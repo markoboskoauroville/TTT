@@ -330,12 +330,12 @@ dependencies {
     implementation(libs.patrickgold.jetpref.datastore.ui)
     implementation(libs.patrickgold.jetpref.material.ui)
 
-    // sherpa-onnx on-device STT spike (issue #104). Vendored from the v1.13.3 GitHub release AAR:
+    // sherpa-onnx on-device STT spike (issue #104). Vendored from the v2.0.1 GitHub release AAR:
     // the Kotlin/JNI API as a jar here; the matching native .so live in src/main/jniLibs/<abi>/.
     // Not on Maven Central, so consumed as a local file (see private/docs/research/sherpa-onnx-feasibility.md).
-    implementation(files("libs/sherpa-onnx-1.13.3.jar"))
-    // Generic ONNX Runtime Java/JNI bridge for Smart Turn v3. The matching 1.24.3 runtime is already
-    // shipped by sherpa-onnx; tools/fetch-sherpa-onnx.sh extracts only the API jar + tiny JNI bridge,
+    implementation(files("libs/sherpa-onnx-2.0.1.jar"))
+    // Generic ONNX Runtime Java/JNI bridge for Smart Turn v3. sherpa-onnx ships the runtime (1.28.2, the
+    // bridge's version tag is retagged to it by the fetch script); tools/fetch-sherpa-onnx.sh extracts only the API jar + tiny JNI bridge,
     // avoiding a second ~20–27 MB copy of libonnxruntime per ABI.
     implementation(files("libs/onnxruntime-android-1.24.3.jar"))
 
@@ -367,7 +367,7 @@ val verifySherpaOnnxLibs by tasks.registering {
     // cache cannot serialize references to Gradle script/Project objects).
     val projectDir = layout.projectDirectory
     val required = buildList {
-        add(projectDir.file("libs/sherpa-onnx-1.13.3.jar").asFile)
+        add(projectDir.file("libs/sherpa-onnx-2.0.1.jar").asFile)
         add(projectDir.file("libs/onnxruntime-android-1.24.3.jar").asFile)
         for (abi in listOf("arm64-v8a", "armeabi-v7a")) {
             add(projectDir.file("src/main/jniLibs/$abi/libonnxruntime.so").asFile)

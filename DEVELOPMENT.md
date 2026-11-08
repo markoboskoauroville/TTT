@@ -8882,7 +8882,7 @@ edit was supposed to add** rather than trusting that no exception was raised.
 - **Forked from FlorisBoard.** The IME framework, the letter keyboard, the theming engine
   (`Snygg`), the clipboard, the NLP provider structure. Everything under `ime/` is largely theirs;
   everything under `dictate/` is largely ours.
-- **`sherpa-onnx` 1.13.3**, vendored from the GitHub release AAR — not on Maven Central. The fetch
+- **`sherpa-onnx` 2.0.1** (was 1.13.3 until 8.11.2026; ONNX Runtime 1.28.2 inside, the 1.24.3 Java bridge retagged by `tools/retag_elf_verneed.py`), vendored from the GitHub release AAR — not on Maven Central. The fetch
   script extracts only the API jar and the JNI bridge, avoiding a second 20–27 MB copy of
   `libonnxruntime` per ABI. One ABI only (`arm64-v8a`); a universal APK would be about 120 MB.
 - **Deliberately NOT carried across:** Groq, and with it automatic language detection. **A detector

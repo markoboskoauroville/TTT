@@ -197,7 +197,8 @@ object SpeechGate {
         while (!vad.empty()) {
             val seg = vad.front()
             val len = seg.samples.size
-            if (len > 0 && seg.start >= 0) out.add(seg.start until (seg.start + len))
+            val start = seg.start.toInt() // Long since sherpa-onnx 2.0
+            if (len > 0 && start >= 0) out.add(start until (start + len))
             vad.pop()
         }
     }

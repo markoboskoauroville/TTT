@@ -99,6 +99,7 @@ import java.util.concurrent.atomic.AtomicLong
 import dev.patrickgold.florisboard.dictate.audio.MaEncoder
 import dev.patrickgold.florisboard.dictate.audio.MaResample
 import dev.patrickgold.florisboard.dictate.nlp.MaDictationCorrections
+import dev.patrickgold.florisboard.dictate.nlp.MaSpokenEmail
 import dev.patrickgold.florisboard.dictate.ui.MaMessage
 import dev.patrickgold.florisboard.dictate.provider.MaKeyRing
 import dev.patrickgold.florisboard.dictate.provider.MaKeys
@@ -2796,7 +2797,9 @@ object DictateController {
         // the last two words. Doing it the other way round would leave "dot" sitting between his
         // sentence and the word "press", and neither rule would see what it was looking for.
         // One line break between paragraphs, never an empty line (MaParagraphs, 3.11.2026).
-        var body = MaParagraphs.single(MaSpokenFormat.apply(text))
+        // A dictated address put together and matched to the address book (MaSpokenEmail, 8.11.2026):
+        // "marco.bosco at gmail.com" is written as the saved marko.bosko@gmail.com.
+        var body = MaParagraphs.single(MaSpokenEmail.apply(MaSpokenFormat.apply(text)))
         if (prefs.dictate.maVoiceCommands.get() && DictateAccessibilityService.isRunning) {
             val split = MaVoiceCommand.splitTrailing(body)
             if (split != null) {
