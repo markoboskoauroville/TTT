@@ -93,6 +93,11 @@ class FlorisApplication : Application() {
         // Models already in Download/models/: used at once at the exact size, their checksum checked
         // once in the background (MaSharedModels). Every start, so also the first after an update.
         dev.patrickgold.florisboard.dictate.llm.MaSharedModels.verifyInBackground(this)
+        // Models still in the private folder move to Documents/TTTmini/models/, where adb and the Mantra
+        // file transfer can copy them to another phone (Marko, 8.11.2026). Background, once per start.
+        val appForMove = this
+        Thread({ runCatching { dev.patrickgold.florisboard.dictate.provider.LocalTranscriptionProvider.migrateToShared(appForMove) } },
+            "ma-model-move").apply { priority = Thread.MIN_PRIORITY }.start()
         dev.patrickgold.florisboard.dictate.provider.OpenAiCompatibleClient.claudeUsageListener =
             { model, input, output -> dev.patrickgold.florisboard.dictate.MaClaudeCost.record(model, input, output) }
         try {

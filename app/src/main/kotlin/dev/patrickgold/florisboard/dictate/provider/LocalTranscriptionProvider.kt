@@ -37,7 +37,7 @@ import java.util.concurrent.TimeUnit
  * A model is a directory under [modelsRoot] containing three fixed-name files (so this class stays
  * agnostic of the specific Whisper variant):
  *
- *   <filesDir>/dictate-models/<modelId>/encoder.onnx
+ *   Documents/TTTmini/models/<modelId>/encoder.onnx   (else <filesDir>/dictate-models/<modelId>/)
  *                                       /decoder.onnx
  *                                       /tokens.txt
  *
@@ -274,11 +274,85 @@ class LocalTranscriptionProvider(
         /** Optional Silero VAD model, downloaded alongside each model; enables long-audio segmenting. */
         const val VAD = "vad.onnx"
 
-        /** Root directory that holds all installed on-device models. */
-        fun modelsRoot(context: Context): File = File(context.filesDir, MODELS_SUBDIR)
+        /**
+         * MODELS LIVE IN `Documents/TTTmini/models/`, BESIDE THE SETTINGS BACKUP (Marko, 8.11.2026).
+         *
+         * "The model is not hidden and inaccessible. It should be in the documents folder where the
+         * settings backup is." A model in the app's private folder cannot be copied out by adb (the
+         * release build is not debuggable), so a phone that already had Parakeet could not give it to
+         * another phone over Wi-Fi, and the other phone downloaded 670 MB again. In the shared folder
+         * any tool copies it: adb, the Mantra file transfer, a file manager. Copied in whole, it is used.
+         *
+         * The private folder stays the fallback while all-files access is not granted, and an
+         * installed private model is still found there until [migrateToShared] has moved it.
+         */
+        const val SHARED_SUBDIR = "models"
 
-        /** Directory for a single model id (its `encoder.onnx`/`decoder.onnx`/`tokens.txt` live here). */
-        fun modelDir(context: Context, modelId: String): File = File(modelsRoot(context), modelId)
+        fun privateRoot(context: Context): File = File(context.filesDir, MODELS_SUBDIR)
+
+        fun sharedRoot(): File = File(dev.patrickgold.florisboard.dictate.MaVault.dir(), SHARED_SUBDIR)
+
+        private fun sharedUsable(): Boolean = dev.patrickgold.florisboard.dictate.MaVault.hasFullAccess()
+
+        private fun hasFiles(dir: File): Boolean =
+            dir.isDirectory && (dir.listFiles()?.any { it.isFile && it.length() > 0L } == true)
+
+        /** Root directory new models are installed into: the shared folder when the app may use it. */
+        fun modelsRoot(context: Context): File = if (sharedUsable()) sharedRoot() else privateRoot(context)
+
+        /**
+         * Directory for a single model id (its `encoder.onnx`/`decoder.onnx`/`tokens.txt` live here):
+         * the shared copy when there is one, else an installed private copy, else where it will go.
+         */
+        fun modelDir(context: Context, modelId: String): File {
+            if (sharedUsable()) {
+                val shared = File(sharedRoot(), modelId)
+                if (hasFiles(shared)) return shared
+            }
+            val private = File(privateRoot(context), modelId)
+            if (hasFiles(private)) return private
+            return File(modelsRoot(context), modelId)
+        }
+
+        /**
+         * Moves every model still in the private folder to `Documents/TTTmini/models/`, once, in the
+         * background at start. Copied into `.tmp-<id>` first, sizes compared file by file, renamed into
+         * place, and only then is the private copy deleted, so an interrupted move loses nothing and is
+         * simply done again on the next start. Skipped when there is not room for a second copy.
+         */
+        fun migrateToShared(context: Context) {
+            if (!sharedUsable()) return
+            val privateDirs = privateRoot(context).listFiles()
+                ?.filter { it.isDirectory && !it.name.startsWith(".") && hasFiles(it) } ?: return
+            if (privateDirs.isEmpty()) return
+            val root = sharedRoot()
+            root.mkdirs()
+            if (!root.isDirectory) return
+            for (src in privateDirs) {
+                runCatching {
+                    val dest = File(root, src.name)
+                    if (hasFiles(dest)) {
+                        src.deleteRecursively()
+                        return@runCatching
+                    }
+                    val files = src.walkTopDown().filter { it.isFile }.toList()
+                    val bytes = files.sumOf { it.length() }
+                    if (root.usableSpace < bytes + 200L * 1024 * 1024) return@runCatching
+                    val tmp = File(root, ".tmp-move-${src.name}")
+                    tmp.deleteRecursively()
+                    src.copyRecursively(tmp, overwrite = true)
+                    val whole = files.all { f ->
+                        File(tmp, f.relativeTo(src).path).length() == f.length()
+                    }
+                    if (!whole) {
+                        tmp.deleteRecursively()
+                        return@runCatching
+                    }
+                    dest.deleteRecursively()
+                    if (tmp.renameTo(dest)) src.deleteRecursively() else tmp.deleteRecursively()
+                }
+            }
+        }
 
         /** True if [modelId] has all required files present on disk. */
         fun isInstalled(context: Context, modelId: String): Boolean {
