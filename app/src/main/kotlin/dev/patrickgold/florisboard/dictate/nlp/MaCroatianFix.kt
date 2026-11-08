@@ -40,7 +40,9 @@ import kotlin.math.log10
  * - **an unknown word** of four or more letters ("kavo", "bozji"): the commonest Croatian word one edit
  *   away, scored by frequency plus how often it follows the words before it ("idemo na kavu"); a change
  *   of length costs extra, so "kavo" becomes "kavu" rather than "kao";
- * - **a word split in two** ("adres u restorana"): joined when the two pieces make a known word.
+ * - **a word split in two** ("adres u restorana"): joined when the two pieces make a known word;
+ * - **words split in the wrong places** ("li je pdan" for "lijep dan", VM, 8.11.2026): an unknown piece
+ *   and its neighbours are joined and split again into FEWER known words, commonest first.
  *
  * Never touched: numbers, English words (in the English dictionary), and capitalised words inside a
  * sentence (names: "Auroville", "Boško"). The Claude or phone-model spell check runs after this, when
@@ -120,7 +122,7 @@ object MaCroatianFix {
     /** [text] with its Croatian corrected; unchanged when the dictionary cannot be loaded. */
     fun apply(context: Context, text: String): String {
         if (text.isBlank() || !load(context)) return text
-        return runCatching { correct(merge(text)) }.getOrDefault(text)
+        return runCatching { correct(resegment(merge(text))) }.getOrDefault(text)
     }
 
     private fun ctx(prev2: String?, prev: String?, next: String?, cand: String): Double {
@@ -175,6 +177,63 @@ object MaCroatianFix {
             val b = m.groupValues[2]
             if (a.lowercase() !in h && a.lowercase() !in en && fold((a + b).lowercase()) in folded) a + b else m.value
         }
+    }
+
+    private val SINGLE_LETTER_WORDS = setOf("i", "u", "a", "s", "k", "o", "v")
+
+    /** The best split of [letters] (folded) into one to three known words, or null. */
+    private fun segment(letters: String): List<String>? {
+        val n = letters.length
+        val scores = arrayOfNulls<Pair<Int, List<String>>>(n + 1)
+        scores[0] = 0 to emptyList()
+        for (i in 1..n) {
+            for (j in maxOf(0, i - 14) until i) {
+                val from = scores[j] ?: continue
+                if (from.second.size >= 3) continue
+                val piece = letters.substring(j, i)
+                if (piece.length == 1 && piece !in SINGLE_LETTER_WORDS) continue
+                val (word, f) = folded[piece] ?: continue
+                if (f < 150) continue
+                val score = from.first + f - 40
+                val at = scores[i]
+                if (at == null || score > at.first) scores[i] = score to (from.second + word)
+            }
+        }
+        return scores[n]?.second
+    }
+
+    private fun resegment(text: String): String {
+        val h = hr ?: return text
+        val toks = text.split(' ').toMutableList()
+        fun core(t: String) = t.filter { it.isLetter() }.lowercase()
+        fun plain(t: String) = t.isNotEmpty() && t.dropLastWhile { !it.isLetter() }.all { it.isLetter() } && t.first().isLetter()
+        var i = 0
+        while (i < toks.size) {
+            val c = core(toks[i])
+            if (c.isNotEmpty() && plain(toks[i]) && c !in h && fold(c) !in folded && c !in en) {
+                var changed = false
+                for ((a, b) in listOf(i - 2 to i, i - 1 to i, i to i + 1, i - 1 to i + 1)) {
+                    if (a < 0 || b >= toks.size) continue
+                    val win = toks.subList(a, b + 1).toList()
+                    // Only the last piece may carry punctuation; no names inside.
+                    if (win.dropLast(1).any { !it.all { ch -> ch.isLetter() } } || !win.all { plain(it) }) continue
+                    if (win.drop(1).any { it.first().isUpperCase() }) continue
+                    val seg = segment(fold(win.joinToString("") { core(it) })) ?: continue
+                    if (seg.size >= win.size) continue
+                    val trail = win.last().dropWhile { it.isLetter() }
+                    var joined = seg.joinToString(" ")
+                    if (win.first().first().isUpperCase()) joined = joined.replaceFirstChar { it.uppercaseChar() }
+                    repeat(win.size) { toks.removeAt(a) }
+                    toks.add(a, joined + trail)
+                    i = a + 1
+                    changed = true
+                    break
+                }
+                if (changed) continue
+            }
+            i++
+        }
+        return toks.joinToString(" ")
     }
 
     private fun correct(text: String): String {

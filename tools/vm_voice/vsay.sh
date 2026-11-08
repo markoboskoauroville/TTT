@@ -18,6 +18,7 @@
 # open on the phone (tools/swiftkey_compare/pad.html), and -l to match the language key pressed last
 # in TTT (the pending file uses TTT's current language; the script only picks the voice from it).
 set -euo pipefail
+exec </dev/null   # adb shell reads stdin: in a `while read` loop it would eat the next lines
 SERIAL=127.0.0.1:5556; VOICE=""; LANG_=hr; FIELD="${FIELD:-540 700}"
 while getopts "s:v:l:" o; do case $o in s) SERIAL=$OPTARG;; v) VOICE=$OPTARG;; l) LANG_=$OPTARG;; *) exit 2;; esac; done
 shift $((OPTIND-1)); TEXT="$*"; [ -n "$TEXT" ] || { echo "usage: vsay.sh [-s serial] [-v voice] [-l hr|en] text" >&2; exit 2; }

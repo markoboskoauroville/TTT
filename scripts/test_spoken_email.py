@@ -68,6 +68,8 @@ check("from the keyboard's own dictionary, pairs and triples",
 check("English words and names inside a sentence are left alone", "l in en" in fix and "!sentenceStart" in fix)
 check("off the main thread", "withContext(Dispatchers.Default)" in ctrl)
 
+check("wrongly split words are split again into fewer known words", "if (seg.size >= win.size) continue" in fix)
+
 if failures:
     for f in failures:
         print("FAIL", f)
