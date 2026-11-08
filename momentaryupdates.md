@@ -239,3 +239,4 @@ voices. Stopped here: a further build plus a full suite (~1 h) would not finish 
 > Please remove this pop-up message when I'm recording my voice with parkit or with assembly AI. Let it just be as before. Silent, please.
 
 **Status:** saved first. The four Talk-to keys (blue/amber E, H) no longer show "Recording … to AssemblyAI / on the phone (Parakeet)"; the engine name on the recording strip stays. The plain E/H keys are unchanged.
+- Build 531 (61047375) built and installed on the Pixel 7 (versionCode 1531): silent Talk-to keys and the engine name before HR/ENG.
