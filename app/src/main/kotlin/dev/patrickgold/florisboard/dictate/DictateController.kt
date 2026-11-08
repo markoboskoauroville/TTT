@@ -99,6 +99,7 @@ import java.util.concurrent.atomic.AtomicLong
 import dev.patrickgold.florisboard.dictate.audio.MaEncoder
 import dev.patrickgold.florisboard.dictate.audio.MaResample
 import dev.patrickgold.florisboard.dictate.nlp.MaDictationCorrections
+import dev.patrickgold.florisboard.dictate.nlp.MaCyrillic
 import dev.patrickgold.florisboard.dictate.nlp.MaNameSpelling
 import dev.patrickgold.florisboard.dictate.nlp.MaSpokenEmail
 import dev.patrickgold.florisboard.dictate.ui.MaMessage
@@ -2798,9 +2799,11 @@ object DictateController {
         // the last two words. Doing it the other way round would leave "dot" sitting between his
         // sentence and the word "press", and neither rule would see what it was looking for.
         // One line break between paragraphs, never an empty line (MaParagraphs, 3.11.2026).
-        // A dictated address put together and matched to the address book (MaSpokenEmail, 8.11.2026):
+        // Latin letters only, whatever the engine (AssemblyAI in English mode wrote Russian Cyrillic for
+        // Croatian on the Pixel 7, 8.11.2026), his name with k, then a dictated address put together and
+        // matched to the address book (MaSpokenEmail, 8.11.2026):
         // "marco.bosco at gmail.com" is written as the saved marko.bosko@gmail.com.
-        var body = MaParagraphs.single(MaSpokenEmail.apply(MaNameSpelling.apply(MaSpokenFormat.apply(text))))
+        var body = MaParagraphs.single(MaSpokenEmail.apply(MaNameSpelling.apply(MaCyrillic.toLatin(MaSpokenFormat.apply(text)))))
         if (prefs.dictate.maVoiceCommands.get() && DictateAccessibilityService.isRunning) {
             val split = MaVoiceCommand.splitTrailing(body)
             if (split != null) {
