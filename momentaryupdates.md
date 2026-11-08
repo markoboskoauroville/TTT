@@ -159,3 +159,11 @@ fixed when typed alone (the suite's misses were the emulator's timing); set 1 63
 22, best). **Fallback tested live:** engine "AssemblyAI, Parakeet as fallback" with a deliberately invalid AssemblyAI
 test key: AssemblyAI answered 401 in 0.4 s, the same recording went to Parakeet and "please send me the address of the
 restaurant" was typed. The history entry said AssemblyAI; it now says "Parakeet (fallback)" and the Parakeet model.
+
+**Status (8.11.2026, 03:40 CET, build 504):** history label confirmed live (entries 17, 18: "Parakeet (fallback)",
+parakeet-tdt-0.6b-v3). Harder Parakeet sentences (edge-tts): "My number is 091 555 0101, call me after five" exact
+("after 5"); "The meeting is at 3:30 on Monday the 12th in Zagreb" → "at 330 … the twelfth"; "marko dot bosko at gmail
+dot com" → "marco.bosco at gmail.com" (dots heard, name spelled the Italian way, "at" stays a word); "Moj broj je 091 555
+0101, nazovi me poslije pet" → number perfect, "nazovim"; "Sastanak je u ponedjeljak u pola četiri u Zagrebu" exact;
+"Nazovi Ximenu kad sletiš, i pozdravi Ivanu" → "nazovi imenu Kacletiš, i pozdravi Ivanu" (rare names are hard).
+Idea, not built: a dictated "x at gmail.com" could be joined into an address and snapped to a saved one in the address book.
