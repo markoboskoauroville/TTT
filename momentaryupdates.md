@@ -219,4 +219,8 @@ voices. Stopped here: a further build plus a full suite (~1 h) would not finish 
 > Now you need to continue testing Croatian spelling and correction on virtual machine only. You need to build their virtual audio device so you can talk virtually to the virtual machine and emulator for Pixel 7 and continue working on corrections with local model.
 > You have this phone now for next hours. Actually, just continue using it, but at the same time build this link if it's not available on virtual machine, but continue using Pixel phone as much as you need.
 
-**Status:** saved first. Engine keys: commit da6af165. Next: virtual microphone for the VM's Pixel 2 (redroid), Croatian corrections for Parakeet, tests on the real Pixel 7 meanwhile.
+**Status:** in progress (08:40 Pixel time).
+- Engine keys (da6af165, build 524): row "Talk to" with ● E ● H blue (AssemblyAI) and ● E ● H amber (Parakeet), added once to his rows. Tested on the Pixel 7: amber H ran Parakeet with the setting on fallback.
+- Local corrections: MaCroatianFix (d8a67a3d, 526455b0, 6148d18f, 470127e1): Cyrillic → Latin, diacritics, one-edit mishearings scored with hr bigrams/trigrams, split words joined and re-split, rare words with a commoner twin, ikavian ije. Pixel 7, build 525, amber H: "Možeš li mi poslati adresu restorana? Molim te.", "žao mi je, danas nemam vremena za ručak", "kad stigneš kući, pošalji mi poruku" (518 wrote "stignes kuci, posalji").
+- VM virtual microphone: the redroid mic is a stub (silence); tools/vm_voice/vsay.sh speaks with edge-tts into TTT's pending folder and reads the result from the history database; 16-20 s per sentence once Parakeet is loaded.
+- Mac session (MANTRA_VOICE ears) took Parakeet + tools/hr_fix (hr_fix.py, spoken.py) and re-syncs when told.
