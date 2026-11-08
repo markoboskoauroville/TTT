@@ -781,6 +781,30 @@ object DictateLegacyMigrator {
         prefs.dictate.maWhatsAppKeyAdded.set(true)
     }
 
+    /**
+     * Talk to AssemblyAI / Talk to Parakeet, once (8.11.2026): ● E ● H with a blue dot (network) and
+     * ● E ● H with an amber dot (the phone), in a row of their own right below the row with his E key,
+     * since that row is already full. Taken from the first empty row slot; afterwards his to move.
+     */
+    suspend fun addEngineKeysIfNeeded() {
+        val prefs by FlorisPreferenceStore
+        if (prefs.dictate.maEngineKeysAdded.get()) return
+        val raw = prefs.dictate.maRows.get()
+        val rows = if (raw.isBlank()) MaRows.defaultRows() else MaRows.parse(raw)
+        val keys = listOf(
+            MaFeatureKey.RECORD_EN_NET, MaFeatureKey.RECORD_HR_NET,
+            MaFeatureKey.RECORD_EN_LOCAL, MaFeatureKey.RECORD_HR_LOCAL,
+        )
+        val already = rows.any { r -> r.entries.any { e -> keys.any { e.button == MaRows.Button.Builtin(it) } } }
+        val empty = rows.indexOfFirst { it.entries.isEmpty() }
+        if (!already && empty >= 0) {
+            val row = MaRows.Row(entries = keys.map { MaRows.Entry(MaRows.Button.Builtin(it)) }, enabled = true, name = "Talk to")
+            val next = rows.toMutableList().apply { set(empty, row) }
+            prefs.dictate.maRows.set(MaRows.serialize(next))
+        }
+        prefs.dictate.maEngineKeysAdded.set(true)
+    }
+
     suspend fun keepPredictionRowOn() {
         val prefs by FlorisPreferenceStore
         if (!prefs.suggestion.enabled.get()) prefs.suggestion.enabled.set(true)

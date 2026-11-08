@@ -81,7 +81,14 @@ object MaProviders {
     @Volatile
     var appContext: Context? = null
 
-    fun transcriptionEngine(): String = prefs.dictate.maTranscriptionEngine.get()
+    /**
+     * The engine for the recording in flight when a Talk to AssemblyAI / Talk to Parakeet key started it
+     * (8.11.2026), else null and the setting decides. Set by DictateController at every start.
+     */
+    @Volatile
+    var engineOverride: String? = null
+
+    fun transcriptionEngine(): String = engineOverride ?: prefs.dictate.maTranscriptionEngine.get()
 
     fun transcriptionAccount(): ProviderAccount {
         val accounts = prefs.dictate.providerAccounts.get()

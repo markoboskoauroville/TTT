@@ -102,7 +102,8 @@ check("and not the setting directly", 'if (languageMode == MaLanguage.EN) "ENG"'
 for k in ("RECORD_HR", "RECORD_EN"):
     check(f"{k} is a key", f'{k}("' in order, "not in the catalogue")
 # E>H (2.11.2026) joins the same branch: one place for the set-then-record order, now for three keys.
-check("the record keys are written once", "MaFeatureKey.RECORD_HR, MaFeatureKey.RECORD_EN, MaFeatureKey.RECORD_EN_HR ->" in row,
+# The engine keys (8.11.2026) join it too: seven keys, still one branch.
+check("the record keys are written once", "MaFeatureKey.RECORD_EN_LOCAL, MaFeatureKey.RECORD_HR_LOCAL,\n                -> {" in row,
       "two places for the set-then-record order to drift")
 
 # THE SEND PAIR IS GONE, and these invert rather than disappear. Recording in a language is the
@@ -115,7 +116,7 @@ check("and gone from the keyboard", "MaFeatureKey.SEND_HR" not in row, "in the r
 check("the plain send key survives", 'SEND("send"' in order,
       "removing the pair must not remove sending")
 
-rec = row[row.index("MaFeatureKey.RECORD_HR, MaFeatureKey.RECORD_EN, MaFeatureKey.RECORD_EN_HR ->"):][:2400]
+rec = row[row.index("MaFeatureKey.RECORD_HR, MaFeatureKey.RECORD_EN, MaFeatureKey.RECORD_EN_HR,"):][:3600]
 check("the language is set before recording starts",
       rec.index("MaLanguage.set(context, language)") < rec.index("DictateController.onMicClick"),
       "the audio would exist before the language did, and transcribe would capture the old one")

@@ -448,6 +448,18 @@ enum class MaFeatureKey(val id: String, val label: String) {
      */
     RECORD_EN_HR("recordenhr", "English to Croatian"),
     /**
+     * Talk to AssemblyAI / talk to Parakeet (Marko, 8.11.2026: "build in for my feature row new
+     * buttons: talk to assemblyai, talk to, then the name of the local model … button for both
+     * languages … the same, only different color, so I know do I speak local or I speak to the
+     * network"). The same ● E / ● H keys, with the dot in the engine's colour: blue for AssemblyAI
+     * (the network), amber for Parakeet (the phone). One recording goes to that engine whatever
+     * Settings → Transcription model says.
+     */
+    RECORD_EN_NET("recordennet", "E, AssemblyAI"),
+    RECORD_HR_NET("recordhrnet", "H, AssemblyAI"),
+    RECORD_EN_LOCAL("recordenlocal", "E, Parakeet"),
+    RECORD_HR_LOCAL("recordhrlocal", "H, Parakeet"),
+    /**
      * Reprompt (4.11.2026): "re" and a small magic sparkle. Opens a window for an instruction, typed
      * or dictated, and Claude applies it to the text in the field, in place (MaReprompt).
      */
@@ -703,6 +715,10 @@ val MaFeatureKey.group: MaFeatureGroup
         MaFeatureKey.RECORD_HR,
         MaFeatureKey.RECORD_EN,
         MaFeatureKey.RECORD_EN_HR,
+        MaFeatureKey.RECORD_EN_NET,
+        MaFeatureKey.RECORD_HR_NET,
+        MaFeatureKey.RECORD_EN_LOCAL,
+        MaFeatureKey.RECORD_HR_LOCAL,
         MaFeatureKey.REPROMPT,
         MaFeatureKey.WHATSAPP,
         MaFeatureKey.SEND,

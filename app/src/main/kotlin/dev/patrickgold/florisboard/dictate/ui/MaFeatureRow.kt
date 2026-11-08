@@ -16,6 +16,7 @@
 
 package dev.patrickgold.florisboard.dictate.ui
 
+import dev.patrickgold.florisboard.dictate.MaProviders
 import dev.patrickgold.florisboard.dictate.MaReprompt
 import dev.patrickgold.florisboard.dictate.MaWhatsApp
 import androidx.compose.foundation.layout.offset
@@ -1406,13 +1407,30 @@ fun MaFeatureRow(
                     }
                 }
 
-                MaFeatureKey.RECORD_HR, MaFeatureKey.RECORD_EN, MaFeatureKey.RECORD_EN_HR -> {
+                MaFeatureKey.RECORD_HR, MaFeatureKey.RECORD_EN, MaFeatureKey.RECORD_EN_HR,
+                MaFeatureKey.RECORD_EN_NET, MaFeatureKey.RECORD_HR_NET,
+                MaFeatureKey.RECORD_EN_LOCAL, MaFeatureKey.RECORD_HR_LOCAL,
+                -> {
                     // RECORD IN A LANGUAGE. The key is the answer to "which language is this".
                     //
                     // Written once for the two: they differ by one string, and two copies would be
                     // two places for the order of "set the language, then record" to drift — which
                     // is the one thing here that must not.
-                    val language = if (button.key == MaFeatureKey.RECORD_HR) MaLanguage.HR else MaLanguage.EN
+                    val language = if (button.key == MaFeatureKey.RECORD_HR || button.key == MaFeatureKey.RECORD_HR_NET ||
+                        button.key == MaFeatureKey.RECORD_HR_LOCAL
+                    ) MaLanguage.HR else MaLanguage.EN
+                    // Talk to AssemblyAI / Parakeet (8.11.2026): the engine for this one recording, and
+                    // the dot's colour that says which. Null = the Transcription model setting.
+                    val engine = when (button.key) {
+                        MaFeatureKey.RECORD_EN_NET, MaFeatureKey.RECORD_HR_NET -> MaProviders.ENGINE_ASSEMBLYAI
+                        MaFeatureKey.RECORD_EN_LOCAL, MaFeatureKey.RECORD_HR_LOCAL -> MaProviders.ENGINE_LOCAL
+                        else -> null
+                    }
+                    val dot = when (engine) {
+                        MaProviders.ENGINE_ASSEMBLYAI -> MaEngineNetBlue
+                        MaProviders.ENGINE_LOCAL -> MaEngineLocalAmber
+                        else -> MaRecordRed
+                    }
                     // E>H records English like E, and the transcript is then written in Croatian.
                     val translate = button.key == MaFeatureKey.RECORD_EN_HR
                     val label = when {
@@ -1452,6 +1470,7 @@ fun MaFeatureRow(
                         // you are recorded" before it is pressed. See MaRecordOutline.
                         ring = if (recording && MaLanguage.active() == language &&
                             DictateController.isTranslating() == translate &&
+                            DictateController.recordingEngine() == engine &&
                             !DictateController.isRepromptRecording()
                         ) MaRecordOutlineLive else MaRecordOutline,
                         onClick = {
@@ -1463,14 +1482,19 @@ fun MaFeatureRow(
                             // whatever the previous setting was — which is the bug he has been
                             // living with, arriving by a different road.
                             if (!recording) MaLanguage.set(context, language)
-                            DictateController.onMicClick(context, translate = translate)
+                            DictateController.onMicClick(context, translate = translate, engine = engine)
                             MaMessage.show(
                                 if (recording) {
                                     if (translate) "Sending English, writing Croatian"
                                     else "Sending " + if (language == MaLanguage.HR) "Croatian" else "English"
                                 } else {
                                     if (translate) "Recording English, writing Croatian"
-                                    else "Recording " + if (language == MaLanguage.HR) "Croatian" else "English"
+                                    else "Recording " + (if (language == MaLanguage.HR) "Croatian" else "English") +
+                                        when (engine) {
+                                            MaProviders.ENGINE_ASSEMBLYAI -> " to AssemblyAI"
+                                            MaProviders.ENGINE_LOCAL -> " on the phone (Parakeet)"
+                                            else -> ""
+                                        }
                                 },
                             )
                         },
@@ -1482,7 +1506,7 @@ fun MaFeatureRow(
                                     modifier = Modifier
                                         .size(9.dp)
                                         .clip(CircleShape)
-                                        .background(MaRecordRed),
+                                        .background(dot),
                                 )
                                 Spacer(Modifier.width(4.dp))
                             }
@@ -2394,3 +2418,9 @@ internal fun maFeatureToken(button: MaRows.Button): String = when (button) {
     is MaRows.Button.Clip -> "C${button.slot}"
     is MaRows.Button.Macro -> "M${button.slot}"
 }
+
+/** Talk to AssemblyAI: the dot of the network's record keys (8.11.2026). */
+internal val MaEngineNetBlue = androidx.compose.ui.graphics.Color(0xFF4FC3F7)
+
+/** Talk to Parakeet: the dot of the phone's record keys (8.11.2026). */
+internal val MaEngineLocalAmber = androidx.compose.ui.graphics.Color(0xFFFFB300)

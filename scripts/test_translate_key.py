@@ -45,12 +45,12 @@ app = code(SRC / "FlorisApplication.kt")
 
 # The key
 check("the key exists", 'RECORD_EN_HR("recordenhr"' in order)
-check("it is a dictation key", "MaFeatureKey.RECORD_EN_HR,\n        MaFeatureKey.REPROMPT," in order)   # WA follows RE since 7.11.2026
-check("drawn with the record keys (red dot)", "MaFeatureKey.RECORD_HR, MaFeatureKey.RECORD_EN, MaFeatureKey.RECORD_EN_HR ->" in row)
+check("it is a dictation key", "MaFeatureKey.RECORD_EN_HR,\n        MaFeatureKey.RECORD_EN_NET," in order)   # WA follows RE since 7.11.2026
+check("drawn with the record keys (red dot)", "MaFeatureKey.RECORD_HR, MaFeatureKey.RECORD_EN, MaFeatureKey.RECORD_EN_HR," in row)
 check("its letters are E>H", 'translate -> "E>H"' in row)
 check("in the rows editor too", 'MaFeatureKey.RECORD_EN_HR -> letters("\\u25CF E>H")' in rows_screen)
-check("it records English", "if (button.key == MaFeatureKey.RECORD_HR) MaLanguage.HR else MaLanguage.EN" in row)
-check("and asks for the translation", "DictateController.onMicClick(context, translate = translate)" in row)
+check("it records English", "val language = if (button.key == MaFeatureKey.RECORD_HR ||" in row)
+check("and asks for the translation", "DictateController.onMicClick(context, translate = translate, engine = engine)" in row)
 check("only the key that started it rings", "DictateController.isTranslating() == translate" in row)
 
 # The pipeline

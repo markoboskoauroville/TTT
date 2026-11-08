@@ -748,6 +748,7 @@ object DictateController {
         translate: Boolean = false,
         reprompt: Boolean = false,
         whatsapp: Boolean = false,
+        engine: String? = null,
     ) {
         // The bar is a leftover from a discard that is still animating — acting on it would stop a
         // recording that no longer exists.
@@ -763,10 +764,22 @@ object DictateController {
                 translateRecording = translate && !reprompt && !whatsapp
                 repromptRecording = reprompt && !whatsapp
                 whatsappRecording = whatsapp
+                nextRecordingEngine = engine
                 startRecording(context)
             }
         }
     }
+
+    /**
+     * Talk to AssemblyAI / Talk to Parakeet (8.11.2026): the engine the next start uses, taken (and
+     * cleared) by [startRecording], so every other way of starting a recording — mic, volume keys,
+     * plain E and H — goes back to the Transcription model setting.
+     */
+    @Volatile
+    private var nextRecordingEngine: String? = null
+
+    /** The engine forced for the recording in flight, or null when the setting decides. */
+    fun recordingEngine(): String? = MaProviders.engineOverride
 
     /**
      * Toggles a prompt in the recording-time queue (ROW layout): while a recording/transcription is in
@@ -1268,6 +1281,8 @@ object DictateController {
      * total; it is 0 for a normal recording.
      */
     private fun startRecording(context: Context, seedAccumulatedMs: Long = 0L) {
+        MaProviders.engineOverride = nextRecordingEngine
+        nextRecordingEngine = null
         if (_state.value is UiState.Recording) return
 
         // Refuse before the microphone opens rather than after the upload fails.

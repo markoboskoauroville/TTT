@@ -777,6 +777,10 @@ internal fun MaButtonGlyph(
             MaFeatureKey.REPROMPT -> letters("re\u2726")
             MaFeatureKey.WHATSAPP -> letters("WA\u2726")
             MaFeatureKey.RECORD_EN_HR -> letters("\u25CF E>H")
+            MaFeatureKey.RECORD_EN_NET -> letters("\u25CF E net")
+            MaFeatureKey.RECORD_HR_NET -> letters("\u25CF H net")
+            MaFeatureKey.RECORD_EN_LOCAL -> letters("\u25CF E local")
+            MaFeatureKey.RECORD_HR_LOCAL -> letters("\u25CF H local")
             MaFeatureKey.PASTE ->
                 Icon(Icons.Default.ContentPaste, contentDescription = null, tint = tint, modifier = size)
             MaFeatureKey.CUT ->

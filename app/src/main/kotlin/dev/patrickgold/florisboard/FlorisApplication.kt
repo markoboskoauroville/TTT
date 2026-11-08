@@ -167,6 +167,7 @@ class FlorisApplication : Application() {
             DictateLegacyMigrator.addTranslateKeyIfNeeded()
             DictateLegacyMigrator.addRepromptKeyIfNeeded()
             DictateLegacyMigrator.addWhatsAppKeyIfNeeded()
+            DictateLegacyMigrator.addEngineKeysIfNeeded()
             MaLog.initialize(this@FlorisApplication)
             MaNgram.initialize(this@FlorisApplication)
             dev.patrickgold.florisboard.dictate.MaProviders.appContext = this@FlorisApplication
