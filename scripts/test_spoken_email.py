@@ -32,7 +32,7 @@ gate = (SRC / "dictate/audio/SpeechGate.kt").read_text()
 
 check("address book lists its saved emails", "fun savedEmails(): List<String>" in book)
 check("every finished dictation passes the email snapper",
-      "MaSpokenEmail.apply(MaSpokenFormat.apply(text))" in ctrl)
+      "MaSpokenEmail.apply(MaNameSpelling.apply(MaSpokenFormat.apply(text)))" in ctrl)
 check("spoken 'at' words", '"at", "et", "@", "majmun"' in email)
 check("spoken dot in Croatian", '"točka"' in email)
 check("pronouns are never made into an address", "local in PRONOUNS" in email)
@@ -53,6 +53,9 @@ cyr = (SRC / "dictate/nlp/MaCyrillic.kt").read_text()
 local = (SRC / "dictate/provider/LocalTranscriptionProvider.kt").read_text()
 check("Parakeet Cyrillic is written in Croatian Latin", local.count("MaCyrillic.toLatin(") == 2)
 check("Serbian letters map to Gaj Latin", "'ж' to \"ž\"" in cyr and "'љ' to \"lj\"" in cyr and "'џ' to \"dž\"" in cyr)
+
+names = (SRC / "dictate/nlp/MaNameSpelling.kt").read_text()
+check("Marco -> Marko, Bosco -> Bosko in every dictation", '"marco" to "marko"' in names and '"bosco" to "bosko"' in names)
 
 if failures:
     for f in failures:

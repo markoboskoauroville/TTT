@@ -65,7 +65,17 @@ object MaSpokenEmail {
     private val TRAILING = " \t\n.,!?;:\"')”’"
 
     /** [text] with every spoken or written address put together and snapped to the address book. */
-    fun apply(text: String): String = runCatching { apply(text, MaAddressBook.savedEmails()) }.getOrDefault(text)
+    fun apply(text: String): String {
+        val saved = MaAddressBook.savedEmails()
+        val out = runCatching { apply(text, saved) }
+            .onFailure { runCatching { android.util.Log.w("MaSpokenEmail", "failed: ${it.javaClass.simpleName}") } }
+            .getOrDefault(text)
+        // Counts only, never the words (8.11.2026, debugging on the Pixel 7).
+        runCatching {
+            android.util.Log.i("MaSpokenEmail", "in=${text.length} saved=${saved.size} at=${text.contains('@')} changed=${out != text}")
+        }
+        return out
+    }
 
     /** The pure rule, for tests: [saved] are the address book's emails. */
     fun apply(text: String, saved: List<String>): String {

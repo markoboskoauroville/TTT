@@ -99,6 +99,7 @@ import java.util.concurrent.atomic.AtomicLong
 import dev.patrickgold.florisboard.dictate.audio.MaEncoder
 import dev.patrickgold.florisboard.dictate.audio.MaResample
 import dev.patrickgold.florisboard.dictate.nlp.MaDictationCorrections
+import dev.patrickgold.florisboard.dictate.nlp.MaNameSpelling
 import dev.patrickgold.florisboard.dictate.nlp.MaSpokenEmail
 import dev.patrickgold.florisboard.dictate.ui.MaMessage
 import dev.patrickgold.florisboard.dictate.provider.MaKeyRing
@@ -2799,7 +2800,7 @@ object DictateController {
         // One line break between paragraphs, never an empty line (MaParagraphs, 3.11.2026).
         // A dictated address put together and matched to the address book (MaSpokenEmail, 8.11.2026):
         // "marco.bosco at gmail.com" is written as the saved marko.bosko@gmail.com.
-        var body = MaParagraphs.single(MaSpokenEmail.apply(MaSpokenFormat.apply(text)))
+        var body = MaParagraphs.single(MaSpokenEmail.apply(MaNameSpelling.apply(MaSpokenFormat.apply(text))))
         if (prefs.dictate.maVoiceCommands.get() && DictateAccessibilityService.isRunning) {
             val split = MaVoiceCommand.splitTrailing(body)
             if (split != null) {
