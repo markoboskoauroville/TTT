@@ -153,3 +153,9 @@ one; set 1 64/100, set 2 34/73; address book recalled. Parakeet + typing confirm
 "see you t" → too, tomorrow. Remaining misses wich, alot, seperate, accomodate: a misspelling with several fixes now
 swaps in the first when it is far commoner (which over witch, a lot over allot; 71 of 200 such entries), and a settled
 misspelling skips the edit-distance search so the fix is ready before space on a slow phone.
+
+**Status (8.11.2026, 03:15 CET):** suite with a fresh personal model (build 503): all 20 English typos fixed, Croatian
+fixed when typed alone (the suite's misses were the emulator's timing); set 1 63/100 (top 3: 33), set 2 35/73 (top 3:
+22, best). **Fallback tested live:** engine "AssemblyAI, Parakeet as fallback" with a deliberately invalid AssemblyAI
+test key: AssemblyAI answered 401 in 0.4 s, the same recording went to Parakeet and "please send me the address of the
+restaurant" was typed. The history entry said AssemblyAI; it now says "Parakeet (fallback)" and the Parakeet model.

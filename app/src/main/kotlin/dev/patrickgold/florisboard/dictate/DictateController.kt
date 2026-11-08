@@ -1768,6 +1768,7 @@ object DictateController {
                     prompt = if (chatAudio) buildChatAudioInstruction(appContext) else transcriptionStylePrompt(),
                 )
                 val providerStartedNanos = SystemClock.elapsedRealtimeNanos()
+                var usedLocalFallback = false
                 val result = if (preset.transcriptionApi == TranscriptionApi.LOCAL_ONDEVICE) {
                     // On-device (issue #104): no HTTP client, no key; transcribe locally via sherpa-onnx.
                     // Tell the recognizer cache how long it may stay resident once idle (RAM unload).
@@ -1887,6 +1888,9 @@ object DictateController {
                         LocalTranscriptionProvider.setIdleUnloadMillis(
                             prefs.dictate.localModelUnloadMinutes.get() * 60_000L,
                         )
+                        // History says who really transcribed it (live test 8.11.2026: a refused AssemblyAI
+                        // key fell back to Parakeet and the entry still read "AssemblyAI").
+                        usedLocalFallback = true
                         // The current file, not the one the request was built with: a fast path that
                         // handed over to the slow one re-encoded and deleted its WAV on the way.
                         fallback.transcribe(request.copy(audioFile = uploadFile))
@@ -1916,11 +1920,14 @@ object DictateController {
                 }
                 // Shared finalize: rewording/formatting + mappings + commit + stats. Reused by the
                 // realtime path (issue #128), which supplies its own already-streamed transcript.
+                val localAccount = MaProviders.localTranscriptionAccount()
                 val capture = HistoryCapture(
                     audioFile = audioFile,
-                    providerId = account.providerId,
-                    providerName = historyProviderName,
-                    model = model,
+                    providerId = if (usedLocalFallback) localAccount.providerId.ifBlank { "local" } else account.providerId,
+                    providerName = if (usedLocalFallback) "Parakeet (fallback)" else historyProviderName,
+                    model = if (usedLocalFallback) {
+                        MaProviders.transcriptionModelFor(appContext, localAccount, dev.patrickgold.florisboard.dictate.provider.ProviderRegistry.LOCAL)
+                    } else model,
                     language = historyLanguage,
                     source = historySource,
                     isReplay = isReplay,
