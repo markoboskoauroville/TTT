@@ -167,3 +167,9 @@ dot com" → "marco.bosco at gmail.com" (dots heard, name spelled the Italian wa
 0101, nazovi me poslije pet" → number perfect, "nazovim"; "Sastanak je u ponedjeljak u pola četiri u Zagrebu" exact;
 "Nazovi Ximenu kad sletiš, i pozdravi Ivanu" → "nazovi imenu Kacletiš, i pozdravi Ivanu" (rare names are hard).
 Idea, not built: a dictated "x at gmail.com" could be joined into an address and snapped to a saved one in the address book.
+
+**Status (8.11.2026, 04:10 CET, final of the night, build 504):** 0 ANR. Typos 28/30 fixed (SwiftKey ~16; the misses are
+the emulator's timing, both fixed when typed alone). Set 1 62/100 (top 3: 30), set 2 33/73 (top 3: 18), within the
+emulator's run-to-run noise of the best runs (65, 35). Address book: kbt → email, 09155 → both saved forms of the number
+(the dictated "0915550101" was saved too, as typed text is). Parakeet: on-device and as fallback, tested live with edge-tts
+voices. Stopped here: a further build plus a full suite (~1 h) would not finish before 5 am.
