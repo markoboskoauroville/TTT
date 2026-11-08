@@ -90,20 +90,6 @@ object MaProviders {
 
     fun transcriptionEngine(): String = engineOverride ?: prefs.dictate.maTranscriptionEngine.get()
 
-    /**
-     * Whether this recording goes to Parakeet on the phone rather than to AssemblyAI. Read by the small
-     * engine name drawn before the HR/ENG key while recording (Marko, 8.11.2026: "before E and G I want
-     * to have confirmation of the engine"). The same rule as [transcriptionAccount], so the label and
-     * the request cannot disagree.
-     */
-    fun transcribesLocally(): Boolean {
-        val engine = transcriptionEngine()
-        if (engine == ENGINE_LOCAL) return true
-        if (engine != ENGINE_FALLBACK) return false
-        val localInstalled = appContext?.let { LocalModelManager.installedIds(it).isNotEmpty() } == true
-        return localInstalled && prefs.dictate.providerAccounts.get().getOrEmpty(MaRoles.TRANSCRIPTION).apiKey.isBlank()
-    }
-
     fun transcriptionAccount(): ProviderAccount {
         val accounts = prefs.dictate.providerAccounts.get()
         // On the phone chosen: every transcription runs on Parakeet, AssemblyAI is not called at all.

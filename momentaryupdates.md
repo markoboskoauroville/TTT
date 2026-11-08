@@ -246,3 +246,17 @@ voices. Stopped here: a further build plus a full suite (~1 h) would not finish 
 > Dobijam ovu čudnu grešku u mojoj aplikaciji. Samo dotaknem lokalni engine i dobijem API grešku. O čemu se tu radi?
 
 **Status:** saved first. The screenshot is 1084 px wide with three-button navigation: the Nothing Phone 2a, not the Pixel 7. TTT refuses a recording only when there is neither an AssemblyAI key nor a downloaded local model, so that phone has neither; the message only named the key. Fix: a Talk-to key is refused for its own engine's reason — amber: "Parakeet is not on this phone yet. Download it in settings first."; blue: no AssemblyAI key.
+
+## 8.11.2026 – the Nothing Phone over ADB
+
+> Molim te, imaj na umu da se našoj aplikaciji može pristupiti preko ADB-a. Ako ne možeš ići izravno, možeš proći kroz macOS sesiju.
+
+**Status:** saved first.
+- 12:47 Nothing Phone time: while loading AssemblyAI-api.txt in the picker, an incoming call (Igor) was answered — probably by the tap on the file, which landed when the call screen came up. Stopped touching the phone. Key import not confirmed; Parakeet not downloaded. Lesson: check `dumpsys telecom` for a ringing call before every tap on his phone.
+
+## 8.11.2026 – remove the engine label
+
+> Telefon je sada slobodan, pa molim te, moraš ukloniti ovu oznaku prije slanja Wavea. Tražio sam oznaku po kitu ili AssemblyAI, ali vidim da nije potrebna. Molim te ukloni tu oznaku, to je za sada moj zahtjev, hvala.
+
+**Status:** saved first.
+**Status:** done — the small AssemblyAI/Parakeet name before HR/ENG is gone (the Talk-to keys stay silent).
