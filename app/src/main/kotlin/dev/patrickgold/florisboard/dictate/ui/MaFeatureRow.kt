@@ -1483,18 +1483,16 @@ fun MaFeatureRow(
                             // living with, arriving by a different road.
                             if (!recording) MaLanguage.set(context, language)
                             DictateController.onMicClick(context, translate = translate, engine = engine)
-                            MaMessage.show(
+                            // Talk-to keys are silent (Marko, 8.11.2026: "Please remove this pop-up
+                            // message when I'm recording ... with Parakeet or with AssemblyAI ...
+                            // Silent, please."). The engine name on the recording strip says it.
+                            if (engine == null) MaMessage.show(
                                 if (recording) {
                                     if (translate) "Sending English, writing Croatian"
                                     else "Sending " + if (language == MaLanguage.HR) "Croatian" else "English"
                                 } else {
                                     if (translate) "Recording English, writing Croatian"
-                                    else "Recording " + (if (language == MaLanguage.HR) "Croatian" else "English") +
-                                        when (engine) {
-                                            MaProviders.ENGINE_ASSEMBLYAI -> " to AssemblyAI"
-                                            MaProviders.ENGINE_LOCAL -> " on the phone (Parakeet)"
-                                            else -> ""
-                                        }
+                                    else "Recording " + (if (language == MaLanguage.HR) "Croatian" else "English")
                                 },
                             )
                         },

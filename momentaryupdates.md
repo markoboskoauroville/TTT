@@ -233,3 +233,9 @@ voices. Stopped here: a further build plus a full suite (~1 h) would not finish 
 - While recording, the HR/ENG key on the strip now has the engine in small letters before it: "AssemblyAI" in blue or "Parakeet" in amber (the Talk-to colours). Same rule as the request itself (MaProviders.transcribesLocally), so a Talk-to key, the setting "on the phone", and fallback without a key all show Parakeet.
 - Open: Marko turns on Accessibility → TTT himself (Speechify reader, WA key). Builds after 525 (vowel-shape scoring, this label) are on CI, not installed on the phone.
 - Build 529 (fc894bb0, this label): CI stopped twice at "Fetch sherpa-onnx native libs" with HTTP 504 from the sherpa-onnx download host (10:08 and 10:09 UTC), before compiling. Not the code: the local test gate passed. Next session: `gh run rerun 42470111209` once the host answers, then install on the Pixel 7.
+
+## 8.11.2026 – Talk-to keys silent
+
+> Please remove this pop-up message when I'm recording my voice with parkit or with assembly AI. Let it just be as before. Silent, please.
+
+**Status:** saved first. The four Talk-to keys (blue/amber E, H) no longer show "Recording … to AssemblyAI / on the phone (Parakeet)"; the engine name on the recording strip stays. The plain E/H keys are unchanged.
