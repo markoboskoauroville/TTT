@@ -32,7 +32,7 @@ gate = (SRC / "dictate/audio/SpeechGate.kt").read_text()
 
 check("address book lists its saved emails", "fun savedEmails(): List<String>" in book)
 check("every finished dictation passes the email snapper",
-      "MaSpokenEmail.apply(MaNameSpelling.apply(MaSpokenFormat.apply(text)))" in ctrl)
+      "MaSpokenEmail.apply(MaNameSpelling.apply(MaCyrillic.toLatin(MaSpokenFormat.apply(text))))" in ctrl)
 check("spoken 'at' words", '"at", "et", "@", "majmun"' in email)
 check("spoken dot in Croatian", '"točka"' in email)
 check("pronouns are never made into an address", "local in PRONOUNS" in email)
