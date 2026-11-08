@@ -261,3 +261,17 @@ voices. Stopped here: a further build plus a full suite (~1 h) would not finish 
 **Status:** saved first.
 **Status:** done — the small AssemblyAI/Parakeet name before HR/ENG is gone (the Talk-to keys stay silent).
 - Build 534 (2a2f6bde) installed on the Nothing Phone and the Pixel 7 (versionCode 1534).
+
+## 8.11.2026 – Parakeet misspells names: Auroville, Yshai Afterman, frame drum
+
+> And see how many misspelled words are here? I'm using Parakeet model to read my voice into text and this is for application TTT. And if you think you can improve the code of this application so it doesn't do so much errors with this Parakeet model, that will be great.
+
+**Status:** saved first, built, NOT built as an APK and NOT tried on a phone (the cloud session has no Android SDK).
+Parakeet has no prompt and no word list, so the words it spells by ear are put right after it: `MaKnownWords` (nlp/), run in
+`DictateController` right after `MaDictationCorrections.apply`. Aliases he is known to produce (Orville, Wilbers, orwheel →
+Auroville; Ashai Afterman → Yshai Afterman; Rend Drum, Trim Drum → frame drum; "the cherry" → Pondicherry; Cloud Code → Claude)
+and sound-alikes of rare words (Santosh → Santoshi, Aura Ville → Auroville), name by name for names of several words.
+His custom words and the right forms he taught are extra entries (seven letters or more). A common name stays alone
+(Natalia is not Natasha). The logic is pure Kotlin: compiled with kotlinc 2.0.21 outside Gradle and 26 cases passed;
+`MaKnownWordsTest` (kotest) holds the same cases and has not run in Gradle yet. Not done, to try on the phone: sherpa-onnx
+hotwords for the NeMo transducer (needs modified_beam_search and the BPE vocabulary), and a settings switch for this step.

@@ -99,6 +99,7 @@ import java.util.concurrent.atomic.AtomicLong
 import dev.patrickgold.florisboard.dictate.audio.MaEncoder
 import dev.patrickgold.florisboard.dictate.audio.MaResample
 import dev.patrickgold.florisboard.dictate.nlp.MaDictationCorrections
+import dev.patrickgold.florisboard.dictate.nlp.MaKnownWords
 import dev.patrickgold.florisboard.dictate.nlp.MaCroatianFix
 import dev.patrickgold.florisboard.dictate.nlp.MaCyrillic
 import dev.patrickgold.florisboard.dictate.nlp.MaNameSpelling
@@ -2860,6 +2861,13 @@ object DictateController {
         // before this one moves the field on; then the fixes he has taught are made in this one.
         if (outputTarget == OutputTarget.IME) settleCorrections(context)
         body = MaDictationCorrections.apply(body)
+        // THE WORDS OF HIS WORLD (MaKnownWords, 8.11.2026): Parakeet cannot be given a word list, so the names it
+        // spells by ear (Orville, Wilbers for Auroville; Ashai for Yshai) are put right here, with his own custom
+        // words and the right forms he taught as extra entries.
+        body = MaKnownWords.apply(
+            body,
+            extra = prefs.dictate.customWords.get().split(',', '\n').map { it.trim() } + MaDictationCorrections.glossary(),
+        )
         val sink = sink(context)
         // A live prompt that worked on the whole field replaces it. commitText already replaces a
         // selection, so selecting everything first turns the insert into the rewrite that was asked
