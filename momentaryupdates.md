@@ -240,3 +240,9 @@ voices. Stopped here: a further build plus a full suite (~1 h) would not finish 
 
 **Status:** saved first. The four Talk-to keys (blue/amber E, H) no longer show "Recording … to AssemblyAI / on the phone (Parakeet)"; the engine name on the recording strip stays. The plain E/H keys are unchanged.
 - Build 531 (61047375) built and installed on the Pixel 7 (versionCode 1531): silent Talk-to keys and the engine name before HR/ENG.
+
+## 8.11.2026 – amber key says "No API key yet"
+
+> Dobijam ovu čudnu grešku u mojoj aplikaciji. Samo dotaknem lokalni engine i dobijem API grešku. O čemu se tu radi?
+
+**Status:** saved first. The screenshot is 1084 px wide with three-button navigation: the Nothing Phone 2a, not the Pixel 7. TTT refuses a recording only when there is neither an AssemblyAI key nor a downloaded local model, so that phone has neither; the message only named the key. Fix: a Talk-to key is refused for its own engine's reason — amber: "Parakeet is not on this phone yet. Download it in settings first."; blue: no AssemblyAI key.

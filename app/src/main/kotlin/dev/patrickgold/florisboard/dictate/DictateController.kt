@@ -1300,9 +1300,17 @@ object DictateController {
         // missing key alone would block a recording he intended to transcribe offline.
         val noKey = MaProviders.transcriptionAccount().apiKey.isBlank()
         val noLocalModel = LocalModelManager.installedIds(context.applicationContext).isEmpty()
-        if (noKey && noLocalModel) {
+        // A Talk-to key names its engine, so it is refused for that engine's own reason (8.11.2026: the
+        // amber key on a phone without Parakeet said "No API key yet", which is not what was missing).
+        val missing = when (MaProviders.engineOverride) {
+            MaProviders.ENGINE_LOCAL -> if (noLocalModel) R.string.dictate__error_no_local_model_before_recording else null
+            MaProviders.ENGINE_ASSEMBLYAI -> if (noKey) R.string.dictate__error_no_key_before_recording else null
+            else -> if (noKey && noLocalModel) R.string.dictate__error_no_key_before_recording else null
+        }
+        if (missing != null) {
+            MaProviders.engineOverride = null
             _state.value = UiState.Error(
-                message = context.getString(R.string.dictate__error_no_key_before_recording),
+                message = context.getString(missing),
                 action = ErrorAction.OPEN_SETTINGS,
             )
             return

@@ -1527,6 +1527,7 @@
     <string name="dictate__error_quota_exceeded" comment="Short error: the provider quota, rate limit or billing is exhausted">Quota or limit reached</string>
     <string name="dictate__error_rate_limited">Too many requests just now. Wait a moment and try again — your key is fine.</string>
     <string name="dictate__error_no_key_before_recording">No API key yet. Add one before recording.</string>
+    <string name="dictate__error_no_local_model_before_recording">Parakeet is not on this phone yet. Download it in settings first.</string>
     <string name="dictate__error_content_size_limit" comment="Short error: the audio/request is too large or too long for the provider">Recording too long or too large</string>
     <string name="dictate__error_format_not_supported" comment="Short error: the provider rejected the audio format">Audio format not supported</string>
     <string name="dictate__error_timeout" comment="Short error: the request timed out">Request timed out</string>
