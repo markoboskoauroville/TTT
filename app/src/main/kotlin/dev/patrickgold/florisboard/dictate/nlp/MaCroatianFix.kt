@@ -37,8 +37,10 @@ import kotlin.math.log10
  * - **missing diacritics** ("mozes", "rucku", "doci"): the form with diacritics;
  * - **a known plain word far rarer than its diacritic twin** ("kuci" 178 vs "kući" 209) when the
  *   context does not prefer the plain one;
+ * - **a rare word with a far commoner twin** one letter away and the context behind the twin
+ *   ("žal mi je" → "žao mi je");
  * - **an unknown word** of four or more letters ("kavo", "bozji"): the commonest Croatian word one edit
- *   away, scored by frequency plus how often it follows the words before it ("idemo na kavu"); a change
+ *   away (or with "ije" for an ikavian "i": "mliko" → "mlijeko"), scored by frequency plus how often it follows the words before it ("idemo na kavu"); a change
  *   of length costs extra, so "kavo" becomes "kavu" rather than "kao";
  * - **a word split in two** ("adres u restorana"): joined when the two pieces make a known word;
  * - **words split in the wrong places** ("li je pdan" for "lijep dan", VM, 8.11.2026): an unknown piece
@@ -51,6 +53,10 @@ import kotlin.math.log10
 object MaCroatianFix {
 
     private const val MIN_FREQ = 170
+    private const val MIN_FREQ_SAME_LENGTH = 150
+    private const val RARE = 140
+    private const val RARE_MARGIN = 60
+    private const val COMMON = 200
     private const val DIACRITIC_MARGIN = 30
     private const val LENGTH_CHANGE_COST = 30.0
 
@@ -152,17 +158,44 @@ object MaCroatianFix {
         val l = w.lowercase()
         val f = fold(l)
         val known = h[l]
+        if (known != null && known < RARE && f.length >= 3) {
+            // A rare known word with a far commoner twin one letter away: "žal mi je" → "žao mi je".
+            val here = ctx(prev2, prev, next, l)
+            var best: String? = null
+            var bestScore = Double.NEGATIVE_INFINITY
+            for (c in edits(f)) {
+                if (c.length != f.length) continue
+                val (d, df) = folded[c] ?: continue
+                if (df < known + RARE_MARGIN) continue
+                val there = ctx(prev2, prev, next, d)
+                if (there <= here) continue
+                if (df + there > bestScore) { best = d; bestScore = df + there }
+            }
+            if (best != null) return best
+        }
         if (known != null) {
             val (d, df) = folded[f] ?: return l
-            return if (d != l && df >= known + DIACRITIC_MARGIN && ctx(prev2, prev, next, d) >= ctx(prev2, prev, next, l)) d else l
+            if (d == l || df < known + DIACRITIC_MARGIN) return l
+            val there = ctx(prev2, prev, next, d)
+            val here = ctx(prev2, prev, next, l)
+            // A common plain word ("sto", a hundred) stays unless the context prefers the twin ("što").
+            return if (there > here || (there == here && known < COMMON)) d else l
         }
         folded[f]?.let { return it.first }
         if (f.length < 4 || l in en) return l
         var best: String? = null
         var bestScore = Double.NEGATIVE_INFINITY
-        for (c in edits(f)) {
+        val candidates = edits(f).toMutableSet()
+        // Ikavian or shortened "ije" ("mliko" → "mlijeko", "lipo" → "lijepo").
+        f.forEachIndexed { i, ch ->
+            if (ch == 'i') {
+                candidates.add(f.substring(0, i) + "ije" + f.substring(i + 1))
+                candidates.add(f.substring(0, i) + "je" + f.substring(i + 1))
+            }
+        }
+        for (c in candidates) {
             val (d, df) = folded[c] ?: continue
-            if (df < MIN_FREQ) continue
+            if (df < (if (c.length == f.length) MIN_FREQ_SAME_LENGTH else MIN_FREQ)) continue
             val score = df + ctx(prev2, prev, next, d) - if (c.length == f.length) 0.0 else LENGTH_CHANGE_COST
             if (score > bestScore) { best = d; bestScore = score }
         }
