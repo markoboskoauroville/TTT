@@ -186,3 +186,9 @@ voices. Stopped here: a further build plus a full suite (~1 h) would not finish 
 > Yes to all. Test it on real phone. Fix the engine and spoken email addresses be corrected to match the address book. Yes. And 2 phones are now over Tailscale. You can use them to test this TTT in next couple of hours. Please pick a faster phone, which is Pixel phone, and test everything on the Pixel phone, please.
 
 **Status:** saved first. Plan: sherpa-onnx 1.13.3 → 2.x; dictated "x at gmail dot com" snaps to an address-book email; build; test everything on the real Pixel 7 (100.70.23.53).
+
+## 8.11.2026 – 10 minutes: TTT's Speechify voices into Parakeet on the Pixel 7
+
+> Please also now for next 10 minutes using the engine for voice from the— this app TTT itself, Speechify Voices, test it how our local voice recognition engine Sherpa is working. Next 10 minutes only you need to talk speaker and recording microphone, debug this system and put in a manifest If any of API codes are missing, you need to ask the Cloud Code session inside macOS to transfer from the folder Downloads/API API codes as file to that phone and that load them automatically through file picker inside TTT.
+
+**Status:** saved first. Baseline on the real Pixel 7, build 506: 30/30 typos fixed.
