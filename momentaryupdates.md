@@ -179,4 +179,4 @@ voices. Stopped here: a further build plus a full suite (~1 h) would not finish 
 > Please install on the phone over wireless debugging. The phone is Pixel 7, latest version of the TTT, and then summarize in voice and install on the same phone voice engine, latest what we had on the repositories, and tell me in voice summary of recent development and if more testing will help. i am on pixel 7, just to remind you
 > feel free to use tailscale to access this phone
 
-**Status:** saved first.
+**Status:** done 05:20 UTC: Pixel 7 reached over Tailscale adb (100.70.23.53:5555); TTT build 506 (versionCode 1506, code = build 504) and VOICE_ENGINE_ANDROID v1 installed, TTT still the default keyboard; spoken summary sent with macsay.
