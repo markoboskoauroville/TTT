@@ -40,6 +40,16 @@ def ctx(prev,nxt,cand,prev2=None):
     if nxt: s+=15*L(1+bi.get(cand+' '+nxt,0))
     if prev2 and prev: s+=40*L(1+tri.get(prev2+' '+prev+' '+cand,0))
     return s
+VOW=set('aeiouy')
+def shape(f,c):
+    # Parakeet mishears endings (kavo for kavu) far more than consonants (kavo for kako)
+    if len(c)!=len(f): return 0
+    diff=[i for i in range(len(f)) if f[i]!=c[i]]
+    if len(diff)!=1: return 0
+    i=diff[0]
+    if f[i] in VOW and c[i] in VOW: return 20 if i==len(f)-1 else 5
+    if f[i] not in VOW and c[i] not in VOW: return -30
+    return 0
 def fix_word(w,prev,nxt,prev2=None):
     l=w.lower(); f=l.translate(F)
     if l in hr and hr[l]<140:
@@ -70,7 +80,7 @@ def fix_word(w,prev,nxt,prev2=None):
         if c in fold:
             d,df=fold[c]
             if df<(150 if len(c)==len(f) else 170): continue
-            sc=df+ctx(prev,nxt,d,prev2)-(0 if len(c)==len(f) else 30)
+            sc=df+ctx(prev,nxt,d,prev2)-(0 if len(c)==len(f) else 30)+shape(f,c)
             if best is None or sc>best[1]: best=(d,sc)
     return best[0] if best else l
 def merge(text):

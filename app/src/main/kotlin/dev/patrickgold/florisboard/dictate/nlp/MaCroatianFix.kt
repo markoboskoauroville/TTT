@@ -153,6 +153,23 @@ object MaCroatianFix {
         return out
     }
 
+    private val VOWELS = setOf('a', 'e', 'i', 'o', 'u', 'y')
+
+    /** Parakeet mishears endings ("kavo" for "kavu") far more often than consonants ("kavo" for "kako"). */
+    private fun shape(f: String, c: String): Double {
+        if (c.length != f.length) return 0.0
+        val diff = f.indices.filter { f[it] != c[it] }
+        if (diff.size != 1) return 0.0
+        val i = diff[0]
+        val fv = f[i] in VOWELS
+        val cv = c[i] in VOWELS
+        return when {
+            fv && cv -> if (i == f.length - 1) 20.0 else 5.0
+            !fv && !cv -> -30.0
+            else -> 0.0
+        }
+    }
+
     private fun fixWord(w: String, prev2: String?, prev: String?, next: String?): String {
         val h = hr ?: return w
         val l = w.lowercase()
@@ -196,7 +213,7 @@ object MaCroatianFix {
         for (c in candidates) {
             val (d, df) = folded[c] ?: continue
             if (df < (if (c.length == f.length) MIN_FREQ_SAME_LENGTH else MIN_FREQ)) continue
-            val score = df + ctx(prev2, prev, next, d) - if (c.length == f.length) 0.0 else LENGTH_CHANGE_COST
+            val score = df + ctx(prev2, prev, next, d) - (if (c.length == f.length) 0.0 else LENGTH_CHANGE_COST) + shape(f, c)
             if (score > bestScore) { best = d; bestScore = score }
         }
         return best ?: l
