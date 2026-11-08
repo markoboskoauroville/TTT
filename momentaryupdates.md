@@ -211,3 +211,12 @@ voices. Stopped here: a further build plus a full suite (~1 h) would not finish 
 > please, in the app, build in for my feature row new buttons: talk to assemblyai talk to, then the name of the local model
 
 **Status:** saved first. Two buttons that record one dictation with that engine, whatever the Transcription model setting says.
+
+## 8.11.2026 – a virtual audio link on the VM; keep the Pixel 7
+
+> please, in the app, build in for my feature row new buttons ... and then button for both languages We already have this icon. They should be the same, only different color, so I know do I speak local or I speak to the network.
+> Which means that since local engine doesn't support creation and it makes a lot of mistakes, first of all, try to force it not to make mistakes. But if it makes mistakes, it needs to be corrected by this application.
+> Now you need to continue testing Croatian spelling and correction on virtual machine only. You need to build their virtual audio device so you can talk virtually to the virtual machine and emulator for Pixel 7 and continue working on corrections with local model.
+> You have this phone now for next hours. Actually, just continue using it, but at the same time build this link if it's not available on virtual machine, but continue using Pixel phone as much as you need.
+
+**Status:** saved first. Engine keys: commit da6af165. Next: virtual microphone for the VM's Pixel 2 (redroid), Croatian corrections for Parakeet, tests on the real Pixel 7 meanwhile.
