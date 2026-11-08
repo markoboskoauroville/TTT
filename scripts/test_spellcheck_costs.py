@@ -48,8 +48,8 @@ routes = code(APP / "app/Routes.kt")
 # ---------------------------------------------------------------- spell check
 check("on by default", re.search(r'maSpellcheckEnabled = boolean\(\s*key = "[^"]+",\s*default = true', prefs) is not None,
       "he called it mandatory")
-check("runs on the dictation path", "croatianSpellcheck(appContext, rawText)" in ctrl)
-check("before the rest of post-processing", ctrl.find("croatianSpellcheck(appContext, rawText)")
+check("runs on the dictation path", "croatianSpellcheck(appContext, local)" in ctrl)
+check("before the rest of post-processing", ctrl.find("croatianSpellcheck(appContext, local)")
       < ctrl.find("postProcessTranscript(appContext, checked)"))
 check("Croatian only", "MaLanguage.active() != MaLanguage.HR" in ctrl)
 check("not gated on the rewording switch", "if (text.isBlank() || !MaSpellcheck.enabled()) return text" in ctrl)

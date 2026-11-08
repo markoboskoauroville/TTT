@@ -61,6 +61,13 @@ tm = (SRC / "dictate/nlp/MaSpokenTime.kt").read_text()
 check("'at 330' is written 3:30, minutes in fives only", "minutes % 5 == 0" in tm)
 check("his name keeps its capital at a fragment's start", "MaNameSpelling.isName(lower)" in ctrl and "isContactNameWord(first)" in ctrl)
 
+fix = (SRC / "dictate/nlp/MaCroatianFix.kt").read_text()
+check("Croatian corrected offline before the model passes", "MaCroatianFix.apply(appContext, latin)" in ctrl)
+check("from the keyboard's own dictionary, pairs and triples",
+      all(a in fix for a in ('"ime/dict/hr.json"', '"ime/dict/hr_bigrams.txt"', '"ime/dict/hr_trigrams.txt"')))
+check("English words and names inside a sentence are left alone", "l in en" in fix and "!sentenceStart" in fix)
+check("off the main thread", "withContext(Dispatchers.Default)" in ctrl)
+
 if failures:
     for f in failures:
         print("FAIL", f)

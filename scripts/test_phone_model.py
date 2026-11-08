@@ -88,7 +88,7 @@ check("pinned by commit", re.search(r'COMMIT="[0-9a-f]{40}"', fetch) is not None
 
 # ---------------------------------------------------------------- the style pass
 check("style before the spell check, spell check as fallback",
-      "phoneStyle(rawText) ?: croatianSpellcheck(appContext, rawText)" in ctrl)
+      "phoneStyle(local) ?: croatianSpellcheck(appContext, local)" in ctrl)
 check("style needs its model downloaded", "!MaPhoneModels.isInstalled(context, phone)) return null" in ctrl)
 check("a phone model needs no key for the spell check",
       "!MaPhoneModels.isPhone(model) && MaProviders.rewordingApiKey().isBlank()" in ctrl)

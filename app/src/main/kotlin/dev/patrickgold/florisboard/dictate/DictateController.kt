@@ -99,6 +99,7 @@ import java.util.concurrent.atomic.AtomicLong
 import dev.patrickgold.florisboard.dictate.audio.MaEncoder
 import dev.patrickgold.florisboard.dictate.audio.MaResample
 import dev.patrickgold.florisboard.dictate.nlp.MaDictationCorrections
+import dev.patrickgold.florisboard.dictate.nlp.MaCroatianFix
 import dev.patrickgold.florisboard.dictate.nlp.MaCyrillic
 import dev.patrickgold.florisboard.dictate.nlp.MaNameSpelling
 import dev.patrickgold.florisboard.dictate.nlp.MaSpokenEmail
@@ -2113,7 +2114,18 @@ object DictateController {
             val translated = if (translateRecording) translateToCroatian(rawText) else null
             val checked = when {
                 translated != null -> translated
-                !alreadyFormatted -> phoneStyle(rawText) ?: croatianSpellcheck(appContext, rawText)
+                !alreadyFormatted -> {
+                    // Croatian corrected on the phone first (MaCroatianFix, 8.11.2026): Latin letters,
+                    // diacritics, misheard words, from the keyboard's own dictionary. No key, no network,
+                    // so Parakeet offline gets it too; the model passes below then start from closer text.
+                    val latin = MaCyrillic.toLatin(rawText)
+                    val local = withContext(Dispatchers.Default) {
+                        if (MaLanguage.active() == MaLanguage.HR || latin != rawText ||
+                            MaCroatianFix.looksCroatian(appContext, latin)
+                        ) MaCroatianFix.apply(appContext, latin) else latin
+                    }
+                    phoneStyle(local) ?: croatianSpellcheck(appContext, local)
+                }
                 else -> rawText
             }
             spellchecked = checked
