@@ -180,3 +180,9 @@ voices. Stopped here: a further build plus a full suite (~1 h) would not finish 
 > feel free to use tailscale to access this phone
 
 **Status:** done 05:20 UTC: Pixel 7 reached over Tailscale adb (100.70.23.53:5555); TTT build 506 (versionCode 1506, code = build 504) and VOICE_ENGINE_ANDROID v1 installed, TTT still the default keyboard; spoken summary sent with macsay.
+
+## 8.11.2026 – yes to all, test on the real Pixel 7
+
+> Yes to all. Test it on real phone. Fix the engine and spoken email addresses be corrected to match the address book. Yes. And 2 phones are now over Tailscale. You can use them to test this TTT in next couple of hours. Please pick a faster phone, which is Pixel phone, and test everything on the Pixel phone, please.
+
+**Status:** saved first. Plan: sherpa-onnx 1.13.3 → 2.x; dictated "x at gmail dot com" snaps to an address-book email; build; test everything on the real Pixel 7 (100.70.23.53).
