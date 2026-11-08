@@ -29,6 +29,11 @@ object MaNameSpelling {
     private val NAMES = listOf("marco" to "marko", "bosco" to "bosko")
     private val PATTERNS = NAMES.map { (from, to) -> Regex("(?i)(?<![\\p{L}\\p{N}])$from(?![\\p{L}\\p{N}])") to to }
 
+    /** His own names, written with a capital even at the start of a lower-cased fragment. */
+    fun isName(lower: String): Boolean = lower in OWN
+
+    private val OWN = setOf("marko", "bosko", "boško")
+
     fun apply(text: String): String {
         var out = text
         for ((re, to) in PATTERNS) {

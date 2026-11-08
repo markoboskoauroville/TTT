@@ -50,7 +50,7 @@ check("CRLF", single("a\r\n\r\nb") == "a\nb")
 check("a single break stays", single("a\nb") == "a\nb")
 check("no break, no change", single("one line") == "one line")
 
-check("dictation is written with single breaks", "MaParagraphs.single(MaSpokenEmail.apply(MaNameSpelling.apply(MaCyrillic.toLatin(MaSpokenFormat.apply(text)))))" in ctrl)
+check("dictation is written with single breaks", "MaParagraphs.single(MaSpokenTime.apply(MaSpokenEmail.apply(MaNameSpelling.apply(MaCyrillic.toLatin(MaSpokenFormat.apply(text))))))" in ctrl)
 check("Ctrl+P and Ctrl+F too", "sink.commitText(MaParagraphs.single(text))" in ctrl)
 check("the realtime path too", "val outputText = MaParagraphs.single(" in ctrl)
 

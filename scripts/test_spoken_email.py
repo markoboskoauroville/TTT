@@ -32,7 +32,7 @@ gate = (SRC / "dictate/audio/SpeechGate.kt").read_text()
 
 check("address book lists its saved emails", "fun savedEmails(): List<String>" in book)
 check("every finished dictation passes the email snapper",
-      "MaSpokenEmail.apply(MaNameSpelling.apply(MaCyrillic.toLatin(MaSpokenFormat.apply(text))))" in ctrl)
+      "MaSpokenTime.apply(MaSpokenEmail.apply(MaNameSpelling.apply(MaCyrillic.toLatin(MaSpokenFormat.apply(text)))))" in ctrl)
 check("spoken 'at' words", '"at", "et", "@", "majmun"' in email)
 check("spoken dot in Croatian", '"točka"' in email)
 check("pronouns are never made into an address", "local in PRONOUNS" in email)
@@ -56,6 +56,10 @@ check("Serbian letters map to Gaj Latin", "'ж' to \"ž\"" in cyr and "'љ' to \
 
 names = (SRC / "dictate/nlp/MaNameSpelling.kt").read_text()
 check("Marco -> Marko, Bosco -> Bosko in every dictation", '"marco" to "marko"' in names and '"bosco" to "bosko"' in names)
+
+tm = (SRC / "dictate/nlp/MaSpokenTime.kt").read_text()
+check("'at 330' is written 3:30, minutes in fives only", "minutes % 5 == 0" in tm)
+check("his name keeps its capital at a fragment's start", "MaNameSpelling.isName(lower)" in ctrl and "isContactNameWord(first)" in ctrl)
 
 if failures:
     for f in failures:

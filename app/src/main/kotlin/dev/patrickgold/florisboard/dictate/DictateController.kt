@@ -102,6 +102,7 @@ import dev.patrickgold.florisboard.dictate.nlp.MaDictationCorrections
 import dev.patrickgold.florisboard.dictate.nlp.MaCyrillic
 import dev.patrickgold.florisboard.dictate.nlp.MaNameSpelling
 import dev.patrickgold.florisboard.dictate.nlp.MaSpokenEmail
+import dev.patrickgold.florisboard.dictate.nlp.MaSpokenTime
 import dev.patrickgold.florisboard.dictate.ui.MaMessage
 import dev.patrickgold.florisboard.dictate.provider.MaKeyRing
 import dev.patrickgold.florisboard.dictate.provider.MaKeys
@@ -2803,7 +2804,7 @@ object DictateController {
         // Croatian on the Pixel 7, 8.11.2026), his name with k, then a dictated address put together and
         // matched to the address book (MaSpokenEmail, 8.11.2026):
         // "marco.bosco at gmail.com" is written as the saved marko.bosko@gmail.com.
-        var body = MaParagraphs.single(MaSpokenEmail.apply(MaNameSpelling.apply(MaCyrillic.toLatin(MaSpokenFormat.apply(text)))))
+        var body = MaParagraphs.single(MaSpokenTime.apply(MaSpokenEmail.apply(MaNameSpelling.apply(MaCyrillic.toLatin(MaSpokenFormat.apply(text))))))
         if (prefs.dictate.maVoiceCommands.get() && DictateAccessibilityService.isRunning) {
             val split = MaVoiceCommand.splitTrailing(body)
             if (split != null) {
@@ -3118,6 +3119,11 @@ object DictateController {
             dev.patrickgold.florisboard.dictate.nlp.MaShippedWords.isLoaded("en") &&
             !dev.patrickgold.florisboard.dictate.nlp.MaShippedWords.isKnown(lower)
         if (isName) return text
+        // His own name and the people in his contacts keep their capital ("marko Boško živi…", Pixel 7,
+        // 8.11.2026): "marko" is a known lower-case word in the shipped lists, so the rule above misses it.
+        if (dev.patrickgold.florisboard.dictate.nlp.MaNameSpelling.isName(lower) ||
+            dev.patrickgold.florisboard.dictate.nlp.MaAddressBook.isContactNameWord(first)
+        ) return text
         // An acronym ("USA", "OK") keeps its capitals too.
         if (first.length > 1 && first.all { it.isUpperCase() }) return text
         return first[0].lowercaseChar() + text.substring(1)

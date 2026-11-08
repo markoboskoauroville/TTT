@@ -210,6 +210,11 @@ object MaAddressBook {
     }
 
     /** Whether [text] is a saved email, number, web address or IBAN (so the strip commits it whole). */
+    /** True when [word] is one of the words of a contact's name ("Boško" of "Marko Boško"). */
+    fun isContactNameWord(word: String): Boolean = word.length >= 2 && synchronized(lock) {
+        contactNames.any { n -> n.split(' ').any { it.equals(word, ignoreCase = true) } }
+    }
+
     /** Every saved email address, most used first (MaSpokenEmail, 8.11.2026). */
     fun savedEmails(): List<String> = synchronized(lock) {
         entries.values.filter { it.kind == EMAIL_KIND }.sortedByDescending { it.count }.map { it.value }
