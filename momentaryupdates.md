@@ -205,3 +205,9 @@ voices. Stopped here: a further build plus a full suite (~1 h) would not finish 
 > my name is spelled with k, and any dictation should convert marko with c to marko with k, bosko with c to bosko with k
 
 **Status:** saved first. Parakeet v3 has no language switch (it picks the language itself), so the output is forced instead: Cyrillic → Croatian Latin (MaCyrillic, commit 17bd7348). Names: MaNameSpelling, Marco → Marko, Bosco → Bosko in every dictation.
+
+## 8.11.2026 – feature row: Talk to AssemblyAI, Talk to Parakeet
+
+> please, in the app, build in for my feature row new buttons: talk to assemblyai talk to, then the name of the local model
+
+**Status:** saved first. Two buttons that record one dictation with that engine, whatever the Transcription model setting says.
