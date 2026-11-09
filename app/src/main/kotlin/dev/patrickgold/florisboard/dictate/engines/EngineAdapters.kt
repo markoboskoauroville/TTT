@@ -81,7 +81,7 @@ object EngineAdapters {
                 r.code == 403 -> if (low.contains("quota") || low.contains("credit") || low.contains("limit")) FailKind.QUOTA else FailKind.AUTH
                 else -> FailKind.ERROR
             }
-            throw EngineFailure(kind, "HTTP ${r.code}")
+            throw EngineFailure(kind, "HTTP ${r.code}" + if (r.code == 400) ": " + body.take(140).replace(Regex("\\s+"), " ") else "")
         }
     }
 
