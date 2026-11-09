@@ -89,7 +89,7 @@ fun MaVoiceButtonsScreen() = FlorisScreen {
                     modifier = Modifier.weight(1f).height(48.dp),
                 ) {
                     Box(contentAlignment = Alignment.CenterStart) {
-                        MaEngineKeyContent(letter, Color(0xFFE53935), EngineCatalog.shortName(id), false, MaterialTheme.colorScheme.onSurface, dev.patrickgold.florisboard.dictate.ui.engineSubLabel(c, id))
+                        MaEngineKeyContent(letter, Color(0xFFE53935), EngineCatalog.shortName(id) + dev.patrickgold.florisboard.dictate.engines.EngineScores.suffix(c, id, lang), false, MaterialTheme.colorScheme.onSurface, dev.patrickgold.florisboard.dictate.ui.engineSubLabel(c, id))
                     }
                 }
             }
@@ -156,7 +156,7 @@ fun MaVoiceButtonsScreen() = FlorisScreen {
                             Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(start = 0.dp, end = 6.dp, top = 2.dp, bottom = 2.dp)) {
                                 RadioButton(selected = sel, onClick = { EngineLive.select(c, lang, id) }, modifier = Modifier.size(36.dp))
                                 Column(modifier = Modifier.weight(1f)) {
-                                    Text(colName(id), style = MaterialTheme.typography.bodyMedium)
+                                    Text(colName(id) + dev.patrickgold.florisboard.dictate.engines.EngineScores.suffix(c, id, lang), style = MaterialTheme.typography.bodyMedium)
                                     Text(
                                         when {
                                             spec.freeSeconds == Long.MAX_VALUE -> "free"

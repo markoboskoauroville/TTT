@@ -159,7 +159,7 @@ fun MaEnginesScreen() = FlorisScreen {
 
         Text("Benchmark", style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(start = 16.dp, top = 16.dp, bottom = 4.dp))
         Text(
-            "Takes your last 10 dictations in Croatian and 10 in English and sends them through every engine that is on and set up, but only within each engine's free quota. An engine with no free quota is only used when it is switched on above.",
+            "Takes your last 5 dictations in Croatian and 5 in English and sends them through every engine that is on and set up, but only within each engine's free quota. An engine with no free quota is only used when it is switched on above.",
             style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.padding(horizontal = 16.dp),
         )

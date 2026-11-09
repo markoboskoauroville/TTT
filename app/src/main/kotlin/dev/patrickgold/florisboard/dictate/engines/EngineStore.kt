@@ -206,4 +206,8 @@ object EngineStore {
 
     fun lastBenchmark(c: Context): String? = p(c).getString("bench_last", null)
     fun setLastBenchmark(c: Context, json: String) = p(c).edit().putString("bench_last", json).apply()
+
+    /** Accuracy table {lang: {engine: pct}} merged from every benchmark run (EngineScores). */
+    fun scores(c: Context): String? = p(c).getString("scores", null)
+    fun setScores(c: Context, json: String) = p(c).edit().putString("scores", json).apply()
 }

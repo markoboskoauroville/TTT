@@ -1519,7 +1519,7 @@ fun MaFeatureRow(
                             val keyName = when (engine) {
                                 MaProviders.ENGINE_ASSEMBLYAI -> "AssemblyAI"
                                 MaProviders.ENGINE_LOCAL -> "Parakeet"
-                                else -> dev.patrickgold.florisboard.dictate.engines.EngineCatalog.shortName(answering ?: chosen)
+                                else -> (answering ?: chosen).let { dev.patrickgold.florisboard.dictate.engines.EngineCatalog.shortName(it) + dev.patrickgold.florisboard.dictate.engines.EngineScores.suffix(context, it, engLang) }
                             }
                             val subId = when (engine) {
                                 MaProviders.ENGINE_ASSEMBLYAI -> "assemblyai"
@@ -2542,7 +2542,7 @@ private fun MaEngineMenu(lang: String, anchor: androidx.compose.ui.geometry.Rect
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Text(
-                        text = dev.patrickgold.florisboard.dictate.engines.EngineCatalog.shortName(id),
+                        text = dev.patrickgold.florisboard.dictate.engines.EngineCatalog.shortName(id) + dev.patrickgold.florisboard.dictate.engines.EngineScores.suffix(context, id, lang),
                         color = if (sel) red else Color(0xFFECEAE3), fontSize = 16.sp,
                         fontWeight = if (sel) FontWeight.Bold else FontWeight.Normal, maxLines = 1,
                         modifier = Modifier.weight(1f),

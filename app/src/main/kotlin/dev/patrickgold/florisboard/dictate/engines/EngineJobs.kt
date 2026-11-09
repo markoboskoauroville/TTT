@@ -127,6 +127,7 @@ class EngineDebugReceiver : BroadcastReceiver() {
                         pending.finish()
                         val r = EngineBenchmark.run(app) { }
                         out("bench saved: " + r.saved)
+                        r.json.lines().forEach { out("json " + it) }
                         out("HR\n" + EngineBenchmark.table(r.rows, "hr")); out("EN\n" + EngineBenchmark.table(r.rows, "en"))
                         r.skipped.forEach { out("note: $it") }
                     }
@@ -136,6 +137,7 @@ class EngineDebugReceiver : BroadcastReceiver() {
                             out("${s.id}: key=${EngineKeys.has(app, s.id)} available=${EngineChain.available(app, s.id)} enabled=${EngineStore.enabled(app, s.id)} quotaLeft=${left ?: "n/a"}")
                         }
                         out("clips hr=${ClipBuffer.count(app, "hr")} en=${ClipBuffer.count(app, "en")}")
+                        for (l in listOf("hr", "en")) ClipBuffer.list(app, l).take(8).forEach { out("clip $l ${it.id} engine=${it.engine} sec=${"%.1f".format(it.seconds)} refwords=${it.reference.trim().split(Regex("\\s+")).size}") }
                     }
                 }
             } catch (t: Throwable) { out("error: " + t.javaClass.simpleName) } finally { runCatching { pending.finish() } }

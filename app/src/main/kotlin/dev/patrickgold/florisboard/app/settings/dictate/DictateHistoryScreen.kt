@@ -543,6 +543,8 @@ private fun DetailDialog(
         else Toast.makeText(context, R.string.dictate__history_audio_missing, Toast.LENGTH_SHORT).show()
     }
     DisposableEffect(Unit) { onDispose { stop() } }
+    var retx by remember { mutableStateOf(false) }
+    if (retx) RetranscribeDialog(entry) { retx = false }
     LaunchedEffect(playing) {
         while (playing) {
             val p = playerRef.value ?: break
@@ -608,6 +610,11 @@ private fun DetailDialog(
                 )
             }
             Spacer(Modifier.height(12.dp))
+            if (entry.audioPath != null) {
+                androidx.compose.material3.OutlinedButton(onClick = { retx = true }, modifier = Modifier.fillMaxWidth()) {
+                    Text("Re-transcribe with\u2026")
+                }
+            }
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(4.dp),
@@ -764,7 +771,8 @@ private fun NumberField(
 
 /** "OpenAI · gpt-4o-mini-transcribe · 0:12 · 0.4 MB" — omits empty parts. */
 private fun historyRowMeta(entry: DictateHistoryEntry): String {
-    val parts = ArrayList<String>(4)
+    val parts = ArrayList<String>(5)
+    if (entry.language.isNotBlank()) parts.add(entry.language.uppercase())
     if (entry.providerName.isNotBlank()) parts.add(entry.providerName)
     if (entry.model.isNotBlank()) parts.add(entry.model)
     formatHistoryDuration(entry.durationSecs)?.let { parts.add(it) }

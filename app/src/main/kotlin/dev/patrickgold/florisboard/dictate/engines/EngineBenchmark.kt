@@ -24,13 +24,13 @@ import org.json.JSONArray
 import org.json.JSONObject
 
 /**
- * "Benchmark voice engines": the last 10 clips in Croatian and 10 in English through every enabled
+ * "Benchmark voice engines": the last 5 real dictations in Croatian and 5 in English through every enabled
  * engine, scored against the text he finally sent. Spend-aware: an engine is only given a clip when
  * its free quota covers it (a paid engine only when he enabled it, its price shown), so a run can
  * never leave a free quota.
  */
 object EngineBenchmark {
-    const val CLIPS = 10
+    const val CLIPS = 5
 
     data class Result(val rows: List<BenchMath.Row>, val skipped: List<String>, val json: String, val date: String, val saved: String)
 
@@ -44,7 +44,8 @@ object EngineBenchmark {
             val rows = ArrayList<BenchMath.Row>()
             val skipped = ArrayList<String>()
             for (lang in listOf("hr", "en")) {
-                val clips = ClipBuffer.latest(c, lang, CLIPS).filter { it.reference.isNotBlank() }
+                val clips = ClipBuffer.list(c, lang).filter { it.reference.isNotBlank() && it.engine != "seed" }.take(CLIPS)
+                skipped.add("$lang: ${clips.size} real dictations used (of $CLIPS wanted)")
                 if (clips.isEmpty()) { skipped.add("$lang: no clips yet"); continue }
                 val ids = EngineStore.order(c, lang).filter { it != EngineCatalog.FAKE && EngineStore.enabled(c, it) && EngineChain.available(c, it) }
                 for (id in ids) {
@@ -88,6 +89,7 @@ object EngineBenchmark {
                 File(c.filesDir, "engine_bench").apply { mkdirs() }.let { File(it, "$date.json").writeText(json) }
             }
             EngineStore.setLastBenchmark(c, json)
+            EngineScores.record(c, rows)
             val saved = if (MaRemoteDb.hasToken()) MaRemoteDb.pushBenchmark(date, json) else "not saved to the database (no token set)"
             onProgress("done")
             Result(rows, skipped, json, date, saved)
@@ -101,7 +103,7 @@ object EngineBenchmark {
             rows.filter { it.lang == lang }.forEach {
                 a.put(
                     JSONObject().put("engine", it.engineId).put("clips", it.clips).put("failed", it.failed)
-                        .put("wer_pct", Math.round(it.wer * 1000) / 10.0).put("name_errors", it.nameErrors).put("names", it.names)
+                        .put("wer_pct", Math.round(it.wer * 1000) / 10.0).put("accuracy_pct", EngineScores.pct(it.wer)).put("name_errors", it.nameErrors).put("names", it.names)
                         .put("avg_ms", it.avgMs).put("cost_usd", Math.round(it.costUsd * 10000) / 10000.0),
                 )
             }
@@ -118,8 +120,8 @@ object EngineBenchmark {
         val sb = StringBuilder()
         r.forEach {
             val n = EngineCatalog.byId(it.engineId)?.name?.substringBefore(" (") ?: it.engineId
-            sb.append(String.format(Locale.ROOT, "%-22s WER %5.1f%%  names %d/%d  %4d ms  $%.4f  (%d clips%s)\n",
-                n.take(22), it.wer * 100, it.names - it.nameErrors, it.names, it.avgMs, it.costUsd, it.clips, if (it.failed > 0) ", ${it.failed} failed" else ""))
+            sb.append(String.format(Locale.ROOT, "%-22s %3d%%  WER %5.1f%%  names %d/%d  %4d ms  $%.4f  (%d clips%s)\n",
+                n.take(22), EngineScores.pct(it.wer), it.wer * 100, it.names - it.nameErrors, it.names, it.avgMs, it.costUsd, it.clips, if (it.failed > 0) ", ${it.failed} failed" else ""))
         }
         return sb.toString().trimEnd()
     }
