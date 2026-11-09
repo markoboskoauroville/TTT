@@ -138,7 +138,12 @@ object MaReSkill {
     fun preamble(): String {
         val skill = read().let { if (it.length <= PROMPT_MAX_CHARS) it else it.take(PROMPT_MAX_CHARS / 2) + "\n...\n" + it.takeLast(PROMPT_MAX_CHARS / 2) }
         return "Before the task, this is the skill that says how Marko writes. Follow it exactly; its last " +
-            "section (his corrections) outranks everything above it.\n<skill>\n" + skill.trim() + "\n</skill>\n\n"
+            "section (his corrections) outranks everything above it.\n<skill>\n" + skill.trim() + "\n</skill>\n\n" +
+            "ANSWER FORMAT: your answer is shown to Marko in a pop-up before anything goes into a chat. If you can write " +
+            "the message, return only the message. If you cannot (information is missing, the screen shows nothing to " +
+            "answer, the request is a question, anything you would explain), return ONE line that starts with " +
+            "\"RE-NOTE:\" and says what is wrong or asks your question in a few words. Never write commentary as if it " +
+            "were the message.\n\n"
     }
 
     // ---------------------------------------------------------------- pure helpers (tested)
@@ -336,6 +341,17 @@ object MaReSkill {
             val final = if (now == rules) updated else mergeRule(now, updated.last())
             save(withRules(fresh, final))
             MaLog.add("re", "skill learned a rule (${final.size} in all)")
+        }
+    }
+
+    /** A correction made in the RE pop-up (his edit of the draft before OK): logged and learned from like a sent one. */
+    fun noteCorrection(pkg: String?, words: String, original: String, edited: String, how: String) {
+        if (!learningOn()) return
+        val d = Draft(pkg ?: "popup", 0, words, original, System.currentTimeMillis())
+        scope.launch {
+            runCatching { logLine(d, edited, how, true) }
+            runCatching { MaSpelling.noteEdit(original, edited) }
+            runCatching { learn(d, edited) }
         }
     }
 

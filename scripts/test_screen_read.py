@@ -44,7 +44,7 @@ check("the screenshot capability is declared", 'android:canTakeScreenshot="true"
 check("read only: the tree walk presses nothing", all(w not in chat for w in ("performAction", "performClick", "dispatchGesture")))
 check("the voice path reads the screen then drafts", "MaScreenRead.wants(words)" in ctrl and "MaReprompt.prompt(words, write, screen)" in ctrl)
 check("the typed path too", "MaScreenRead.wants(words)" in ime)
-check("a failed read stops and says so", "could not read the screen" in ctrl and "return" in ctrl[ctrl.find("could not read the screen"):][:200])
+check("a failed read stops and says so", "Could not read the screen" in ctrl and "return" in ctrl[ctrl.find("Could not read the screen"):][:300])
 check("the reply is never sent", "performEnter" not in rd and "pressSend" not in rd and "never sent" in (SRC / "dictate/MaScreenRead.kt").read_text().lower())
 check("the prompt names sides and the newest message", "[left]" in rd and "newest" in rd and "Return only the reply" in rd)
 check("Settings: switch, order, permission line", "maReScreen" in scr and "Read screen" in scr and "ACTION_ACCESSIBILITY_SETTINGS" in scr)

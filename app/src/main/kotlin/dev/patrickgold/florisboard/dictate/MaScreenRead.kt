@@ -112,5 +112,7 @@ object MaScreenRead {
             "order from top to bottom, so the newest message is the last one.\n<screen>\n" + screen.text + "\n</screen>\n" +
             "Ignore the part of the instruction about taking or reading the screenshot: it is done. Find the newest " +
             "message from the other person ([left]) in that chat and write Marko's reply to it, following the skill, in " +
-            "the language of that message unless the instruction names another. Return only the reply, ready to send."
+            "the language of that message unless the instruction names another. If no line is [left] (a chat with himself, " +
+            "or only his own messages), answer the newest message whatever its side, as a reply to it. If there is no " +
+            "message at all, return one line starting with RE-NOTE: and say so. Return only the reply, ready to send."
 }

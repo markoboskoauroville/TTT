@@ -2073,7 +2073,7 @@ object DictateController {
                 MaMessage.show("RE: reading the screen")
                 screen = MaScreenRead.read()
                 if (screen == null) {
-                    MaMessage.show("RE: could not read the screen (accessibility tree and OCR both empty)")
+                    MaReResult.note(appContext, "Could not read the screen: the app's text and a screenshot both came back empty. Nothing was written.")
                     return
                 }
             }
@@ -3862,11 +3862,14 @@ object DictateController {
                 }
                 // commitText replaces the active selection if any, else inserts at the cursor. One line
                 // break between paragraphs, never an empty line (MaParagraphs, 3.11.2026).
-                sink.commitText(MaParagraphs.single(text))
-                // RE MAGIC (MaReSkill): this text is the draft his corrections are compared against.
+                // RE NEVER WRITES INTO THE CHAT BY ITSELF (MaReResult, Marko 9.11.2026): its answer goes to a pop-up,
+                // and only OK puts a message into the field. A note (RE's own words) can never be inserted.
                 if (prompt.name == MaReprompt.NAME) {
-                    MaReSkill.onComposed(MaReprompt.lastPkg, MaReprompt.lastFieldId, MaReprompt.lastWords, MaParagraphs.single(text))
+                    _state.value = UiState.Idle
+                    MaReResult.present(appContext, MaParagraphs.single(text), replace = input != null, words = MaReprompt.lastWords)
+                    return@launch
                 }
+                sink.commitText(MaParagraphs.single(text))
                 _state.value = UiState.Idle
             } catch (e: CancellationException) {
                 throw e // stop button pressed: cancelRewording already reset the state, leave the field as-is
@@ -4211,6 +4214,14 @@ object DictateController {
             purpose = "Suggestion",
         )
     }.getOrNull()
+
+    /** The pop-up's OK (MaReResult): the draft goes into the field, replacing its text in reshape mode, and becomes the draft the learning loop compares. */
+    fun insertReResult(context: Context, r: MaReResult.Result) {
+        val s = sink(context.applicationContext)
+        if (r.replace) s.selectAll()
+        s.commitText(r.text)
+        MaReSkill.onComposed(r.pkg, r.fieldId, r.words, r.text)
+    }
 
     /**
      * One plain question to the model RE uses (Settings → Prompts), for the background jobs that are not

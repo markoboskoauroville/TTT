@@ -227,6 +227,13 @@
         <!-- Reprompt (MaReprompt): the small window where the instruction for the field's text is
              written or dictated. Its own task, so closing it returns to the app he was in. -->
         <activity
+            android:name="dev.patrickgold.florisboard.dictate.MaReResultActivity"
+            android:theme="@style/FlorisAppTheme.Transparent"
+            android:excludeFromRecents="true"
+            android:taskAffinity=""
+            android:windowSoftInputMode="adjustResize|stateHidden"
+            android:exported="false"/>
+        <activity
             android:name="dev.patrickgold.florisboard.dictate.MaRepromptActivity"
             android:theme="@style/FlorisAppTheme.Transparent"
             android:excludeFromRecents="true"

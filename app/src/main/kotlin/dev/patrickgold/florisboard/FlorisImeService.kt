@@ -483,7 +483,9 @@ class FlorisImeService : LifecycleInputMethodService() {
                     if (dev.patrickgold.florisboard.dictate.MaScreenRead.wants(words)) {
                         screen = dev.patrickgold.florisboard.dictate.MaScreenRead.read()
                         if (screen == null) {
-                            dev.patrickgold.florisboard.dictate.ui.MaMessage.show("RE: could not read the screen")
+                            dev.patrickgold.florisboard.dictate.MaReResult.note(
+                                this@FlorisImeService, "Could not read the screen: the app's text and a screenshot both came back empty. Nothing was written.",
+                            )
                             return@launch
                         }
                     }
@@ -491,6 +493,12 @@ class FlorisImeService : LifecycleInputMethodService() {
                         this@FlorisImeService, MaReprompt.prompt(words, write, screen), model = MaFlow.model(), allowGrowth = true, bare = true,
                     )
                 }
+            }, 400)
+        }
+        // The pop-up's OK (MaReResult): the accepted draft goes into the field it was written for.
+        dev.patrickgold.florisboard.dictate.MaReResult.takeInsert(info.packageName, info.fieldId)?.let { r ->
+            android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
+                DictateController.insertReResult(this, r)
             }, 400)
         }
         // The cursor pad never survives a new field.

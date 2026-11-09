@@ -37,16 +37,24 @@ object MaScreenChat {
                 runCatching { root.recycle() }
             }
         }
-        return out.sortedBy { it.top }
+        // Everything at or below the message box is the app's own bar (emoji, attach, camera, mic): not chat.
+        val inputTop = inputTopSeen
+        inputTopSeen = Int.MAX_VALUE
+        return out.filter { it.top < inputTop - 4 }.sortedBy { it.top }
     }
+
+    @Volatile
+    private var inputTopSeen = Int.MAX_VALUE
 
     private fun collect(node: AccessibilityNodeInfo, out: MutableList<Item>, depth: Int) {
         if (depth > 40 || out.size > 300) return
+        if (node.isEditable) {
+            val r = Rect().also { node.getBoundsInScreen(it) }
+            if (r.top > 0 && r.top < inputTopSeen) inputTopSeen = r.top
+        }
         if (node.isVisibleToUser && !node.isEditable && !node.isPassword) {
-            val text = node.text?.toString()?.trim().orEmpty()
-            val desc = node.contentDescription?.toString()?.trim().orEmpty()
-            // A message shows as text; a description only when there is no text and it is not a one word label.
-            val shown = text.ifEmpty { if (desc.contains(' ') && desc.length > 12) desc else "" }
+            // A message shows as text. Descriptions are button labels ("Emoji, GIFs and stickers"): never chat.
+            val shown = node.text?.toString()?.trim().orEmpty()
             if (shown.isNotEmpty() && shown.any { it.isLetterOrDigit() }) {
                 val r = Rect().also { node.getBoundsInScreen(it) }
                 if (r.width() > 0 && r.height() > 0) out.add(Item(shown, r.top, r.left, r.right))
