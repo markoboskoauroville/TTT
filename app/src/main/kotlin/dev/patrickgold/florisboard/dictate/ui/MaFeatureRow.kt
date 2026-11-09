@@ -362,6 +362,8 @@ fun MaFeatureRow(
     val langMode by prefs.dictate.maLanguageMode.collectAsState()
     val scrollPages by prefs.dictate.maScrollPages.collectAsState()
     var scrollMenu by remember { mutableStateOf(false) }
+    // Long press on the H or E key: the engines for that language, pick one and it closes (Marko, 9.11.2026). "hr" / "en" / null.
+    var engineMenu by remember { mutableStateOf<String?>(null) }
 
     // The one-minute fill mark and its clock are gone. They existed to make a tick last long enough
     // to be seen; the ring on the key says the same thing for as long as it is true, so there is
@@ -1473,6 +1475,9 @@ fun MaFeatureRow(
                             DictateController.recordingEngine() == engine &&
                             !DictateController.isRepromptRecording()
                         ) MaRecordOutlineLive else MaRecordOutline,
+                        onLongClick = if (!translate && engine == null) {
+                            { engineMenu = if (language == MaLanguage.HR) "hr" else "en" }
+                        } else null,
                         onClick = {
                             // THE LANGUAGE IS SET FIRST, AND SET SYNCHRONOUSLY.
                             //
@@ -2079,6 +2084,10 @@ fun MaFeatureRow(
         )
       }
 
+      engineMenu?.let { lang ->
+        MaEngineMenu(lang = lang, onDismiss = { engineMenu = null })
+      }
+
       // The scan picker was here. It is gone with the list it drew: nothing arms it any more,
       // because learning happens by pressing the real button instead of choosing from thirty
       // labels written for a screen reader.
@@ -2451,3 +2460,62 @@ internal val MaEngineNetRed = androidx.compose.ui.graphics.Color(0xFFE53935)
 
 /** Talk to Parakeet: the dot of the phone's record keys (8.11.2026). */
 internal val MaEngineLocalAmber = androidx.compose.ui.graphics.Color(0xFFFFB300)
+
+/**
+ * The engines for one language, opened by a long press on its H or E key (Marko, 9.11.2026). One tap on a
+ * provider chooses it (the same store as the radios in Voice transcription buttons, so the key changes at
+ * once) and the panel closes; there is no OK. The x closes it without a change. Drawn inside the keyboard's
+ * window like the scroll stepper, since an input method cannot show a dialog.
+ */
+@Composable
+private fun MaEngineMenu(lang: String, onDismiss: () -> kotlin.Unit) {
+    val context = androidx.compose.ui.platform.LocalContext.current
+    val live by dev.patrickgold.florisboard.dictate.engines.EngineLive.state.collectAsState()
+    val chosen = live.selected[lang] ?: dev.patrickgold.florisboard.dictate.engines.EngineStore.selected(context, lang)
+    val ids = dev.patrickgold.florisboard.dictate.engines.EngineCatalog.ALL.map { it.id }
+        .filter { it == chosen || dev.patrickgold.florisboard.dictate.engines.EngineChain.available(context, it) }
+    val red = Color(0xFFE53935)
+    Row(
+        modifier = Modifier.fillMaxWidth().background(Color(0xFF16161A)).padding(horizontal = 8.dp, vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(
+            text = "\u2715",
+            color = Color(0xFFECEAE3),
+            fontSize = 18.sp,
+            modifier = Modifier.clickable { onDismiss() }.padding(horizontal = 10.dp, vertical = 6.dp),
+        )
+        Text(
+            text = if (lang == "hr") "H" else "E",
+            color = red,
+            fontSize = 17.sp,
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier.padding(end = 8.dp),
+        )
+        Row(modifier = Modifier.weight(1f).horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+            for (id in ids) {
+                val sel = id == chosen
+                Column(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(10.dp))
+                        .background(if (sel) red.copy(alpha = 0.18f) else Color(0x22FFFFFF))
+                        .border(if (sel) 2.dp else 1.dp, if (sel) red else Color(0x33FFFFFF), RoundedCornerShape(10.dp))
+                        .clickable {
+                            dev.patrickgold.florisboard.dictate.engines.EngineLive.select(context, lang, id)
+                            onDismiss()
+                        }
+                        .padding(horizontal = 12.dp, vertical = 6.dp),
+                ) {
+                    Text(
+                        text = dev.patrickgold.florisboard.dictate.engines.EngineCatalog.shortName(id),
+                        color = Color(0xFFECEAE3), fontSize = 14.sp, maxLines = 1,
+                    )
+                    Text(
+                        text = engineSubLabel(context, id),
+                        color = Color(0x99FFFFFF), fontSize = 11.sp, maxLines = 1,
+                    )
+                }
+            }
+        }
+    }
+}

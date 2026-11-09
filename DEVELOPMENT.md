@@ -11417,3 +11417,7 @@ Marko disliked build 576 (half-size minutes). The H/E key (and both previews in 
 **Fallback** (`KeyRing`): every cloud engine calls through the ring. 401/403, 429 or a timeout moves to the next key and the status line says it ("Groq key 2/5 rate-limited -> key 3"); a refused key rests an hour, a rate-limited one a minute; when the last key fails the failure goes up and the engine chain moves to the next provider as before. The provider cards in Voice transcription buttons show "5 keys" (or "1 account") small.
 
 **No key is ever shown, logged or put in a summary.** Debug (adb, DUMP): `dev.ttt.engines.KEYS` runs the same importer over files in `Android/data/<app>/files/keys/` and deletes them; `dev.ttt.engines.RETEST` re-tests; results in `engines_log.txt`, counts only. Tests: `KeyScanTest`.
+
+### Long press on H or E opens the engines for that language (9.11.2026, task 70)
+
+Marko: long press the transcription button, a dialog with all the models, pick one, no OK, it closes. `MaEngineMenu` (end of `MaFeatureRow.kt`) is a panel inside the keyboard window (an input method cannot show a dialog), opened by `onLongClick` of the plain H and E keys only (not E|H, not the Talk-to keys). One chip per provider that is set up (name, free/paid word with minutes), the current one marked red; a tap calls `EngineLive.select` (the same store as the radios in Voice transcription buttons, so the key changes at once) and closes it. The x closes without a change. A long press does not record: `combinedClickable` fires either the click or the long click.
