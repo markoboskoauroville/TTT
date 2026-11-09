@@ -501,6 +501,10 @@ class FlorisImeService : LifecycleInputMethodService() {
                 }
             }, 400)
         }
+        // The RE pop-up has closed (Close, Cancel, OK, Back, outside): the keyboard comes back at once.
+        if (dev.patrickgold.florisboard.dictate.MaReResult.consumeClosed()) {
+            android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({ runCatching { requestShowSelf(0) } }, 250)
+        }
         // The pop-up's OK (MaReResult): the accepted draft goes into the field it was written for.
         dev.patrickgold.florisboard.dictate.MaReResult.takeInsert(info.packageName, info.fieldId)?.let { r ->
             android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({

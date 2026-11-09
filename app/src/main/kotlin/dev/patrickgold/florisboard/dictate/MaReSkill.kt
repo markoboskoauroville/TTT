@@ -142,8 +142,9 @@ object MaReSkill {
             "ANSWER FORMAT: your answer is shown to Marko in a pop-up before anything goes into a chat. If you can write " +
             "the message, return only the message. If you cannot (information is missing, the screen shows nothing to " +
             "answer, the request is a question, anything you would explain), return ONE line that starts with " +
-            "\"RE-NOTE:\" and says what is wrong or asks your question in a few words. Never write commentary as if it " +
-            "were the message.\n\n" + MaSkills.contextBlock()
+            "\"RE-NOTE:\" and says what is wrong or asks your question in a few words. Never use RE-NOTE because the chat " +
+            "is Marko's own or the newest message is his: then write the next message from where it stands. Never write " +
+            "commentary as if it were the message.\n\n" + MaSkills.contextBlock()
     }
 
     // ---------------------------------------------------------------- pure helpers (tested)

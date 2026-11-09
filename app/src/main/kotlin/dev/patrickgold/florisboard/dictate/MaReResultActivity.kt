@@ -119,6 +119,8 @@ class MaReResultActivity : ComponentActivity() {
     override fun onDestroy() {
         // Swiped away or Back: nothing is inserted.
         if (!done) MaReResult.cancel()
+        // However it closed, RE's state is reset at once: no spinner, no stuck keyboard.
+        DictateController.recoverAfterPopup()
         super.onDestroy()
     }
 }

@@ -58,6 +58,9 @@ def is_note(t):
 
 
 check("note detection", is_note("RE-NOTE: which message?") and is_note("NO MESSAGE FOUND") and not is_note("Hi, ja sam Marko"))
+check("the keyboard comes back after any close", "consumeClosed()" in ime and "requestShowSelf(0)" in ime)
+check("RE's state resets when the pop-up closes", "recoverAfterPopup()" in act and "fun recoverAfterPopup" in ctrl)
+check("a self-chat is never refused", "NEVER refuse" in code(SRC / "dictate/MaScreenRead.kt") and "Never use RE-NOTE because the chat" in skill)
 print(f"re popup, test 1: {checks} checks, {len(failures)} failed")
 for f in failures:
     print("  FAIL ", f)

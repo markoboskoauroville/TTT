@@ -4234,6 +4234,11 @@ object DictateController {
         )
     }.getOrNull()
 
+    /** After any RE pop-up closes: nothing may stay "working". */
+    fun recoverAfterPopup() {
+        if (_state.value is UiState.Rewording || _state.value is UiState.Error) _state.value = UiState.Idle
+    }
+
     /** The pop-up's OK (MaReResult): the draft goes into the field, replacing its text in reshape mode, and becomes the draft the learning loop compares. */
     fun insertReResult(context: Context, r: MaReResult.Result) {
         val s = sink(context.applicationContext)

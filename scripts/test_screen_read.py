@@ -49,7 +49,7 @@ check("the voice path reads the screen then drafts", "MaScreenRead.wants(words)"
 check("the typed path too", "MaScreenRead.wants(words)" in ime)
 check("a failed read stops and says so", "Could not read the screen" in ctrl and "return" in ctrl[ctrl.find("Could not read the screen"):][:300])
 check("the reply is never sent", "performEnter" not in rd and "pressSend" not in rd and "never sent" in (SRC / "dictate/MaScreenRead.kt").read_text().lower())
-check("the prompt names sides and the newest message", "[left]" in rd and "newest" in rd and "Return only the reply" in rd)
+check("the prompt names sides and the newest message", "[left]" in rd and "newest" in rd and "Return only the " in rd)
 check("Settings: switch, order, permission line", "maReScreen" in scr and "Read screen" in scr and "ACTION_ACCESSIBILITY_SETTINGS" in scr)
 check("never an auto-click of the system prompt", "performClick" not in scr)
 

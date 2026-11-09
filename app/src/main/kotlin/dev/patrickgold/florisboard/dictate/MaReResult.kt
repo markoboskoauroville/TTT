@@ -91,6 +91,7 @@ object MaReResult {
     fun accept(finalText: String) {
         val r = shown ?: return
         shown = null
+        markClosed()
         if (r.note || finalText.isBlank()) return
         accepted = r.copy(text = finalText.trim(), at = System.currentTimeMillis())
         if (!MaReSkill.same(r.text, finalText)) MaReSkill.noteCorrection(r.pkg, r.words, r.text, finalText.trim(), "popup-edit")
@@ -99,6 +100,23 @@ object MaReResult {
     fun cancel() {
         shown = null
         accepted = null
+        markClosed()
+    }
+
+    /** When the pop-up last closed (any way): the keyboard shows itself again and RE's state is reset. */
+    @Volatile
+    var closedAt: Long = 0L
+
+    private fun markClosed() {
+        closedAt = System.currentTimeMillis()
+    }
+
+    /** True once, within a few seconds of the pop-up closing: the keyboard must come back. */
+    fun consumeClosed(now: Long = System.currentTimeMillis()): Boolean {
+        val c = closedAt
+        if (c == 0L || now - c > 6_000L) return false
+        closedAt = 0L
+        return true
     }
 
     /** Called when a field starts: the accepted result for THIS field, once, or null. */
