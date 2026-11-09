@@ -25,8 +25,8 @@ import org.json.JSONObject
 
 /**
  * The engine keys, Keystore-encrypted (AES-GCM, key never leaves the Keystore), never printed or
- * logged. Marko pastes them on the phone; a push from the Mac over adb Tailscale lands them in
- * `Android/data/<app>/files/keys/<engine>.key` and [importPushed] encrypts and deletes the files.
+ * logged. Keys come only from files (Marko, 9.11.2026): the picker on Voice transcription buttons, or a file
+ * pushed to `Android/data/<app>/files/keys/`, both through [KeyImporter].
  * AssemblyAI keeps using the app's existing key ring when no key was given here.
  */
 object EngineKeys {
@@ -64,15 +64,18 @@ object EngineKeys {
         prefs(c).edit().remove(keyId(engineId)).apply()
     }
 
-    /** All stored lines (a Groq file may hold several keys; Cloudflare holds account id then token). */
+    /** The lines stored here (the ring), without the legacy fallback. */
+    fun ownLines(c: Context, engineId: String): List<String> = runCatching {
+        val raw = Base64.decode(prefs(c).getString(keyId(engineId), null) ?: return@runCatching emptyList<String>(), Base64.NO_WRAP)
+        val ci = Cipher.getInstance("AES/GCM/NoPadding")
+        ci.init(Cipher.DECRYPT_MODE, secret(), GCMParameterSpec(128, raw.copyOfRange(0, 12)))
+        String(ci.doFinal(raw.copyOfRange(12, raw.size))).lines().filter { it.isNotBlank() }
+    }.getOrDefault(emptyList())
+
+    /** The ring: every stored key, one per line (Cloudflare holds account id then token; a service account is one JSON line). */
     fun lines(c: Context, engineId: String): List<String> {
-        val own = runCatching {
-            val raw = Base64.decode(prefs(c).getString(keyId(engineId), null) ?: return@runCatching null, Base64.NO_WRAP)
-            val ci = Cipher.getInstance("AES/GCM/NoPadding")
-            ci.init(Cipher.DECRYPT_MODE, secret(), GCMParameterSpec(128, raw.copyOfRange(0, 12)))
-            String(ci.doFinal(raw.copyOfRange(12, raw.size))).lines().filter { it.isNotBlank() }
-        }.getOrNull()
-        if (!own.isNullOrEmpty()) return own
+        val own = ownLines(c, engineId)
+        if (own.isNotEmpty()) return own
         // The existing key ring (AssemblyAI is already set up in the keyboard).
         if (engineId == "assemblyai") {
             val k = runCatching {
@@ -83,6 +86,30 @@ object EngineKeys {
             if (k.isNotBlank()) return listOf(k)
         }
         return emptyList()
+    }
+
+    /** Replaces the ring (empty deletes it). */
+    fun setLines(c: Context, engineId: String, l: List<String>) {
+        if (l.isEmpty()) delete(c, engineId) else save(c, engineId, l.joinToString("\n"))
+    }
+
+    /** Adds the keys that are not already in the ring; returns how many were new. */
+    fun merge(c: Context, engineId: String, add: List<String>): Int {
+        val cur = ownLines(c, engineId)
+        val fresh = add.map { it.trim() }.filter { it.isNotEmpty() && it !in cur }.distinct()
+        if (fresh.isNotEmpty()) setLines(c, engineId, cur + fresh)
+        return fresh.size
+    }
+
+    /** "5 keys" for the provider cards; null when none. Cloudflare and a service account count as accounts. */
+    fun countLabel(c: Context, engineId: String): String? {
+        val l = lines(c, engineId)
+        if (l.isEmpty()) return null
+        return when (keyId(engineId)) {
+            "cloudflare" -> if (l.size >= 2) "1 account" else null
+            "google_chirp" -> if (l.size == 1) "1 account" else "${l.size} accounts"
+            else -> if (l.size == 1) "1 key" else "${l.size} keys"
+        }
     }
 
     fun has(c: Context, engineId: String): Boolean {
@@ -101,21 +128,18 @@ object EngineKeys {
     fun pushedDir(c: Context): File? = c.getExternalFilesDir("keys")
 
     /**
-     * Takes every `<engine>.key` file pushed into the app's keys folder, encrypts it and deletes the
-     * file. Returns one line per engine, status only: "deepgram: stored". Values are never returned.
+     * Keys enter only through files. A file pushed into the app's keys folder (adb, tests) goes the same
+     * way as one chosen with the picker: [KeyImporter] finds the keys, tests them, keeps the working
+     * ones, and the file is deleted. Returns the summary lines, never a key.
      */
-    fun importPushed(c: Context): List<String> {
+    suspend fun importPushed(c: Context): List<String> {
         val dir = pushedDir(c) ?: return listOf("no keys folder")
-        val out = ArrayList<String>()
-        for (f in dir.listFiles().orEmpty().sortedBy { it.name }) {
-            val id = f.name.substringBefore('.')
-            val spec = EngineCatalog.byId(id) ?: EngineCatalog.byId(id + "_v3")
-            if (spec == null) { out.add("$id: unknown engine"); continue }
-            val text = runCatching { f.readText() }.getOrDefault("")
-            val v = KeyText.forEngine(spec.id, text)
-            if (v != null && save(c, spec.id, v)) { out.add("${spec.id}: stored"); f.delete() } else out.add("${spec.id}: not recognised, file kept")
-        }
-        return out
+        val files = dir.listFiles().orEmpty().filter { it.isFile }.sortedBy { it.name }
+        if (files.isEmpty()) return listOf("no files in the keys folder")
+        val texts = files.map { it.name to runCatching { it.readText() }.getOrDefault("") }
+        val out = KeyImporter.importTexts(c, texts) { }
+        files.forEach { it.delete() }
+        return out.summary.lines()
     }
 }
 
@@ -173,6 +197,10 @@ object EngineStore {
         }.getOrDefault("assemblyai")
     }
     fun setSelected(c: Context, lang: String, id: String) = p(c).edit().putString("sel_" + (if (lang == "en") "en" else "hr"), id).apply()
+
+    /** The last key import or re-test summary (counts only, never a key). */
+    fun lastKeys(c: Context): String? = p(c).getString("keys_last", null)
+    fun setLastKeys(c: Context, text: String) = p(c).edit().putString("keys_last", text).apply()
 
     fun lastBenchmark(c: Context): String? = p(c).getString("bench_last", null)
     fun setLastBenchmark(c: Context, json: String) = p(c).edit().putString("bench_last", json).apply()

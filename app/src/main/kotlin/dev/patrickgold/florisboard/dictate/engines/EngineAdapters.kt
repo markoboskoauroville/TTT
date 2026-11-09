@@ -99,17 +99,17 @@ object EngineAdapters {
         return when (id) {
             "parakeet" -> parakeet(c, wav, lang, names)
             "android" -> androidRecognizer(c, wav, lang)
-            "groq_turbo" -> groq(c, "whisper-large-v3-turbo", wav, lang, names)
-            "groq_v3" -> groq(c, "whisper-large-v3", wav, lang, names)
+            "groq_turbo" -> KeyRing.run(c, "groq", "Groq") { k -> groq(k, "whisper-large-v3-turbo", wav, lang, names) }
+            "groq_v3" -> KeyRing.run(c, "groq", "Groq") { k -> groq(k, "whisper-large-v3", wav, lang, names) }
             "cloudflare" -> cloudflare(c, wav, lang)
-            "gemini" -> gemini(c, wav, lang, names)
-            "deepgram" -> deepgram(c, wav, lang, names)
-            "assemblyai" -> assemblyai(c, wav, lang, names)
-            "speechmatics" -> speechmatics(c, wav, lang)
-            "soniox" -> soniox(c, wav, lang)
-            "google_v1" -> googleV1(c, wav, lang, names)
+            "gemini" -> KeyRing.run(c, "gemini", "Gemini") { k -> geminiWith(k, wav, lang, names) }
+            "deepgram" -> KeyRing.run(c, "deepgram", "Deepgram") { k -> deepgram(k, wav, lang, names) }
+            "assemblyai" -> KeyRing.run(c, "assemblyai", "AssemblyAI") { k -> assemblyai(k, wav, lang, names) }
+            "speechmatics" -> KeyRing.run(c, "speechmatics", "Speechmatics") { k -> speechmatics(k, wav, lang) }
+            "soniox" -> KeyRing.run(c, "soniox", "Soniox") { k -> soniox(k, wav, lang) }
+            "google_v1" -> KeyRing.run(c, "google_v1", "Google") { k -> googleV1(k, wav, lang, names) }
             "google_chirp" -> googleChirp(c, wav, lang)
-            "elevenlabs" -> elevenlabs(c, wav, lang)
+            "elevenlabs" -> KeyRing.run(c, "elevenlabs", "ElevenLabs") { k -> elevenlabs(k, wav, lang) }
             else -> throw EngineFailure(FailKind.NOT_CONFIGURED, "unknown engine")
         }
     }
@@ -170,21 +170,14 @@ object EngineAdapters {
 
     // ------------------------------------------------------------------ cloud, one call
 
-    /** Groq: tries each key it holds, rolling to the next on a quota answer. */
-    private suspend fun groq(c: Context, model: String, wav: File, lang: String, names: List<String>): String {
-        var last: EngineFailure? = null
-        for (k in key(c, "groq")) {
-            val fields = linkedMapOf("model" to model, "response_format" to "json", "temperature" to "0", "language" to lang2(lang))
-            if (names.isNotEmpty()) fields["prompt"] = names.joinToString(", ").take(600)
-            val req = Request.Builder().url("https://api.groq.com/openai/v1/audio/transcriptions")
-                .header("Authorization", "Bearer $k").header("User-Agent", "curl/8")
-                .post(multipart(fields, "file", wav)).build()
-            try { return JSONObject(send(req)).getString("text") } catch (f: EngineFailure) {
-                if (f.kind != FailKind.QUOTA && f.kind != FailKind.AUTH) throw f
-                last = f
-            }
-        }
-        throw last ?: EngineFailure(FailKind.NOT_CONFIGURED, "no key")
+    /** Groq with one key; [KeyRing] rolls to the next key on a quota or refused answer. */
+    private suspend fun groq(k: String, model: String, wav: File, lang: String, names: List<String>): String {
+        val fields = linkedMapOf("model" to model, "response_format" to "json", "temperature" to "0", "language" to lang2(lang))
+        if (names.isNotEmpty()) fields["prompt"] = names.joinToString(", ").take(600)
+        val req = Request.Builder().url("https://api.groq.com/openai/v1/audio/transcriptions")
+            .header("Authorization", "Bearer $k").header("User-Agent", "curl/8")
+            .post(multipart(fields, "file", wav)).build()
+        return JSONObject(send(req)).getString("text")
     }
 
     private suspend fun cloudflare(c: Context, wav: File, lang: String): String {
@@ -195,18 +188,6 @@ object EngineAdapters {
         val req = Request.Builder().url("https://api.cloudflare.com/client/v4/accounts/${k[0]}/ai/run/@cf/openai/whisper-large-v3-turbo")
             .header("Authorization", "Bearer ${k[1]}").post(body).build()
         return JSONObject(send(req)).getJSONObject("result").getString("text")
-    }
-
-    private suspend fun gemini(c: Context, wav: File, lang: String, names: List<String>): String {
-        var last: EngineFailure? = null
-        // Several free-tier keys may be stored (one per line): a quota or refused key rolls to the next.
-        for (k in key(c, "gemini")) {
-            try { return geminiWith(k, wav, lang, names) } catch (f: EngineFailure) {
-                if (f.kind != FailKind.QUOTA && f.kind != FailKind.AUTH) throw f
-                last = f
-            }
-        }
-        throw last ?: EngineFailure(FailKind.NOT_CONFIGURED, "no key")
     }
 
     private suspend fun geminiWith(k: String, wav: File, lang: String, names: List<String>): String {
@@ -230,8 +211,7 @@ object EngineAdapters {
             .getJSONArray("parts").getJSONObject(0).getString("text").trim()
     }
 
-    private suspend fun deepgram(c: Context, wav: File, lang: String, names: List<String>): String {
-        val k = key(c, "deepgram").first()
+    private suspend fun deepgram(k: String, wav: File, lang: String, names: List<String>): String {
         val u = Uri.Builder().scheme("https").authority("api.deepgram.com").path("/v1/listen")
             .appendQueryParameter("model", "nova-3").appendQueryParameter("language", lang2(lang))
             .appendQueryParameter("smart_format", "true")
@@ -241,8 +221,7 @@ object EngineAdapters {
             .getJSONArray("alternatives").getJSONObject(0).getString("transcript")
     }
 
-    private suspend fun elevenlabs(c: Context, wav: File, lang: String): String {
-        val k = key(c, "elevenlabs").first()
+    private suspend fun elevenlabs(k: String, wav: File, lang: String): String {
         val req = Request.Builder().url("https://api.elevenlabs.io/v1/speech-to-text").header("xi-api-key", k)
             .post(multipart(mapOf("model_id" to "scribe_v1", "language_code" to lang2(lang)), "file", wav)).build()
         return JSONObject(send(req)).getString("text")
@@ -250,8 +229,7 @@ object EngineAdapters {
 
     private fun gLang(lang: String) = if (lang2(lang) == "en") "en-US" else "hr-HR"
 
-    private suspend fun googleV1(c: Context, wav: File, lang: String, names: List<String>): String {
-        val k = key(c, "google_v1").first()
+    private suspend fun googleV1(k: String, wav: File, lang: String, names: List<String>): String {
         val b64 = withContext(Dispatchers.IO) { Base64.encodeToString(wav.readBytes(), Base64.NO_WRAP) }
         val cfg = JSONObject().put("encoding", "LINEAR16").put("sampleRateHertz", 16000).put("languageCode", gLang(lang))
             .put("enableAutomaticPunctuation", true)
@@ -302,8 +280,7 @@ object EngineAdapters {
 
     // ------------------------------------------------------------------ cloud, upload then poll
 
-    private suspend fun assemblyai(c: Context, wav: File, lang: String, names: List<String>): String {
-        val k = key(c, "assemblyai").first()
+    private suspend fun assemblyai(k: String, wav: File, lang: String, names: List<String>): String {
         val up = JSONObject(
             send(Request.Builder().url("https://api.assemblyai.com/v2/upload").header("authorization", k).post(wav.asRequestBody("application/octet-stream".toMediaType())).build()),
         ).getString("upload_url")
@@ -320,8 +297,7 @@ object EngineAdapters {
         }
     }
 
-    private suspend fun speechmatics(c: Context, wav: File, lang: String): String {
-        val k = key(c, "speechmatics").first()
+    private suspend fun speechmatics(k: String, wav: File, lang: String): String {
         val cfg = JSONObject().put("type", "transcription").put("transcription_config", JSONObject().put("language", lang2(lang)))
         val form = MultipartBody.Builder().setType(MultipartBody.FORM)
             .addFormDataPart("config", cfg.toString()).addFormDataPart("data_file", "clip.wav", wav.asRequestBody(WAV)).build()
@@ -336,8 +312,7 @@ object EngineAdapters {
         return send(Request.Builder().url("https://asr.api.speechmatics.com/v2/jobs/$id/transcript?format=txt").header("Authorization", "Bearer $k").get().build()).trim()
     }
 
-    private suspend fun soniox(c: Context, wav: File, lang: String): String {
-        val k = key(c, "soniox").first()
+    private suspend fun soniox(k: String, wav: File, lang: String): String {
         val auth = "Bearer $k"
         val fileId = JSONObject(
             send(Request.Builder().url("https://api.soniox.com/v1/files").header("Authorization", auth).post(multipart(emptyMap(), "file", wav)).build()),

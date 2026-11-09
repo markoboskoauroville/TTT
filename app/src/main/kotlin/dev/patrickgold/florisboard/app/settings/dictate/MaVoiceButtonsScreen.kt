@@ -10,6 +10,8 @@
 
 package dev.patrickgold.florisboard.app.settings.dictate
 
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -22,15 +24,21 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -40,11 +48,14 @@ import dev.patrickgold.florisboard.app.LocalNavController
 import dev.patrickgold.florisboard.app.Routes
 import dev.patrickgold.florisboard.dictate.engines.EngineCatalog
 import dev.patrickgold.florisboard.dictate.engines.EngineChain
+import dev.patrickgold.florisboard.dictate.engines.EngineKeys
+import dev.patrickgold.florisboard.dictate.engines.KeyImporter
 import dev.patrickgold.florisboard.dictate.engines.EngineLive
 import dev.patrickgold.florisboard.dictate.engines.Quota
 import dev.patrickgold.florisboard.dictate.engines.EngineStore
 import dev.patrickgold.florisboard.dictate.ui.MaEngineKeyContent
 import dev.patrickgold.florisboard.lib.compose.FlorisScreen
+import kotlinx.coroutines.launch
 
 private fun colName(id: String): String = when (id) {
     "groq_v3" -> "Groq v3"
@@ -83,6 +94,51 @@ fun MaVoiceButtonsScreen() = FlorisScreen {
                 }
             }
         }
+        // Keys enter only through files (Marko, 9.11.2026): one picker, every provider detected, tested, the working ones kept.
+        val scope = rememberCoroutineScope()
+        var busy by remember { mutableStateOf("") }
+        var result by remember { mutableStateOf<String?>(null) }
+        var lastKeys by remember { mutableStateOf(EngineStore.lastKeys(c)) }
+        var keysTick by remember { mutableStateOf(0) }
+        fun finish(text: String) {
+            EngineStore.setLastKeys(c, text); lastKeys = text; result = text; busy = ""; keysTick++
+        }
+        val picker = rememberLauncherForActivityResult(ActivityResultContracts.OpenMultipleDocuments()) { uris ->
+            if (uris.isNotEmpty()) {
+                busy = "Reading\u2026"
+                scope.launch { finish(KeyImporter.importUris(c, uris) { busy = it }.summary) }
+            }
+        }
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 4.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically,
+        ) {
+            OutlinedButton(
+                enabled = busy.isEmpty(),
+                onClick = { picker.launch(arrayOf("text/*", "application/json", "application/octet-stream")) },
+                modifier = Modifier.weight(1f),
+            ) { Text(if (busy.isEmpty()) "Import keys from file" else busy, maxLines = 1) }
+            TextButton(
+                enabled = busy.isEmpty(),
+                onClick = { busy = "Re-testing\u2026"; scope.launch { finish(KeyImporter.retest(c) { busy = it }.summary) } },
+            ) { Text("Re-test keys") }
+        }
+        lastKeys?.let { sum ->
+            val tail = sum.lines().lastOrNull { l -> l.startsWith("Stored") || l.startsWith("Removed") || l.startsWith("No keys") } ?: sum.lines().first()
+            Text(
+                "Last: $tail",
+                style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(horizontal = 16.dp),
+            )
+        }
+        result?.let { text ->
+            AlertDialog(
+                onDismissRequest = { result = null },
+                title = { Text("Keys") },
+                text = { Text(text) },
+                confirmButton = { TextButton(onClick = { result = null }) { Text("OK") } },
+            )
+        }
         Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 4.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
             for (lang in listOf("hr", "en")) {
                 val chosen = live.selected[lang] ?: EngineStore.selected(c, lang)
@@ -106,7 +162,7 @@ fun MaVoiceButtonsScreen() = FlorisScreen {
                                             spec.freeSeconds == Long.MAX_VALUE -> "free"
                                             spec.paid -> "$%.2f/h".format(java.util.Locale.ROOT, spec.pricePerHour)
                                             else -> (Quota.remainingSeconds(spec, EngineStore.usage(c, id), System.currentTimeMillis()) / 60).toString() + " min"
-                                        },
+                                        } + (if (keysTick >= 0) EngineKeys.countLabel(c, id)?.let { " \u00b7 $it" }.orEmpty() else ""),
                                         style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
                                     )
                                 }

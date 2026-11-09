@@ -18,7 +18,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -30,7 +29,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontFamily
-import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -39,7 +37,6 @@ import dev.patrickgold.florisboard.dictate.engines.EngineBenchmark
 import dev.patrickgold.florisboard.dictate.engines.EngineBenchmarkJob
 import dev.patrickgold.florisboard.dictate.engines.EngineCatalog
 import dev.patrickgold.florisboard.dictate.engines.EngineChain
-import dev.patrickgold.florisboard.dictate.engines.EngineKeys
 import dev.patrickgold.florisboard.dictate.engines.EngineLive
 import dev.patrickgold.florisboard.dictate.engines.EngineStore
 import dev.patrickgold.florisboard.dictate.engines.Quota
@@ -85,9 +82,6 @@ fun MaEnginesScreen() = FlorisScreen {
         var running by remember { mutableStateOf(false) }
         var bench by remember { mutableStateOf(EngineStore.lastBenchmark(c)?.let { EngineBenchmark.rowsFromJson(it) }.orEmpty()) }
         var benchNote by remember { mutableStateOf("") }
-        var keyEngine by remember { mutableStateOf("groq_turbo") }
-        var keyText by remember { mutableStateOf("") }
-        var keyNote by remember { mutableStateOf("") }
 
         @Composable
         fun toggle(title: String, summary: String, value: Boolean, set: (Boolean) -> Unit) {
@@ -157,38 +151,11 @@ fun MaEnginesScreen() = FlorisScreen {
             }
         }
 
-        Text("Keys", style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(start = 16.dp, top = 16.dp, bottom = 4.dp))
         Text(
-            "Paste a key, tap Save. It is encrypted in this phone's keystore and never shown again. Cloudflare: account id on the first line, token on the second.",
+            "Keys are added only from files: Settings > Voice transcription buttons > Import keys from file.",
             style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.padding(horizontal = 16.dp),
+            modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 4.dp),
         )
-        val keyEngines = EngineCatalog.ALL.filter { it.needsKey }
-        Row(modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-            OutlinedButton(onClick = {
-                val i = keyEngines.indexOfFirst { it.id == keyEngine }
-                keyEngine = keyEngines[(i + 1) % keyEngines.size].id; keyText = ""; keyNote = ""
-            }) { Text("Engine: " + (EngineCatalog.byId(keyEngine)?.name?.substringBefore(" (") ?: keyEngine)) }
-        }
-        Text(
-            EngineKeys.describe(c, keyEngine) + " · " + (EngineCatalog.byId(keyEngine)?.keyHelp ?: ""),
-            style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(horizontal = 16.dp),
-        )
-        OutlinedTextField(
-            value = keyText, onValueChange = { keyText = it },
-            label = { Text("Key") }, singleLine = false, maxLines = 3,
-            visualTransformation = PasswordVisualTransformation(),
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp),
-        )
-        Row(modifier = Modifier.padding(horizontal = 16.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            OutlinedButton(onClick = {
-                val v = dev.patrickgold.florisboard.dictate.engines.KeyText.forEngine(keyEngine, keyText) ?: keyText.trim()
-                keyNote = if (EngineKeys.save(c, keyEngine, v)) "Saved." else "Nothing to save."
-                keyText = ""; tick++
-            }) { Text("Save key") }
-            OutlinedButton(onClick = { EngineKeys.delete(c, keyEngine); keyNote = "Key deleted."; tick++ }) { Text("Delete key") }
-        }
-        if (keyNote.isNotEmpty()) Text(keyNote, style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(horizontal = 16.dp, vertical = 2.dp))
 
         Text("Benchmark", style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(start = 16.dp, top = 16.dp, bottom = 4.dp))
         Text(

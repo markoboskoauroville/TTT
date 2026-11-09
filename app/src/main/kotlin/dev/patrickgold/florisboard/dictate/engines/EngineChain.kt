@@ -90,12 +90,14 @@ object EngineChain {
             }
         }
         if (legacyFailed != null) onStatus("$letter \u00b7 $legacyFailed failed \u2192 switching to ${chain.first().name}")
+        KeyRing.statusSink = { m -> onStatus("$letter \u00b7 $m") }
         return try {
             FallbackRunner.run(chain, timeoutMs(sec, false), { s -> onStatus(if (s.contains("\u2192")) "$letter \u00b7 $s" else s) })
         } catch (e: AllEnginesFailed) {
             onStatus("$letter \u00b7 all engines failed")
             null
         } finally {
+            KeyRing.statusSink = null
             EngineLive.setActive(l, null)
         }
     }
