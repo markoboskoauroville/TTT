@@ -78,7 +78,7 @@ fun MaVoiceButtonsScreen() = FlorisScreen {
                     modifier = Modifier.weight(1f).height(48.dp),
                 ) {
                     Box(contentAlignment = Alignment.CenterStart) {
-                        MaEngineKeyContent(letter, Color(0xFFE53935), EngineCatalog.shortName(id), false, MaterialTheme.colorScheme.onSurface)
+                        MaEngineKeyContent(letter, Color(0xFFE53935), EngineCatalog.shortName(id), false, MaterialTheme.colorScheme.onSurface, dev.patrickgold.florisboard.dictate.ui.engineSubLabel(c, id))
                     }
                 }
             }

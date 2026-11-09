@@ -335,3 +335,7 @@ voices. Stopped here: a further build plus a full suite (~1 h) would not finish 
 > "Please remove the text which describes this menu item, and make these models into columns. It needs to align the width of the column with the width of the button, and this will make a minimalistic, clear user interface." (Marko, 9.11.2026, screenshot of build 574, Voice transcription buttons)
 
 **Status:** saved first; task 68 of mac-ses9-08-nov. Explanation paragraph and the H/E headings removed; two columns under the two key previews, each the width of its key (same Row, weight 1f, 10 dp gap); compact provider cards with radio, short name, quota line; Advanced one full-width row.
+
+> "I choose something and it's not reflected in the buttons." / "On the buttons, push the model name to the LEFT side, next to the letter, and add the free minutes next to it, half the font size." / "The model name can be a bit smaller so it also fits the free time." (Marko, 9.11.2026)
+
+**Status:** saved first; same build as task 68. Key layout: dot, letter, name (left), quota at half size; the key reads EngineStore directly when the live state is not yet loaded (no "assemblyai" flash); the Talk-to AssemblyAI key stays forced by design and is labelled so.

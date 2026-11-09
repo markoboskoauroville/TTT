@@ -1504,14 +1504,21 @@ fun MaFeatureRow(
                             androidx.compose.runtime.LaunchedEffect(Unit) {
                                 dev.patrickgold.florisboard.dictate.engines.EngineLive.load(context)
                             }
-                            val chosen = liveEngines.selected[engLang] ?: "assemblyai"
+                            val chosen = liveEngines.selected[engLang]
+                                ?: dev.patrickgold.florisboard.dictate.engines.EngineStore.selected(context, engLang)
                             val answering = liveEngines.active[engLang]
                             val keyName = when (engine) {
                                 MaProviders.ENGINE_ASSEMBLYAI -> "AssemblyAI"
                                 MaProviders.ENGINE_LOCAL -> "Parakeet"
                                 else -> dev.patrickgold.florisboard.dictate.engines.EngineCatalog.shortName(answering ?: chosen)
                             }
-                            MaEngineKeyContent(label, dot, keyName, engine == null && answering != null && answering != chosen, fg)
+                            val subId = when (engine) {
+                                MaProviders.ENGINE_ASSEMBLYAI -> "assemblyai"
+                                MaProviders.ENGINE_LOCAL -> "parakeet"
+                                else -> answering ?: chosen
+                            }
+                            MaEngineKeyContent(label, dot, keyName, engine == null && answering != null && answering != chosen, fg,
+                                dev.patrickgold.florisboard.dictate.ui.engineSubLabel(context, subId))
                         } else
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             // E|H wears no red dot (Marko, 2.11.2026); the red outline says it records.

@@ -26,7 +26,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -37,28 +36,38 @@ import androidx.compose.ui.unit.sp
  * is shown by the engine that really answers, with a return arrow.
  */
 @Composable
-internal fun MaEngineKeyContent(letter: String, dot: Color, name: String, fallback: Boolean, fg: Color) {
+internal fun MaEngineKeyContent(letter: String, dot: Color, name: String, fallback: Boolean, fg: Color, sub: String = "") {
     BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
         val shown = if (fallback) "$name ↺" else name
-        // The letter, the dot and the gaps take about 44 dp; the rest is the name's. A glyph is about 0.58 of its size wide.
+        // Marko, 9.11.2026: name left, right after the letter, a bit smaller; the quota at half the name's size on the same line.
+        // The dot, letter and gaps take about 48 dp; a glyph is about 0.58 of its size wide; the sub is half size.
         val room = (maxWidth.value - 52f).coerceAtLeast(20f)
-        // 20% smaller than build 571 (Marko, 9.11.2026), regular weight, still auto-fit so a long name never cuts off.
-        val size = (room / (shown.length * 0.58f)).coerceIn(9f, 26f) * 0.8f
+        val units = shown.length * 0.58f + sub.length * 0.58f * 0.5f + (if (sub.isEmpty()) 0f else 0.6f)
+        val size = (room / units).coerceIn(8f, 16f)
         Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth().padding(start = 10.dp, end = 6.dp)) {
             androidx.compose.foundation.layout.Box(modifier = Modifier.size(9.dp).clip(CircleShape).background(dot))
             Spacer(Modifier.width(4.dp))
             Text(text = letter, color = fg, fontSize = 17.sp, fontWeight = FontWeight.Bold, maxLines = 1)
-            Text(
-                text = shown,
-                color = fg,
-                fontSize = size.sp,
-                fontWeight = FontWeight.Normal,
-                maxLines = 1,
-                softWrap = false,
-                overflow = TextOverflow.Clip,
-                textAlign = TextAlign.Center,
-                modifier = Modifier.weight(1f),
-            )
+            Spacer(Modifier.width(6.dp))
+            Text(text = shown, color = fg, fontSize = size.sp, fontWeight = FontWeight.Normal, maxLines = 1, softWrap = false, overflow = TextOverflow.Clip)
+            if (sub.isNotEmpty()) {
+                Spacer(Modifier.width(4.dp))
+                Text(text = sub, color = fg.copy(alpha = 0.75f), fontSize = (size / 2f).sp, fontWeight = FontWeight.Normal, maxLines = 1, softWrap = false, overflow = TextOverflow.Clip)
+            }
+        }
+    }
+}
+
+/** The quota under a provider, one wording everywhere: "480 min free", "free", "$0.10/h paid". */
+internal fun engineSubLabel(c: android.content.Context, id: String): String {
+    val spec = dev.patrickgold.florisboard.dictate.engines.EngineCatalog.byId(id) ?: return ""
+    return when {
+        spec.freeSeconds == Long.MAX_VALUE -> "free"
+        spec.paid -> "$%.2f/h paid".format(java.util.Locale.ROOT, spec.pricePerHour)
+        else -> {
+            val min = dev.patrickgold.florisboard.dictate.engines.Quota.remainingSeconds(
+                spec, dev.patrickgold.florisboard.dictate.engines.EngineStore.usage(c, id), System.currentTimeMillis()) / 60
+            if (min > 0) "$min min free" else "paid"
         }
     }
 }
