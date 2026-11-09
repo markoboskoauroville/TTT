@@ -11278,3 +11278,40 @@ the word cut out, `tools/make_auto_icon.py` (MANTRA_MANIFEST modules/six-letter-
 corrections, phone style, AI spell check (it rewrites, there is no underline-only mode), Markdown cues, auto Enter. Fresh
 installs by default, existing installs once by `applyAutoOffV2IfNeeded` (guard `dictate__ma_auto_off_v2_applied`). Each is its own
 switch on the AUTO screen. Supersedes the "dictation ones keep their state" paragraph above.
+
+## RE Magic skill and the learning loop (9.11.2026)
+
+**Asked (momentaryupdates.md, 9.11.2026):** RE's icon in settings with a skill editor; RE transcribes with AssemblyAI only; it
+writes by a skill file that is not shipped with the app, lives on the Mac (`~/Downloads/API/re_ttt_skill.md`), is pushed to the
+phone over Wi-Fi, is readable in `Documents/TTTmini/`, and learns from every correction he makes before sending.
+
+**What was built.** `dictate/MaReSkill.kt` (the file, the draft, the comparison, the learning); `MaReprompt` puts
+`MaReSkill.preamble()` in front of both prompts (reshape and write), read fresh from disk on every use (Documents first, a private
+copy second, a short built-in voice if neither exists). The RE key calls `onMicClick(reprompt = true, engine = ENGINE_ASSEMBLYAI)`;
+`MaProviders.localFallbackProvider` already returns null for that engine, so there is no Parakeet fallback. Settings gets an entry
+"RE Magic" (`MaSettingsEntry.RE_MAGIC`, route `settings/dictate/re`) wearing `MaReIcon` (the key's "re" and the AutoAwesome sparkle),
+opening `MaReScreen`: the learning switch (`maReLearn`, on), the skill as an editable Markdown text with Save / Reload / Reset rules
+(Reload = take what the Mac pushed, Save = leave it where the Mac pulls from), counters and the last corrections.
+
+**The learning loop, and why these two methods.** The task offered: press Send for him after copying, the IME's own send action,
+an accessibility click watcher, or the field being cleared. Pressing Send for him was rejected: it delays or risks his send and an
+AccessibilityService that clicks is a different permission class. The IME's send action fires only in apps whose own button is the
+IME action, which is a minority (WhatsApp, Gmail, Telegram use their own buttons). So the loop is read-only and has two triggers,
+whichever comes first, one draft at a time:
+- **A. Send click** (`DictateAccessibilityService.noteSendClickForSkill`): while an RE draft waits, a `TYPE_VIEW_CLICKED` on a node whose
+  text, description or view id is "send" (also Pošalji, Submit, Post, Reply, ...) reads the focused field's text and hands it to
+  `MaReSkill.onSendClicked`. Nothing is clicked. The click event arrives with the click; if the app has already cleared the field, the
+  last text the keyboard saw (B) is used.
+- **B. Field cleared** (`FlorisImeService.onUpdateSelection` -> `MaReSkill.noteFieldText`): the keyboard remembers the field's text while a
+  draft waits; a field that held at least 12 characters and is empty in one step is a sent message. A cut or select-all-delete looks the
+  same; the model is told to answer NONE when the sent text is not the same message.
+Only fields where RE wrote are compared (same app package, 30 minute window, newest draft only). Same text: counted as "sent as
+written". Different: a line goes to `Documents/TTTmini/re_corrections.jsonl` and a background prompt (`DictateController.askModel`:
+the model RE uses, else the cheapest) returns ONE rule or NONE, merged into section 7 of the skill (dedupe, 40 rules maximum, merged by
+the model beyond that). Nothing leaves the phone except that prompt to the API he already uses.
+
+**Sync.** `re-skill-sync push|pull|status [-s SERIAL]` on the Mac (adb over USB or Wi-Fi); registered in TERMINAL COMMANDS.md.
+
+**Not proven yet (the honest list).** The send-click label match has only been written, not seen in WhatsApp; whether WhatsApp emits
+`TYPE_VIEW_CLICKED` with a readable label for its send button decides method A, and method B is the net under it. The icon's glyph
+paths have not been looked at on a screen. Test 1: `scripts/test_re_skill.py`.

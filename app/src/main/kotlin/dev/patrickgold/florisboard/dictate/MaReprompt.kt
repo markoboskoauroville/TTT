@@ -71,6 +71,19 @@ object MaReprompt {
     var writeMode: Boolean = false
         private set
 
+    /** The field the last RE message was written into, and his words for it (MaReSkill compares against it). */
+    @Volatile var lastPkg: String? = null
+    @Volatile var lastFieldId: Int = 0
+    @Volatile var lastWords: String = ""
+
+    /** The key was pressed in this field (a press that records, or the long press). */
+    fun noteField(packageName: String?, fieldId: Int) {
+        if (packageName != null && packageName != ownPackage) {
+            lastPkg = packageName
+            lastFieldId = fieldId
+        }
+    }
+
     /** The key: remember the field, open the window. */
     fun open(context: Context, packageName: String, fieldId: Int, write: Boolean = false) {
         writeMode = write
@@ -112,6 +125,7 @@ object MaReprompt {
         // The window's own field starts first, and must never receive the reprompt.
         if (packageName == null || packageName == ownPackage) return null
         cancel()
+        noteField(packageName, fieldId)
         if (nowMillis - t.atMillis > WAIT_MS) return null
         if (t.packageName != packageName || t.fieldId != fieldId) return null
         return i
@@ -123,7 +137,7 @@ object MaReprompt {
 
     /** What is sent: his words, as the instruction for the text below them. */
     fun instructionFor(words: String): String =
-        "Carry out this instruction on the text between the <text> tags. Do exactly what it asks: " +
+        MaReSkill.preamble() + "Carry out this instruction on the text between the <text> tags. Do exactly what it asks: " +
             "if it asks for shorter, make it clearly shorter; if it asks for a different tone or " +
             "language, change it. Do not just proofread. Instruction: " +
             // Hidden code words (MaCodeWords): a name such as "Ashai Afterman" brings its full
@@ -153,7 +167,7 @@ object MaReprompt {
         val inLanguage = if (language != null) " Write it in $language unless the request names another language."
         else " Write it in the language of the request unless the request names another language."
         return MaCodeWords.expand(
-            "Write the message the user asks for between the <request> tags. Write it as the user, " +
+            MaReSkill.preamble() + "Write the message the user asks for between the <request> tags. Write it as the user, " +
                 "ready to send.$inLanguage Return only the message, nothing before or after it.\n\n" +
                 "<request>\n$w\n</request>",
         )
@@ -163,14 +177,18 @@ object MaReprompt {
      * The prompt sent. [write] (an empty field): a new message, inserted at the cursor, nothing
      * selected or replaced. Otherwise the text is reshaped: the selection, else the whole field.
      */
-    fun prompt(words: String, write: Boolean = false): PromptModel = PromptModel(
-        id = PromptModel.ID_INSTANT_PROMPT,
-        pos = 0,
-        name = NAME,
-        prompt = if (write) writeInstructionFor(words) else instructionFor(words),
-        requiresSelection = !write,
-        autoApply = false,
-    )
+    fun prompt(words: String, write: Boolean = false): PromptModel {
+        // What the draft answers; MaReSkill keeps it with the draft.
+        lastWords = words
+        return PromptModel(
+            id = PromptModel.ID_INSTANT_PROMPT,
+            pos = 0,
+            name = NAME,
+            prompt = if (write) writeInstructionFor(words) else instructionFor(words),
+            requiresSelection = !write,
+            autoApply = false,
+        )
+    }
 
     // ---------------------------------------------------------------- his last instructions
 

@@ -30,6 +30,8 @@ enum class MaSettingsEntry(val id: String, val title: String, val summary: Strin
     SWITCHBOARD("switchboard", "Switchboard", "Every row the keyboard can show, in one place"),
     FEATURE_ROW("feature_row", "Feature row", "Three rows of keys, drag them into the order you want"),
     MAGIC("magic", "Magic finger", "What it presses on screen, and which it tries first"),
+    // RE Magic (Marko, 9.11.2026): the skill RE writes by, its editor, and what it learns. Wears the key's own icon.
+    RE_MAGIC("re_magic", "RE Magic", "The skill RE writes by, its editor, and what it learns from your corrections"),
     VOICE_COMMANDS("voice_commands", "Voice commands", "Words that press instead of being typed"),
     SHORTCUTS("shortcuts", "Keyboard shortcuts", "Ctrl and a letter, including Ctrl+P to proofread"),
     PROMPTS("prompts", "Prompts", "Ctrl+P, Ctrl+F, E>H and the Croatian spell check: wording and model"),
@@ -103,6 +105,7 @@ object MaSettingsOrder {
         MaSettingsEntry.VOICE_COMMANDS,
         MaSettingsEntry.SHORTCUTS,
         MaSettingsEntry.PROMPTS,
+        MaSettingsEntry.RE_MAGIC,
         MaSettingsEntry.CLAUDE_COSTS,
         // Beside Prompts and its costs, where he looked for it (27.10.2026: "it should be there, but
         // it is missing" — it was the last entry of all, under twenty others).

@@ -330,6 +330,7 @@ class FlorisImeService : LifecycleInputMethodService() {
 
     override fun onCreate() {
         super.onCreate()
+        dev.patrickgold.florisboard.dictate.MaReSkill.attach(this)
         maWireCursorPad()
         FlorisImeServiceReference = WeakReference(this)
         systemLocalesFlow.value = resources.configuration.locales
@@ -596,6 +597,17 @@ class FlorisImeService : LifecycleInputMethodService() {
                 newSelection = EditorRange.normalized(newSelStart, newSelEnd),
                 composing = EditorRange.normalized(candidatesStart, candidatesEnd),
             )
+        }
+        // RE Magic (MaReSkill), method B: while an RE draft waits to be sent, remember what the field
+        // holds, so a field emptied in one step is a sent message. Looks at nothing otherwise.
+        if (dev.patrickgold.florisboard.dictate.MaReSkill.pending()) {
+            runCatching {
+                val info = editorInstance.activeInfo
+                val c = editorInstance.activeContent
+                dev.patrickgold.florisboard.dictate.MaReSkill.noteFieldText(
+                    info.packageName, info.base.fieldId, c.textBeforeSelection + c.selectedText + c.textAfterSelection,
+                )
+            }
         }
     }
 

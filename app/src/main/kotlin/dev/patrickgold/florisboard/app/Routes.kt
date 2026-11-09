@@ -251,6 +251,10 @@ object Routes {
         object MaAuto
 
         @Serializable
+        @Deeplink("settings/dictate/re")
+        object MaRe
+
+        @Serializable
         @Deeplink("settings/dictate/predictions")
         object MaPredictions
 
@@ -508,6 +512,7 @@ object Routes {
             composableWithDeepLink(Settings.MaDictationCorrections::class) { MaCorrectionsScreen() }
             composableWithDeepLink(Settings.MaPermissions::class) { MaPermissionsScreen() }
             composableWithDeepLink(Settings.MaAuto::class) { MaAutoScreen() }
+            composableWithDeepLink(Settings.MaRe::class) { dev.patrickgold.florisboard.app.settings.dictate.MaReScreen() }
             composableWithDeepLink(Settings.MaPredictions::class) { MaPredictionsScreen() }
             composableWithDeepLink(Settings.MaSwitchboard::class) { MaSwitchboardScreen() }
             composableWithDeepLink(Settings.MaSettingsOrder::class) { MaSettingsOrderScreen() }

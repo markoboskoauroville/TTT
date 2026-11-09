@@ -1559,9 +1559,15 @@ fun MaFeatureRow(
                         modifier = keyMod,
                         ring = if (recordingThis) MaRecordOutlineLive else MaRecordOutline,
                         onClick = {
-                            if (rec == null) MaLanguage.set(context, MaLanguage.EN)
-                            DictateController.onMicClick(context, reprompt = true)
-                            MaMessage.show(if (rec == null) "Reprompt: say the instruction" else "Reprompt: sending")
+                            if (rec == null) {
+                                MaLanguage.set(context, MaLanguage.EN)
+                                // The field the message will be written into, for MaReSkill's comparison.
+                                MaReprompt.noteField(editorInstance.activeInfo.packageName, editorInstance.activeInfo.base.fieldId)
+                            }
+                            // RE transcribes with AssemblyAI and nothing else (Marko, 9.11.2026): no Parakeet,
+                            // no fallback (MaProviders.localFallbackProvider returns null for this engine).
+                            DictateController.onMicClick(context, reprompt = true, engine = MaProviders.ENGINE_ASSEMBLYAI)
+                            MaMessage.show(if (rec == null) "RE: say the instruction (AssemblyAI)" else "RE: sending")
                         },
                         onLongClick = {
                             val info = editorInstance.activeInfo

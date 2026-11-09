@@ -260,6 +260,13 @@ without waiting for a reading.
 **Messages** are drawn by the keyboard above every row — not system toasts, which cannot be moved off
 the keys on Android 11 and later.
 
+## RE Magic skill (9.11.2026)
+
+RE transcribes with AssemblyAI only and writes by `Documents/TTTmini/re_ttt_skill.md`, the skill file that lives on the Mac
+(`~/Downloads/API/re_ttt_skill.md`, never shipped in the app) and is moved with `re-skill-sync push|pull|status`. Settings has an
+"RE Magic" entry with the key's icon and a skill editor; the app compares what RE wrote with what Marko sent (accessibility send-click
+read-only, or the field emptied) and appends a rule to the skill's section 7. Details and the unproven list: DEVELOPMENT.md, last section.
+
 ## What has never been proven
 
 **Nothing in this app has ever been run by me on a phone.** Not one build. Every "it works" in this

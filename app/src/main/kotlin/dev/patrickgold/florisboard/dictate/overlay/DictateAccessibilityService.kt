@@ -198,11 +198,35 @@ class DictateAccessibilityService : AccessibilityService() {
                         }
                     }
                 }
+                // RE MAGIC (MaReSkill), method A: a click on a button called Send while an RE draft waits.
+                // READ ONLY: the label is read and the focused field's text is read; nothing is clicked,
+                // nothing is pressed for him, nothing is delayed. His send goes through untouched.
+                if (event.eventType == AccessibilityEvent.TYPE_VIEW_CLICKED &&
+                    dev.patrickgold.florisboard.dictate.MaReSkill.pending()
+                ) {
+                    runCatching { noteSendClickForSkill(event) }
+                }
                 updateEditableFocusImmediately()
             }
             // This is the only subscribed event which can arrive for every keystroke. Keep it coalesced
             // so caret moves and text selection do not cause a focused-node IPC round trip per character.
             AccessibilityEvent.TYPE_VIEW_TEXT_SELECTION_CHANGED -> scheduleFocusUpdate()
+        }
+    }
+
+    /** RE Magic, method A (see the call above): is this click a send, and if so hand the field's text over. */
+    private fun noteSendClickForSkill(event: AccessibilityEvent) {
+        val node = event.source
+        try {
+            val isSend = dev.patrickgold.florisboard.dictate.MaReSkill.isSendLabel(
+                node?.text, node?.contentDescription, event.contentDescription,
+                event.text.takeIf { it.isNotEmpty() }?.joinToString(" "),
+                node?.viewIdResourceName?.substringAfterLast('/')?.split('_', '.')?.firstOrNull { it.equals("send", true) },
+            )
+            if (!isSend) return
+            dev.patrickgold.florisboard.dictate.MaReSkill.onSendClicked(event.packageName?.toString(), fullTextOfFocused())
+        } finally {
+            runCatching { node?.recycle() }
         }
     }
 

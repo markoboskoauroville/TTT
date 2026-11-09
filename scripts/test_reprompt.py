@@ -122,7 +122,7 @@ check("too late: dropped", r.take("com.whatsapp", 7, 70000) is None)
 
 # 5.11.2026: a press records the instruction in English; the window is the long press.
 check("a press records, in English", "if (rec == null) MaLanguage.set(context, MaLanguage.EN)" in row
-      and "DictateController.onMicClick(context, reprompt = true)" in row)
+      and "DictateController.onMicClick(context, reprompt = true, engine = MaProviders.ENGINE_ASSEMBLYAI)" in row)
 check("the long press opens the typing window", "onLongClick = {" in row[row.find("MaFeatureKey.REPROMPT -> {"):row.find("MaFeatureKey.RECORD -> {")])
 check("set at every start", "repromptRecording = reprompt" in ctrl)
 check("the transcript is an instruction, not typed", "if (repromptRecording && !live) {" in ctrl

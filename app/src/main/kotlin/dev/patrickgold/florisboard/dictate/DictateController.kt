@@ -3846,6 +3846,10 @@ object DictateController {
                 // commitText replaces the active selection if any, else inserts at the cursor. One line
                 // break between paragraphs, never an empty line (MaParagraphs, 3.11.2026).
                 sink.commitText(MaParagraphs.single(text))
+                // RE MAGIC (MaReSkill): this text is the draft his corrections are compared against.
+                if (prompt.name == MaReprompt.NAME) {
+                    MaReSkill.onComposed(MaReprompt.lastPkg, MaReprompt.lastFieldId, MaReprompt.lastWords, MaParagraphs.single(text))
+                }
                 _state.value = UiState.Idle
             } catch (e: CancellationException) {
                 throw e // stop button pressed: cancelRewording already reset the state, leave the field as-is
@@ -4190,6 +4194,22 @@ object DictateController {
             purpose = "Suggestion",
         )
     }.getOrNull()
+
+    /**
+     * One plain question to the model RE uses (Settings → Prompts), for the background jobs that are not
+     * a rewrite of his text: the RE Magic skill learning from a correction (MaReSkill). The model he
+     * chose first; if that fails, the cheapest the provider has. Null when no key or both fail; never
+     * throws, never touches the field.
+     */
+    suspend fun askModel(userContent: String, purpose: String): String? {
+        if (MaProviders.rewordingApiKey().isBlank()) return null
+        val chosen = MaFlow.model()
+        val first = if (MaPhoneModels.isPhone(chosen)) null else runCatching {
+            requestRewordRaw(userContent, modelOverride = chosen, purpose = purpose)
+        }.getOrNull()
+        if (!first.isNullOrBlank()) return first.trim()
+        return runCatching { requestRewordRaw(userContent, cheapest = true, purpose = purpose) }.getOrNull()?.trim()?.takeIf { it.isNotEmpty() }
+    }
 
     private suspend fun requestRewordRaw(
         userContent: String,
