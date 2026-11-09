@@ -11406,4 +11406,4 @@ Marko: Settings said H = Groq, the key said AssemblyAI. Two causes found. (1) Th
 
 ### Key label: name and one word at the same size (9.11.2026, task 69)
 
-Marko disliked build 576 (half-size minutes). The H/E key (and both previews in Voice transcription buttons) now shows dot, letter, provider name, then one word, `free` when the provider still has free quota and `paid` when not, both at the build 574 size (0.8 x 26 sp, regular weight). If the key is narrow both shrink by the same factor, never cut. The radio cards keep their small quota line.
+Marko disliked build 576 (half-size minutes). The H/E key (and both previews in Voice transcription buttons) now shows dot, letter, provider name, then `free <minutes left>` (38332 shown as 38k, no unit) while the provider has free quota, `free` alone if unlimited, `paid` when none, both at the build 574 size (0.8 x 26 sp, regular weight). If the key is narrow both shrink by the same factor, never cut. The radio cards keep their small quota line.
