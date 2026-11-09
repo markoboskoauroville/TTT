@@ -269,3 +269,9 @@ voices. Stopped here: a further build plus a full suite (~1 h) would not finish 
 1. One centred link "My studio setup" right above the donation bowl, opening https://studiosetupmantra.pages.dev in a new tab, with the line "The gear these apps are made with · affiliate links on Amazon.de".
 
 **Status:** committed 1.11.2026, NOT pushed or deployed: waiting until Marko registers studiosetupmantra.pages.dev in Amazon PartnerNet and the studio page is live.
+
+## 9.11.2026 – AT2020: the keyboard deletes the 2; AUTO menu
+
+> "I've just been on Amazon on my Nothing phone, and I was trying to type this microphone 'AT2020'. I type 8... 2... 0, and the keyboard is deleting [the] 2. Please debug this keyboard TTT, because I want no automatic replacement of anything. If there is auto replacement there must be a special item in the menu. It needs to have a nice icon: 'AUTO'. The new standard for icons: [a] white background with cut-out text, so it represents what's inside, similar to the 'A' with cut-out text we already have. And if there are any auto-corrections, put them under that menu, so I can quickly disable or enable them. The corrections must be easily accessed and seen in the settings, and separate things, because they're so annoying." (Marko, 9.11.2026)
+
+**Status:** saved first; task 25 of mac-ses9-08-nov.
