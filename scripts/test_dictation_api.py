@@ -83,7 +83,7 @@ _cfg = _body.find('addFormDataPart("config"')
 _aud = _body.find('addFormDataPart("audio"')
 check("config is sent before audio", 0 <= _cfg < _aud,
       "the endpoint rejects an audio part that arrives first")
-check("the language is stated, not defaulted", '"language_codes":["en"]' in _body,
+check("the language is stated, not defaulted", 'put("language_codes", JsonArray(listOf(JsonPrimitive("en"))))' in _body,
       "the request would not say what it means")
 check("no llm_instruction is sent", "llm_instruction" not in _body,
       "his prose rules would silently apply to every recording")
