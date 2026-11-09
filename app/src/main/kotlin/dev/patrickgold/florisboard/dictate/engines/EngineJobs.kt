@@ -126,6 +126,9 @@ class EngineDebugReceiver : BroadcastReceiver() {
                         out("ping $id: " + if (clip == null) "no clip" else EngineAdapters.ping(app, id, clip.wav))
                     }
                     "dev.ttt.engines.BENCH" -> {
+                        // Long: release the broadcast at once (no ANR); the run needs the app in the foreground,
+                        // because Android freezes a cached process. The Settings button is the normal way.
+                        pending.finish()
                         val r = EngineBenchmark.run(app) { }
                         out("bench saved: " + r.saved)
                         out("HR\n" + EngineBenchmark.table(r.rows, "hr")); out("EN\n" + EngineBenchmark.table(r.rows, "en"))
