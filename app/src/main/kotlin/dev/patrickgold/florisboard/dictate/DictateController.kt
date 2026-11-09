@@ -1794,6 +1794,9 @@ object DictateController {
                     // Non-chat: style/punctuation prompt biases recognition (roadmap 2.4 / 4.11).
                     // Chat-audio: the full instruction (language + style + all auto-formatting) in one go.
                     prompt = if (chatAudio) buildChatAudioInstruction(appContext) else transcriptionStylePrompt(),
+                    // His names and the misheard forms of them (MaSpelling): AssemblyAI keyterms and custom spelling.
+                    keyterms = MaSpelling.keyterms(),
+                    customSpelling = MaSpelling.engineSpelling(),
                 )
                 val providerStartedNanos = SystemClock.elapsedRealtimeNanos()
                 var usedLocalFallback = false
@@ -1964,7 +1967,8 @@ object DictateController {
                 val finalizeStartedNanos = SystemClock.elapsedRealtimeNanos()
                 finalizeAndCommit(
                     appContext,
-                    result.text,
+                    // The local spelling pass (MaSpelling): whole words, case-aware, with context rules.
+                    MaSpelling.apply(result.text),
                     recordedSeconds,
                     live,
                     alreadyFormatted = chatAudio,
@@ -2749,7 +2753,10 @@ object DictateController {
         val language = MaLanguage.active()
         val style = transcriptionStylePrompt()
         val prompt = continuity.takeLast(200).trim().let { if (it.isEmpty()) style else "$it $style".trim() }
-        val request = TranscriptionRequest(audioFile = wav, model = model, language = language, prompt = prompt)
+        val request = TranscriptionRequest(
+            audioFile = wav, model = model, language = language, prompt = prompt,
+            keyterms = MaSpelling.keyterms(), customSpelling = MaSpelling.engineSpelling(),
+        )
         return try {
             val result = if (preset.transcriptionApi == TranscriptionApi.LOCAL_ONDEVICE) {
                 if (!LocalModelManager.isInstalled(appContext, model)) return null

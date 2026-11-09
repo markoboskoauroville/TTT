@@ -125,6 +125,17 @@ data class TranscriptionRequest(
      * shortlist and for users who really do want any language.
      */
     val languageCandidates: List<String> = emptyList(),
+    /**
+     * Names and terms the engine should favour (AssemblyAI `keyterms_prompt`: Universal-2 200 terms,
+     * Universal-3.5 Pro 1000, sync and dictation 100 terms / 8000 characters). Empty sends nothing.
+     * Only the AssemblyAI paths read it. A 400 from the engine retries once without it.
+     */
+    val keyterms: List<String> = emptyList(),
+    /**
+     * AssemblyAI `custom_spelling` (pre-recorded path only): misheard forms and the one-word spelling
+     * they become. The engine's own rule: `to` is one word, `from` at most five words.
+     */
+    val customSpelling: List<Pair<List<String>, String>> = emptyList(),
 )
 
 data class TranscriptionResult(

@@ -21,6 +21,7 @@ import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.buildJsonObject
 import okhttp3.Call
 import okhttp3.Callback
 import okhttp3.Credentials
@@ -263,12 +264,32 @@ class OpenAiCompatibleClient(
         TranscriptionApi.GEMINI_GENERATE_CONTENT -> transcribeGeminiGenerateContent(request, onRetry)
         TranscriptionApi.ELEVENLABS_MULTIPART -> transcribeElevenLabs(request, onRetry)
         TranscriptionApi.DEEPGRAM -> transcribeDeepgram(request, onRetry)
-        TranscriptionApi.ASSEMBLYAI_ASYNC -> transcribeAssemblyAi(request, onRetry)
-        TranscriptionApi.ASSEMBLYAI_SYNC -> transcribeAssemblyAiSync(request, onRetry)
-        TranscriptionApi.ASSEMBLYAI_DICTATION -> transcribeAssemblyAiDictation(request, onRetry)
+        TranscriptionApi.ASSEMBLYAI_ASYNC -> withVocabulary(request) { transcribeAssemblyAi(it, onRetry) }
+        TranscriptionApi.ASSEMBLYAI_SYNC -> withVocabulary(request) { transcribeAssemblyAiSync(it, onRetry) }
+        TranscriptionApi.ASSEMBLYAI_DICTATION -> withVocabulary(request) { transcribeAssemblyAiDictation(it, onRetry) }
         // On-device transcription never uses this HTTP client; the dictation flow routes local providers
         // to LocalTranscriptionProvider before one is ever constructed.
         TranscriptionApi.LOCAL_ONDEVICE -> error("LOCAL_ONDEVICE is handled by LocalTranscriptionProvider")
+    }
+
+    /**
+     * Keyterms and custom spelling ride on every AssemblyAI request (Marko, 9.11.2026: his names are
+     * misheard). If the engine answers 400 to a request carrying them (a limit, an unsupported field on
+     * that endpoint or model), the same request is sent once more without them: a dictation without the
+     * vocabulary is worth more than a refused one.
+     */
+    private suspend fun withVocabulary(
+        request: TranscriptionRequest,
+        send: suspend (TranscriptionRequest) -> TranscriptionResult,
+    ): TranscriptionResult {
+        if (request.keyterms.isEmpty() && request.customSpelling.isEmpty()) return send(request)
+        return try {
+            send(request)
+        } catch (e: DictateApiException) {
+            if (e.httpStatus != 400) throw e
+            DictateHttpLog.warn("AssemblyAI refused the vocabulary (400); retrying without it")
+            send(request.copy(keyterms = emptyList(), customSpelling = emptyList()))
+        }
     }
 
     override suspend fun transcribe(request: TranscriptionRequest): TranscriptionResult =
@@ -667,6 +688,9 @@ class OpenAiCompatibleClient(
             } else {
                 null
             },
+            keytermsPrompt = request.keyterms.takeIf { it.isNotEmpty() }?.take(200),
+            customSpelling = request.customSpelling.takeIf { it.isNotEmpty() }
+                ?.map { AssemblySpellingDto(from = it.first, to = it.second) },
         )
         fun createRequestFor(model: String) = Request.Builder()
             .url(base + "v2/transcript")
@@ -759,7 +783,12 @@ class OpenAiCompatibleClient(
         val audioBody = request.audioFile.asRequestBody(guessAudioMediaType(request.audioFile))
         // English only, and the caller has already refused anything else — but the code is sent
         // explicitly rather than relying on the default, so the request says what it means.
-        val configJson = """{"language_codes":["en"]}"""
+        val configJson = buildJsonObject {
+            put("language_codes", JsonArray(listOf(JsonPrimitive("en"))))
+            capKeyterms(request.keyterms).takeIf { it.isNotEmpty() }?.let { t ->
+                put("keyterms_prompt", JsonArray(t.map { JsonPrimitive(it) }))
+            }
+        }.toString()
         val multipart = MultipartBody.Builder()
             .setType(MultipartBody.FORM)
             // CONFIG FIRST. Not a style choice: the endpoint rejects the request without it.
@@ -875,6 +904,12 @@ class OpenAiCompatibleClient(
      * documented field, and a language it does not know is named in a contextual prompt instead, which
      * is what AssemblyAI's own language-selection page recommends for exactly this case.
      */
+    /** At most 100 terms and 8000 characters in all, the sync and dictation endpoints' limit. */
+    private fun capKeyterms(terms: List<String>): List<String> {
+        var chars = 0
+        return terms.map { it.trim() }.filter { it.isNotEmpty() }.take(100).takeWhile { chars += it.length; chars <= 8000 }
+    }
+
     private fun buildSyncConfig(request: TranscriptionRequest): String? {
         // An explicit choice, or the shortlist when the user is on auto-detect. "detect" itself is not a
         // language and never reaches the wire.
@@ -883,15 +918,18 @@ class OpenAiCompatibleClient(
             ?.let { listOf(it) }
             ?: request.languageCandidates.filter { it.isNotEmpty() && it != "detect" }
         val codes = wanted.map { it.lowercase().substringBefore('-') }.distinct()
-        if (codes.isEmpty()) return null
+        val terms = request.keyterms.takeIf { it.isNotEmpty() }?.let { capKeyterms(it) }
+        if (codes.isEmpty()) {
+            return terms?.let { json.encodeToString(AssemblySyncConfigDto.serializer(), AssemblySyncConfigDto(keytermsPrompt = it)) }
+        }
         val known = codes.filter { it in SYNC_LANGUAGES }
         return if (known.size == codes.size) {
             // Every language is one the endpoint knows: use the documented field. A single code goes as a
             // string and several as an array, which is what the schema accepts.
             val dto = if (codes.size == 1) {
-                AssemblySyncConfigDto(languageCode = JsonPrimitive(codes.first()))
+                AssemblySyncConfigDto(languageCode = JsonPrimitive(codes.first()), keytermsPrompt = terms)
             } else {
-                AssemblySyncConfigDto(languageCode = JsonArray(codes.map { JsonPrimitive(it) }))
+                AssemblySyncConfigDto(languageCode = JsonArray(codes.map { JsonPrimitive(it) }), keytermsPrompt = terms)
             }
             json.encodeToString(AssemblySyncConfigDto.serializer(), dto)
         } else {
@@ -899,7 +937,7 @@ class OpenAiCompatibleClient(
             val spoken = if (names.size == 1) names.first() else names.joinToString(" or ")
             json.encodeToString(
                 AssemblySyncConfigDto.serializer(),
-                AssemblySyncConfigDto(prompt = "The audio is a person dictating in $spoken."),
+                AssemblySyncConfigDto(prompt = "The audio is a person dictating in $spoken.", keytermsPrompt = terms),
             )
         }
     }
@@ -1532,7 +1570,13 @@ class OpenAiCompatibleClient(
         // this on a model that lacks the feature costs nothing and changes nothing.
         @SerialName("language_detection_options")
         val languageDetectionOptions: AssemblyLangOptionsDto? = null,
+        // Names to favour and misheard forms to respell (MaSpelling in the app).
+        @SerialName("keyterms_prompt") val keytermsPrompt: List<String>? = null,
+        @SerialName("custom_spelling") val customSpelling: List<AssemblySpellingDto>? = null,
     )
+
+    @Serializable
+    private data class AssemblySpellingDto(val from: List<String>, val to: String)
 
     @Serializable
     private data class AssemblyLangOptionsDto(
@@ -1586,6 +1630,7 @@ class OpenAiCompatibleClient(
     private data class AssemblySyncConfigDto(
         @SerialName("language_code") val languageCode: JsonElement? = null,
         val prompt: String? = null,
+        @SerialName("keyterms_prompt") val keytermsPrompt: List<String>? = null,
     )
 
     // --- Gemini native generateContent DTOs (see transcribeGeminiGenerateContent) ---

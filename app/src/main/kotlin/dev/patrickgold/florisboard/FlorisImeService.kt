@@ -331,6 +331,7 @@ class FlorisImeService : LifecycleInputMethodService() {
     override fun onCreate() {
         super.onCreate()
         dev.patrickgold.florisboard.dictate.MaReSkill.attach(this)
+        dev.patrickgold.florisboard.dictate.MaSpelling.attach(this)
         maWireCursorPad()
         FlorisImeServiceReference = WeakReference(this)
         systemLocalesFlow.value = resources.configuration.locales

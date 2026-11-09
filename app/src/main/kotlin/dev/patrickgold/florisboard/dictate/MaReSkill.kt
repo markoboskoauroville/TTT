@@ -259,6 +259,8 @@ object MaReSkill {
         val changed = !same(d.text, finalText)
         scope.launch {
             runCatching { logLine(d, finalText, how, changed) }
+            // A word he changes the same way twice becomes a learned spelling pair (MaSpelling).
+            if (changed) runCatching { MaSpelling.noteEdit(d.text, finalText) }
             if (changed) runCatching { learn(d, finalText) }
         }
     }

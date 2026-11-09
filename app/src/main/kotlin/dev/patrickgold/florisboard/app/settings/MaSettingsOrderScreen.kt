@@ -115,6 +115,7 @@ val MaSettingsEntry.icon: ImageVector
         MaSettingsEntry.AUTO -> MaAutoIcon
         // The key's own picture: "re" and the small sparkle (9.11.2026).
         MaSettingsEntry.RE_MAGIC -> MaReIcon
+        MaSettingsEntry.SPELLING -> Icons.Default.Spellcheck
         MaSettingsEntry.MAPPINGS -> Icons.Default.Spellcheck
         MaSettingsEntry.OUTPUT -> Icons.Default.Keyboard
         MaSettingsEntry.HISTORY -> Icons.Default.History
@@ -159,6 +160,7 @@ val MaSettingsEntry.route: Any
         MaSettingsEntry.PREDICTIONS -> Routes.Settings.MaPredictions
         MaSettingsEntry.AUTO -> Routes.Settings.MaAuto
         MaSettingsEntry.RE_MAGIC -> Routes.Settings.MaRe
+        MaSettingsEntry.SPELLING -> Routes.Settings.MaSpelling
         MaSettingsEntry.MAPPINGS -> Routes.Settings.DictateMappings
         MaSettingsEntry.OUTPUT -> Routes.Settings.DictateOutput
         MaSettingsEntry.HISTORY -> Routes.Settings.DictateHistory

@@ -912,6 +912,11 @@ abstract class FlorisPreferenceModel : PreferenceModel() {
         val maRepromptRecent = string(key = "dictate__ma_reprompt_recent", default = "")
         // RE Magic skill (MaReSkill, 9.11.2026): learn from the corrections he makes before sending.
         val maReLearn = boolean(key = "dictate__ma_re_learn", default = true)
+        // Spelling (MaSpelling, 9.11.2026): the names his speech-to-text mishears. On by default: he asked for it.
+        val maSpelling = boolean(key = "dictate__ma_spelling", default = true)
+        val maSpellingTerms = boolean(key = "dictate__ma_spelling_terms", default = true)
+        /** Pair ids switched off on the Spelling page, comma separated. */
+        val maSpellingOff = string(key = "dictate__ma_spelling_off", default = "")
         /** The Reprompt key put on his rows, once. */
         val maRepromptKeyAdded = boolean(key = "dictate__ma_reprompt_key_added", default = false)
         /** The WA key placed on his rows once, after RE (7.11.2026). */
