@@ -337,15 +337,40 @@ fun HomeScreen() = FlorisScreen {
             val storedOrder by prefs.dictate.maSettingsOrder.collectAsState()
             val entries = remember(storedOrder) { MaSettingsOrder.parse(storedOrder) }
             // The old Transcription model menu is hidden (Marko, 9.11.2026): the H and E keys' radio lists replace it.
-            entries.filter { it != MaSettingsEntry.TRANSCRIPTION_MODEL }.forEach { entry ->
+            // NEW badge (Marko, 9.11.2026): an entry whose id is not in the seen set shows NEW until opened once.
+            val seenRaw by prefs.dictate.maSettingsSeen.collectAsState()
+            val seenScope = rememberCoroutineScope()
+            val seen = remember(seenRaw) { seenRaw.split(',').map { it.trim() }.toSet() }
+            val seededV1 by prefs.dictate.maSettingsSeenSeededV1.collectAsState()
+            entries.forEach { entry ->
+                val isNew = seededV1 && entry.id !in seen
                 Preference(
                     icon = entry.icon,
                     title = entry.title,
                     summary = entry.summary,
+                    trailing = if (isNew) {
+                        {
+                            Text(
+                                text = "NEW",
+                                color = androidx.compose.material3.MaterialTheme.colorScheme.onPrimary,
+                                fontSize = 11.sp,
+                                fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
+                                modifier = Modifier
+                                    .background(
+                                        androidx.compose.material3.MaterialTheme.colorScheme.primary,
+                                        androidx.compose.foundation.shape.RoundedCornerShape(50),
+                                    )
+                                    .padding(horizontal = 8.dp, vertical = 2.dp),
+                            )
+                        }
+                    } else null,
                     // navigate() takes the route object itself; entry.route is typed Any so the
                     // enum stays free of the navigation graph, and the cast is safe because every
                     // branch of that when returns a @Serializable route object.
-                    onClick = { navController.navigate(entry.route) },
+                    onClick = {
+                        if (isNew) seenScope.launch { prefs.dictate.maSettingsSeen.set((seen + entry.id).joinToString(",")) }
+                        navController.navigate(entry.route)
+                    },
                 )
             }
         }

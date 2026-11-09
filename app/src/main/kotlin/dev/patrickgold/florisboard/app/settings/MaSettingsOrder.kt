@@ -102,7 +102,6 @@ object MaSettingsOrder {
         MaSettingsEntry.PERMISSIONS,
         MaSettingsEntry.ENGINES,
         MaSettingsEntry.AUTO,
-        MaSettingsEntry.TRANSCRIPTION_MODEL,
         MaSettingsEntry.SETTINGS_ORDER,
         MaSettingsEntry.BUCKETS,
         MaSettingsEntry.SWITCHBOARD,
@@ -157,11 +156,17 @@ object MaSettingsOrder {
             // prediction up from the bottom of the list, where he could not find it.
             .map { if (it == MaSettingsEntry.CORRECTIONS) MaSettingsEntry.PREDICTIONS else it }
             .distinct()
+        // Hidden ids never appear, in the home list or in the order list: one set for both.
+        val hidden = setOf(MaSettingsEntry.KEYS, MaSettingsEntry.VOCABULARY, MaSettingsEntry.CORRECTIONS, MaSettingsEntry.TRANSCRIPTION_MODEL)
+        if (wanted.isEmpty()) return DEFAULT.filterNot { it in hidden }
         val all = wanted.toMutableList()
-        DEFAULT.forEachIndexed { index, entry ->
-            if (entry in all) return@forEachIndexed
-            val anchor = DEFAULT.subList(0, index).lastOrNull { it in all }
-            all.add(if (anchor == null) 0 else all.indexOf(anchor) + 1, entry)
+        // NEW ENTRIES GO SECOND FROM THE TOP (Marko, 9.11.2026: "whenever there is a new feature in a
+        // menu, it must be the second item from the top, so I'm not searching at the bottom"). An entry
+        // not in his saved order is inserted at position 2, after the first entry; his own order is untouched.
+        // Walking DEFAULT backwards keeps several new entries in DEFAULT's relative order.
+        DEFAULT.asReversed().forEach { entry ->
+            if (entry in all || entry in hidden) return@forEach
+            all.add(minOf(1, all.size), entry)
         }
         // PERMISSIONS is first only because DEFAULT puts it first.
         //
@@ -178,9 +183,20 @@ object MaSettingsOrder {
         //
         // VOCABULARY likewise: "Teach it from my dictations" is inside Auto prediction now, and
         // everything about prediction is behind that one entry (27.10.2026).
-        return all.filterNot {
-            it == MaSettingsEntry.KEYS || it == MaSettingsEntry.VOCABULARY || it == MaSettingsEntry.CORRECTIONS
-        }
+        // TRANSCRIPTION_MODEL likewise: its screen lives under Voice transcription buttons > Advanced.
+        return all.filterNot { it in hidden }
+    }
+
+    /**
+     * Once (build 572): "Voice transcription buttons" to position 2 of his saved order, after the first
+     * entry, replacing the old Transcription model entry. Also drops that ghost id from the stored string.
+     */
+    fun withEnginesSecond(raw: String): String {
+        val ids = raw.split(',').map { it.trim() }.filter { it.isNotEmpty() && it != "engines" && it != "transcription_model" }
+        if (ids.isEmpty()) return raw
+        val out = ids.toMutableList()
+        out.add(minOf(1, out.size), "engines")
+        return out.joinToString(",")
     }
 
     fun serialize(order: List<MaSettingsEntry>): String = order.joinToString(",") { it.id }

@@ -984,6 +984,21 @@ abstract class FlorisPreferenceModel : PreferenceModel() {
             key = "dictate__ma_predictions_moved_v1",
             default = false,
         )
+        /** Voice transcription buttons moved to position 2 of the stored order, once (build 572, 9.11.2026). */
+        val maEnginesSecondV1 = boolean(
+            key = "dictate__ma_engines_second_v1",
+            default = false,
+        )
+        /** Settings entries the user has opened (comma separated ids); an entry not in it shows the NEW badge. */
+        val maSettingsSeen = string(
+            key = "dictate__ma_settings_seen",
+            default = "",
+        )
+        /** The seen set was seeded once with every entry that existed before NEW badges (build 572). */
+        val maSettingsSeenSeededV1 = boolean(
+            key = "dictate__ma_settings_seen_seeded_v1",
+            default = false,
+        )
         /** The Mantra settings list order, as comma separated ids. See MaSettingsOrder. */
         val maSettingsOrder = string(
             key = "dictate__ma_settings_order",

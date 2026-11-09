@@ -11386,3 +11386,12 @@ The left/right rule is a guess from the box position and is the first thing to l
 
 ## STT bake-off method (9.11.2026)
 Movie shape: 21 sentences (7 en, 7 hr, 7 mixed), Marko reads them into `tools/stt_bakeoff/record_server.py`; `run_bakeoff.py` runs each engine plain and with the canonical names (`names.txt`, from MANTRA_MANIFEST modules/dictation-corrections.md), same normalisation, WER / name errors / diacritics / latency per group. Results in docs/stt-bakeoff-9nov.md. TTT keeps no dictation audio, so truth = the written sentences.
+
+
+## RULE (Marko, 9.11.2026): a new menu entry is the second item from the top
+
+> "Whenever there is a new feature in a menu, it must be the second item from the top, so I'm not searching for something new at the bottom."
+
+`MaSettingsOrder.parse()` inserts every entry that is not yet in the saved order at position 2 (after the first entry), never at the end; his own arrangement is untouched. Hidden ids (KEYS, VOCABULARY, CORRECTIONS, TRANSCRIPTION_MODEL) are filtered inside `parse()` so the home list and the Settings order list are the same set (build 571 showed a ghost "Transcription model" only in the order list, because the filter lived in HomeScreen alone). Build 572: "Voice transcription buttons" moved to position 2 once (`moveEnginesSecondIfNeeded`). The H/E key engine name is regular weight at 0.8 of the build 571 size, still auto-fit.
+
+**NEW badge (Marko, 9.11.2026):** "Add a NEW badge to new items in the settings, and once the user has selected it, the NEW disappears." Every settings entry whose id is not in the seen set (`maSettingsSeen`, comma separated ids) shows a small accent-coloured NEW pill on its row; opening it adds the id to the set for good. The set is seeded once (`seedSettingsSeenIfNeeded`, build 572) with every entry that existed then, except "Voice transcription buttons"; so a developer only adds the enum entry and the app marks it new, and `parse()` puts it second from the top.

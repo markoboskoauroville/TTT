@@ -170,6 +170,8 @@ class FlorisApplication : Application() {
             DictateLegacyMigrator.applyActionRowV19IfNeeded()
             DictateLegacyMigrator.applyActionRowV20IfNeeded()
             DictateLegacyMigrator.movePredictionsBesidePromptsIfNeeded()
+            DictateLegacyMigrator.moveEnginesSecondIfNeeded()
+            DictateLegacyMigrator.seedSettingsSeenIfNeeded()
             DictateLegacyMigrator.keepPredictionRowOn()
             DictateLegacyMigrator.addTranslateKeyIfNeeded()
             DictateLegacyMigrator.addRepromptKeyIfNeeded()

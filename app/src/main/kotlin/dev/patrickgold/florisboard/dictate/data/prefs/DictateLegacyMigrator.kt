@@ -29,6 +29,7 @@ import dev.patrickgold.florisboard.ime.text.gestures.SwipeAction
 import dev.patrickgold.florisboard.dictate.MaKeyImport
 import dev.patrickgold.florisboard.dictate.data.prompts.PromptsDatabaseHelper
 import dev.patrickgold.florisboard.app.FlorisPreferenceStore
+import dev.patrickgold.florisboard.app.settings.MaSettingsEntry
 import dev.patrickgold.florisboard.app.settings.MaSettingsOrder
 import dev.patrickgold.florisboard.ime.theme.extCoreTheme
 import dev.patrickgold.florisboard.dictate.DictateLanguages
@@ -851,6 +852,24 @@ object DictateLegacyMigrator {
         val next = MaSettingsOrder.withPredictionsBesidePrompts(raw)
         if (next != raw) prefs.dictate.maSettingsOrder.set(next)
         prefs.dictate.maPredictionsMovedV1.set(true)
+    }
+
+    /** Seeds the NEW-badge seen set once: everything counts as seen except the entries new in build 572. */
+    suspend fun seedSettingsSeenIfNeeded() {
+        val prefs by FlorisPreferenceStore
+        if (prefs.dictate.maSettingsSeenSeededV1.get()) return
+        val ids = MaSettingsEntry.entries.map { it.id }.filter { it != "engines" }
+        prefs.dictate.maSettingsSeen.set(ids.joinToString(","))
+        prefs.dictate.maSettingsSeenSeededV1.set(true)
+    }
+
+    suspend fun moveEnginesSecondIfNeeded() {
+        val prefs by FlorisPreferenceStore
+        if (prefs.dictate.maEnginesSecondV1.get()) return
+        val raw = prefs.dictate.maSettingsOrder.get()
+        val next = MaSettingsOrder.withEnginesSecond(raw)
+        if (next != raw) prefs.dictate.maSettingsOrder.set(next)
+        prefs.dictate.maEnginesSecondV1.set(true)
     }
 
     suspend fun migratePromptsLayoutToRowIfNeeded() {

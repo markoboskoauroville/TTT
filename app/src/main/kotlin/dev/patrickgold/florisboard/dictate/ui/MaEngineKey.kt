@@ -42,7 +42,8 @@ internal fun MaEngineKeyContent(letter: String, dot: Color, name: String, fallba
         val shown = if (fallback) "$name ↺" else name
         // The letter, the dot and the gaps take about 44 dp; the rest is the name's. A glyph is about 0.58 of its size wide.
         val room = (maxWidth.value - 52f).coerceAtLeast(20f)
-        val size = (room / (shown.length * 0.58f)).coerceIn(9f, 26f)
+        // 20% smaller than build 571 (Marko, 9.11.2026), regular weight, still auto-fit so a long name never cuts off.
+        val size = (room / (shown.length * 0.58f)).coerceIn(9f, 26f) * 0.8f
         Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth().padding(start = 10.dp, end = 6.dp)) {
             androidx.compose.foundation.layout.Box(modifier = Modifier.size(9.dp).clip(CircleShape).background(dot))
             Spacer(Modifier.width(4.dp))
@@ -51,7 +52,7 @@ internal fun MaEngineKeyContent(letter: String, dot: Color, name: String, fallba
                 text = shown,
                 color = fg,
                 fontSize = size.sp,
-                fontWeight = FontWeight.Bold,
+                fontWeight = FontWeight.Normal,
                 maxLines = 1,
                 softWrap = false,
                 overflow = TextOverflow.Clip,
