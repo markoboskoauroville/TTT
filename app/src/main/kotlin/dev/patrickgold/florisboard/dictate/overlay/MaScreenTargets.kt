@@ -684,7 +684,7 @@ object MaScreenTargets {
         return Rect.intersects(screen, r)
     }
 
-    private fun appWindowRoots(service: AccessibilityService): List<AccessibilityNodeInfo> {
+    internal fun appWindowRoots(service: AccessibilityService): List<AccessibilityNodeInfo> {
         val own = service.packageName
         val windows = runCatching { service.windows }.getOrNull().orEmpty()
         val roots = windows

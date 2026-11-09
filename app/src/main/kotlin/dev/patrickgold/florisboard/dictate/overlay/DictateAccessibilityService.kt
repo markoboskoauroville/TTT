@@ -901,6 +901,61 @@ class DictateAccessibilityService : AccessibilityService() {
             return MaScreenTargets.scrollBy(ims, 1)
         }
 
+        /** RE read screen (a): the chat items of the app under the keyboard, and the screen width; null when the service is off. */
+        fun chatItems(): kotlin.Pair<List<MaScreenChat.Item>, Int>? {
+            val ims = instance ?: return null
+            val width = ims.resources.displayMetrics.widthPixels
+            return MaScreenChat.fromTree(ims) to width
+        }
+
+        /** Whether this service was granted the screenshot capability (API 30+, and enabled again after the update added it). */
+        fun canTakeScreenshot(): Boolean {
+            val ims = instance ?: return false
+            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R) return false
+            return runCatching {
+                (ims.serviceInfo.capabilities and android.accessibilityservice.AccessibilityServiceInfo.CAPABILITY_CAN_TAKE_SCREENSHOT) != 0
+            }.getOrDefault(false)
+        }
+
+        /**
+         * RE read screen (b): one screenshot of the default display as a software bitmap, cut above the
+         * keyboard, or null. The system shows no prompt: the capability is the one Marko allowed when he
+         * switched the service on. The bitmap stays in memory and is never saved or sent.
+         */
+        suspend fun screenshotAboveKeyboard(): android.graphics.Bitmap? {
+            val ims = instance ?: return null
+            if (!canTakeScreenshot()) return null
+            val top = MaScreenChat.keyboardTop(ims)
+            return kotlinx.coroutines.suspendCancellableCoroutine { cont ->
+                runCatching {
+                    ims.takeScreenshot(
+                        android.view.Display.DEFAULT_DISPLAY,
+                        java.util.concurrent.Executors.newSingleThreadExecutor(),
+                        object : AccessibilityService.TakeScreenshotCallback {
+                            override fun onSuccess(result: AccessibilityService.ScreenshotResult) {
+                                val bmp = runCatching {
+                                    val hw = android.graphics.Bitmap.wrapHardwareBuffer(result.hardwareBuffer, result.colorSpace)
+                                    val soft = hw?.copy(android.graphics.Bitmap.Config.ARGB_8888, false)
+                                    hw?.recycle()
+                                    soft
+                                }.getOrNull()
+                                runCatching { result.hardwareBuffer.close() }
+                                val cut = if (bmp != null && top != null && top > 200 && top < bmp.height) {
+                                    android.graphics.Bitmap.createBitmap(bmp, 0, 0, bmp.width, top)
+                                } else bmp
+                                if (cont.isActive) cont.resumeWith(Result.success(cut))
+                            }
+
+                            override fun onFailure(errorCode: Int) {
+                                MaLog.add("re", "screenshot failed, code $errorCode")
+                                if (cont.isActive) cont.resumeWith(Result.success(null))
+                            }
+                        },
+                    )
+                }.onFailure { if (cont.isActive) cont.resumeWith(Result.success(null)) }
+            }
+        }
+
         fun readableScreenText(): String {
             val ims = instance ?: return ""
             return MaScreenTargets.readableText(ims)

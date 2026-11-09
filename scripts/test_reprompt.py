@@ -52,7 +52,7 @@ check("it remembers the field and opens the window", "MaReprompt.open(context, p
 check("an empty field opens the prompt mode", "MaReprompt.open(context, pkg, info.base.fieldId, write = empty)" in row
       and '"Reprompt: write something first"' not in row)
 check("the field decides when it is back", "val write = content.text.isBlank() && content.selectedText.isBlank()" in ime
-      and "MaReprompt.prompt(words, write)" in ime)
+      and "MaReprompt.prompt(words, write, screen)" in ime)
 check("write mode inserts, reshape mode replaces", "requiresSelection = !write," in rp)
 check("write mode: the request fenced, its language named",
       "<request>" in rp and "MaRewordPrompt.languageOf(w)" in rp)
@@ -69,7 +69,7 @@ check("Back or Cancel rewrites nothing", "if (!submitted) MaReprompt.cancel()" i
 # Back in the field
 check("runs when the field comes back", "MaReprompt.takeFor(info.packageName, info.fieldId)" in ime)
 check("through the Ctrl+P / Ctrl+F path, with Ctrl+F's model, sent bare",
-      "MaReprompt.prompt(words, write), model = MaFlow.model(), allowGrowth = true, bare = true" in ime)
+      "MaReprompt.prompt(words, write, screen), model = MaFlow.model(), allowGrowth = true, bare = true" in ime)
 # Mac emulator, build 440: "make it shorter" came back only proofread. Sent bare, no proofreading system prompt.
 check("bare skips the rewording system prompt", "requestRewordRaw(MaReprompt.message(raw, input), modelOverride = model" in ctrl)
 check("his text fenced, its language kept", "<text>" in rp and "MaRewordPrompt.languageOf(text)" in rp)
@@ -126,7 +126,7 @@ check("a press records, in English", "if (rec == null) MaLanguage.set(context, M
 check("the long press opens the typing window", "onLongClick = {" in row[row.find("MaFeatureKey.REPROMPT -> {"):row.find("MaFeatureKey.RECORD -> {")])
 check("set at every start", "repromptRecording = reprompt" in ctrl)
 check("the transcript is an instruction, not typed", "if (repromptRecording && !live) {" in ctrl
-      and "MaReprompt.prompt(words, write), model = MaFlow.model()," in ctrl)
+      and "MaReprompt.prompt(words, write, screen), model = MaFlow.model()," in ctrl)
 check("empty field writes, text is reshaped", "val write = outSink.fullText().isBlank() && outSink.selectedText().isBlank()" in ctrl)
 check("a streamed preview is taken back", "outSink.clearDictationPreview(realtimeShown.toString())" in ctrl)
 check("kept in Reprompt's list", "MaReprompt.rememberWords(words)" in ctrl)

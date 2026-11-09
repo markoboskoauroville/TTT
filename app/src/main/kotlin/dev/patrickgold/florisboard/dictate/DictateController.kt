@@ -2067,8 +2067,18 @@ object DictateController {
             if (words.isEmpty()) return
             MaReprompt.rememberWords(words)
             val write = outSink.fullText().isBlank() && outSink.selectedText().isBlank()
+            // "Take a screenshot and reply to the latest message" (MaScreenRead): read the screen first.
+            var screen: MaScreenRead.Screen? = null
+            if (MaScreenRead.wants(words)) {
+                MaMessage.show("RE: reading the screen")
+                screen = MaScreenRead.read()
+                if (screen == null) {
+                    MaMessage.show("RE: could not read the screen (accessibility tree and OCR both empty)")
+                    return
+                }
+            }
             applyPrompt(
-                appContext, MaReprompt.prompt(words, write), model = MaFlow.model(),
+                appContext, MaReprompt.prompt(words, write, screen), model = MaFlow.model(),
                 allowGrowth = true, bare = true,
             )
             return

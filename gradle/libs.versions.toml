@@ -38,6 +38,8 @@ turbine = "1.2.1"
 
 
 [libraries]
+# On-device OCR for RE's screen reading (MaScreenRead): bundled Latin model, offline, no Play services.
+mlkit-text-recognition = { module = "com.google.mlkit:text-recognition", version = "16.0.1" }
 # Main
 androidx-activity-compose = { module = "androidx.activity:activity-compose", version.ref = "androidx-activity" }
 androidx-activity-ktx = { module = "androidx.activity:activity-ktx", version.ref = "androidx-activity" }

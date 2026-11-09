@@ -11340,3 +11340,23 @@ once, shown in Settings, Spelling marked "learned", and brought to the Mac by `r
 Croatian is the one to watch; a 400 falls back to no vocabulary and the log says so). Whether keyterms make "Groq" come out right
 without the local pass is his test. Samir, Diana and mode are common words: the first is unconditional (as he asked), the other two
 carry an `onlyIf`.
+
+## RE reads the screen (9.11.2026)
+
+**Asked (momentaryupdates.md):** "take a screenshot, read the latest message and reply to it", spoken to RE, in the app and in the skill.
+
+**Built.** `MaScreenRead` (the tool and the trigger phrases, English and Croatian), `overlay/MaScreenChat` (the accessibility node
+tree as chat lines with the side each message sits on: left = the other person, right = Marko, centre = dates), and in
+`DictateAccessibilityService.screenshotAboveKeyboard()` (`takeScreenshot`, API 30+, cut above the keyboard window, kept in memory
+only) followed by ML Kit's bundled Latin OCR (`com.google.mlkit:text-recognition`, offline). Order: tree, then screenshot and OCR.
+**Source (c), vision on the model, is NOT built:** it would send a picture to a paid API and nothing in this app sends an image; when
+both sources fail RE says "could not read the screen" and writes nothing. The voice path (`DictateController`) and the typed window
+(`FlorisImeService.takeFor`) both read the screen when `MaScreenRead.wants(words)`, then build the prompt with `MaScreenRead.block`
+(sides, newest last, "return only the reply"); the reply lands in the field through the existing RE path and is never sent.
+Skill section 6b (re_ttt_skill.md) says the same to the model. Settings, RE Magic: the Read screen switch (`maReScreen`) with the order,
+and the screenshot permission line with a button to the system's accessibility settings (the system asks, Marko taps Allow; nothing
+clicks it). `accessibility_service_config.xml` gained `canTakeScreenshot="true"`. Test 1: `scripts/test_screen_read.py`.
+
+**Not proven yet.** Whether the new capability is granted after an UPDATE: Android may need the TTT service switched off and on once
+(Settings shows the state). The tree path has not met WhatsApp's real tree: if its bubbles are not text nodes, step 2 takes over.
+The left/right rule is a guess from the box position and is the first thing to look at if a reply answers the wrong message.

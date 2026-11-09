@@ -136,13 +136,13 @@ object MaReprompt {
     private var ownPackage: String = ""
 
     /** What is sent: his words, as the instruction for the text below them. */
-    fun instructionFor(words: String): String =
+    fun instructionFor(words: String, screen: MaScreenRead.Screen? = null): String =
         MaReSkill.preamble() + "Carry out this instruction on the text between the <text> tags. Do exactly what it asks: " +
             "if it asks for shorter, make it clearly shorter; if it asks for a different tone or " +
             "language, change it. Do not just proofread. Instruction: " +
             // Hidden code words (MaCodeWords): a name such as "Ashai Afterman" brings its full
             // description with it, however it was spelled or misheard.
-            MaCodeWords.expand(words.trim())
+            MaCodeWords.expand(words.trim()) + (screen?.let { MaScreenRead.block(it) } ?: "")
 
     /**
      * The whole message, sent bare (no rewording system prompt): the instruction, then his text
@@ -159,7 +159,7 @@ object MaReprompt {
     }
 
     /** The prompt mode: a new message from his instruction, nothing to reshape. */
-    fun writeInstructionFor(words: String): String {
+    fun writeInstructionFor(words: String, screen: MaScreenRead.Screen? = null): String {
         val w = words.trim()
         // The language is named, not left to "the language of the instruction": this wrapper is
         // English, and a Croatian request must not come back English (the E|H lesson, 3.11.2026).
@@ -169,7 +169,7 @@ object MaReprompt {
         return MaCodeWords.expand(
             MaReSkill.preamble() + "Write the message the user asks for between the <request> tags. Write it as the user, " +
                 "ready to send.$inLanguage Return only the message, nothing before or after it.\n\n" +
-                "<request>\n$w\n</request>",
+                "<request>\n$w\n</request>" + (screen?.let { MaScreenRead.block(it) } ?: ""),
         )
     }
 
@@ -177,14 +177,14 @@ object MaReprompt {
      * The prompt sent. [write] (an empty field): a new message, inserted at the cursor, nothing
      * selected or replaced. Otherwise the text is reshaped: the selection, else the whole field.
      */
-    fun prompt(words: String, write: Boolean = false): PromptModel {
+    fun prompt(words: String, write: Boolean = false, screen: MaScreenRead.Screen? = null): PromptModel {
         // What the draft answers; MaReSkill keeps it with the draft.
         lastWords = words
         return PromptModel(
             id = PromptModel.ID_INSTANT_PROMPT,
             pos = 0,
             name = NAME,
-            prompt = if (write) writeInstructionFor(words) else instructionFor(words),
+            prompt = if (write) writeInstructionFor(words, screen) else instructionFor(words, screen),
             requiresSelection = !write,
             autoApply = false,
         )

@@ -477,9 +477,20 @@ class FlorisImeService : LifecycleInputMethodService() {
                 // Empty field: write the message he asks for, at the cursor. Text: reshape it.
                 val content = editorInstance.activeContent
                 val write = content.text.isBlank() && content.selectedText.isBlank()
-                DictateController.applyPrompt(
-                    this, MaReprompt.prompt(words, write), model = MaFlow.model(), allowGrowth = true, bare = true,
-                )
+                lifecycleScope.launch {
+                    // The typed window can say it too: "take a screenshot and reply" (MaScreenRead).
+                    var screen: dev.patrickgold.florisboard.dictate.MaScreenRead.Screen? = null
+                    if (dev.patrickgold.florisboard.dictate.MaScreenRead.wants(words)) {
+                        screen = dev.patrickgold.florisboard.dictate.MaScreenRead.read()
+                        if (screen == null) {
+                            dev.patrickgold.florisboard.dictate.ui.MaMessage.show("RE: could not read the screen")
+                            return@launch
+                        }
+                    }
+                    DictateController.applyPrompt(
+                        this@FlorisImeService, MaReprompt.prompt(words, write, screen), model = MaFlow.model(), allowGrowth = true, bare = true,
+                    )
+                }
             }, 400)
         }
         // The cursor pad never survives a new field.

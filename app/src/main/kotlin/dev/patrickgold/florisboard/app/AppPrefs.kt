@@ -913,6 +913,7 @@ abstract class FlorisPreferenceModel : PreferenceModel() {
         // RE Magic skill (MaReSkill, 9.11.2026): learn from the corrections he makes before sending.
         val maReLearn = boolean(key = "dictate__ma_re_learn", default = true)
         // Spelling (MaSpelling, 9.11.2026): the names his speech-to-text mishears. On by default: he asked for it.
+        val maReScreen = boolean(key = "dictate__ma_re_screen", default = true)
         val maSpelling = boolean(key = "dictate__ma_spelling", default = true)
         val maSpellingTerms = boolean(key = "dictate__ma_spelling_terms", default = true)
         /** Pair ids switched off on the Spelling page, comma separated. */

@@ -62,6 +62,36 @@ fun MaReScreen() = FlorisScreen {
                 "never presses Send. Off: nothing is kept or compared.",
         )
 
+        SwitchPreference(
+            prefs.dictate.maReScreen,
+            title = "Read screen",
+            summary = "Say \"take a screenshot and reply to the latest message\" (or in Croatian, \"odgovori na zadnju poruku\"): " +
+                "RE reads the chat on screen and writes the reply into the field. It never sends. Order: 1. the app's " +
+                "accessibility text with the side of each message, 2. a screenshot read by on-device OCR, 3. nothing " +
+                "else: no picture ever leaves the phone.",
+        )
+        val context = androidx.compose.ui.platform.LocalContext.current
+        val shotOk = dev.patrickgold.florisboard.dictate.overlay.DictateAccessibilityService.canTakeScreenshot()
+        Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {
+            Text(
+                text = if (shotOk) "Screenshot permission: granted (step 2 works)."
+                else "Screenshot permission: not granted yet. Step 1 works without it. For step 2, open the accessibility " +
+                    "settings and switch the TTT service off and on; the system asks, and you tap Allow.",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            if (!shotOk) {
+                OutlinedButton(
+                    onClick = {
+                        context.startActivity(
+                            android.content.Intent(android.provider.Settings.ACTION_ACCESSIBILITY_SETTINGS)
+                                .addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK),
+                        )
+                    },
+                    modifier = Modifier.padding(top = 4.dp),
+                ) { Text("Open accessibility settings") }
+            }
+        }
         Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {
             Text(
                 text = "RE transcribes with AssemblyAI only. It writes by the skill file: ${MaReSkill.skillFile().path}" +
