@@ -314,3 +314,12 @@ voices. Stopped here: a further build plus a full suite (~1 h) would not finish 
 
 **Status:** saved first; task 25 of mac-ses9-08-nov.
 **Root cause (9.11.2026):** KeyboardManager treated a digit as punctuation: pressing "2" after "AT" committed the auto-correct fix for the word "AT" (replacing the composing word), so the digits typed so far vanished. Fixed: a digit never ends a word; a word with a digit is never corrected; the auto-commit needs the AUTO switch on. All typing corrections off by default + one-time migration; AUTO key in the toolbar and Settings, AUTO corrections.
+
+## 9.11.2026 – engines and benchmark: many free engines, fallback, TTT scores them itself
+
+> "I want TTT to be full of free engines so it can fall back between engines... install every engine with a free quota, from Groq etc. TTT itself tests my dictations from my recordings and scores each engine's accuracy, English and Croatian separately, shown in my Settings. Run the batch benchmark... engines keep improving."
+> "In Settings there's a 'Benchmark voice engines' action: it takes my last 10 dictations in Croatian and 10 in English and gives an accuracy test across the APIs with free quotas that reset monthly."
+> "Quick fallback from API to API, with a status under the recorder while it sends; if an API is out of quota it says 'switching to another API / provider'."
+> "Explore options from free to high-end; be flexible and cheap." (Marko, 9.11.2026)
+
+**Status:** saved first; task 63 of mac-ses9-08-nov. Slice: clip buffer (20 per language), pluggable engines with Keystore-encrypted keys, fallback chain per language with status line, Settings > Engines with benchmark, unit tests (CI), phone test with seeded clips and a fake 429 provider. Never OpenAI. Paid engines only when explicitly enabled.
