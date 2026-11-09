@@ -65,7 +65,27 @@
         android:supportsRtl="true"
         android:theme="@style/FlorisAppTheme"
         tools:targetApi="tiramisu"
-        android:usesCleartextTraffic="true"><!-- allow http:// endpoints the user configures (e.g. a LAN Ollama / self-hosted server, #136); default providers all use https -->
+        android:usesCleartextTraffic="true">
+        <!-- Engines + benchmark (9.11.2026): the weekly benchmark job, and adb test hooks that only the shell (DUMP) may call. -->
+        <service
+            android:name=".dictate.engines.EngineBenchmarkJob"
+            android:exported="false"
+            android:permission="android.permission.BIND_JOB_SERVICE"/>
+        <receiver
+            android:name=".dictate.engines.EngineDebugReceiver"
+            android:exported="true"
+            android:permission="android.permission.DUMP">
+            <intent-filter>
+                <action android:name="dev.ttt.engines.KEYS"/>
+                <action android:name="dev.ttt.engines.SEED"/>
+                <action android:name="dev.ttt.engines.FAKE"/>
+                <action android:name="dev.ttt.engines.DEMO"/>
+                <action android:name="dev.ttt.engines.PING"/>
+                <action android:name="dev.ttt.engines.BENCH"/>
+                <action android:name="dev.ttt.engines.REPORT"/>
+            </intent-filter>
+        </receiver>
+<!-- allow http:// endpoints the user configures (e.g. a LAN Ollama / self-hosted server, #136); default providers all use https -->
 
         <!-- Allow app to be profiled for benchmarking and baseline profile generation -->
         <profileable android:shell="true"/>

@@ -61,12 +61,19 @@ object MaDictationCorrections {
         val before: String,
         val language: String,
         val field: String,
+        val clip: Pair<String, String>? = null,
     )
+
+    @Volatile
+    private var appCtx: Context? = null
+
+    private fun appContextOrNull(): Context? = appCtx
 
     @Volatile
     private var pending: Pending? = null
 
     fun initialize(context: Context) {
+        appCtx = context.applicationContext
         val f = File(context.filesDir, FILE)
         file = f
         scope.launch {
@@ -100,9 +107,17 @@ object MaDictationCorrections {
      */
     fun noteDictation(text: String, start: Int, textBefore: String, info: FlorisEditorInfo, incognito: Boolean) {
         pending = null
+        // The clip buffer's reference for the newest clip: what really went into the field.
+        runCatching {
+            val ctx = appContextOrNull()
+            if (ctx != null) {
+                if (incognito || isSecret(info)) dev.patrickgold.florisboard.dictate.engines.ClipBuffer.discardLast(ctx)
+                else dev.patrickgold.florisboard.dictate.engines.ClipBuffer.setLastReference(ctx, text)
+            }
+        }
         if (!enabled() || incognito || isSecret(info) || text.isBlank()) return
         if (start < 0) return
-        pending = Pending(text, start, textBefore.takeLast(24), MaLanguage.active(), fieldOf(info))
+        pending = Pending(text, start, textBefore.takeLast(24), MaLanguage.active(), fieldOf(info), dev.patrickgold.florisboard.dictate.engines.ClipBuffer.lastRef())
     }
 
     /** Forgets the dictation being watched, without learning from it: Ctrl+P, Ctrl+F and the like rewrote it. */
@@ -121,6 +136,10 @@ object MaDictationCorrections {
         if (!enabled() || fieldOf(info) != p.field) return
         val now = runCatching { readRegion(p) }.getOrNull() ?: return
         val swaps = MaCorrectionRules.diff(p.text, now)
+        // His final text becomes the clip's reference, so the benchmark scores against what he sent.
+        if (p.clip != null) runCatching {
+            appContextOrNull()?.let { dev.patrickgold.florisboard.dictate.engines.ClipBuffer.setReference(it, p.clip.first, p.clip.second, now.trim()) }
+        }
         if (swaps.isEmpty()) return
         var next = _rules.value
         for (s in swaps) next = MaCorrectionRules.record(next, s, p.language)

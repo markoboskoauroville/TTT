@@ -303,6 +303,13 @@ object DictateController {
     private val _maStatus = MutableStateFlow("")
     val maStatus: StateFlow<String> = _maStatus.asStateFlow()
 
+    /** Engine chain / debug: show a status line and the transcribing state; blank clears both. */
+    fun showEngineStatus(text: String) {
+        _maStatus.value = text
+        if (text.isBlank()) { if (_state.value is UiState.Transcribing) _state.value = UiState.Idle }
+        else if (_state.value is UiState.Idle) _state.value = UiState.Transcribing()
+    }
+
     private val _prompts = MutableStateFlow<List<PromptModel>>(emptyList())
     /** The user's saved prompts (shared `prompts.db`), refreshed via [refreshPrompts]; drives the Smartbar prompt chips. */
     val prompts: StateFlow<List<PromptModel>> = _prompts.asStateFlow()
@@ -1754,7 +1761,23 @@ object DictateController {
                 // Fast or slow, decided here rather than earlier, because here the resample has already
                 // happened and the length and the size are facts about a file instead of intentions.
                 var maFast = false
-                if (preset.transcriptionApi != TranscriptionApi.LOCAL_ONDEVICE) {
+                // ENGINES (9.11.2026): the fallback chain for this language first, with the status line;
+                // when no engine in it answers, the path below runs exactly as before.
+                var engineOutcome: dev.patrickgold.florisboard.dictate.engines.ChainResult? = null
+                if (!chatAudio && (dev.patrickgold.florisboard.dictate.engines.EngineStore.chainOn(appContext) ||
+                        dev.patrickgold.florisboard.dictate.engines.EngineStore.clipsOn(appContext))) {
+                    val engWav = MaResample.toTargetRate(uploadFile) ?: uploadFile
+                    try {
+                        engineOutcome = dev.patrickgold.florisboard.dictate.engines.EngineChain.dictate(
+                            appContext, engWav, MaLanguage.active(),
+                            runChain = dev.patrickgold.florisboard.dictate.engines.EngineStore.chainOn(appContext),
+                            onStatus = { _maStatus.value = it },
+                        )
+                    } finally {
+                        if (engWav !== uploadFile && engWav !== audioFile) runCatching { engWav.delete() }
+                    }
+                }
+                if (engineOutcome == null && preset.transcriptionApi != TranscriptionApi.LOCAL_ONDEVICE) {
                     val resampled = MaResample.toTargetRate(uploadFile)
                     if (resampled != null) {
                         if (uploadFile !== audioFile) runCatching { uploadFile.delete() }
@@ -1801,7 +1824,9 @@ object DictateController {
                 )
                 val providerStartedNanos = SystemClock.elapsedRealtimeNanos()
                 var usedLocalFallback = false
-                val result = if (preset.transcriptionApi == TranscriptionApi.LOCAL_ONDEVICE) {
+                val result = if (engineOutcome != null) {
+                    TranscriptionResult(engineOutcome.text)
+                } else if (preset.transcriptionApi == TranscriptionApi.LOCAL_ONDEVICE) {
                     // On-device (issue #104): no HTTP client, no key; transcribe locally via sherpa-onnx.
                     // Tell the recognizer cache how long it may stay resident once idle (RAM unload).
                     LocalTranscriptionProvider.setIdleUnloadMillis(
@@ -1935,7 +1960,7 @@ object DictateController {
                 val maSendMs = System.currentTimeMillis() - maSendStartedAt
                 prefs.dictate.maLastSendMs.set(maSendMs)
                 prefs.dictate.maLastSendFormat.set(maFormatTag)
-                _maStatus.value = "%.1fs \u00b7 %s".format(maSendMs / 1000.0, maFormatTag.uppercase())
+                if (engineOutcome == null) _maStatus.value = "%.1fs \u00b7 %s".format(maSendMs / 1000.0, maFormatTag.uppercase())
                 // Prompt-echo guard (issue #77): on silent/unclear audio, Whisper-style models echo the
                 // transcription style prompt back verbatim (the old default was infamously returned as
                 // "This sentence has capitalization and punctuation."). If the result is just that prompt
@@ -1956,7 +1981,7 @@ object DictateController {
                 val capture = HistoryCapture(
                     audioFile = audioFile,
                     providerId = if (usedLocalFallback) localAccount.providerId.ifBlank { "local" } else account.providerId,
-                    providerName = if (usedLocalFallback) "Parakeet (fallback)" else historyProviderName,
+                    providerName = engineOutcome?.engineName ?: if (usedLocalFallback) "Parakeet (fallback)" else historyProviderName,
                     model = if (usedLocalFallback) {
                         MaProviders.transcriptionModelFor(appContext, localAccount, dev.patrickgold.florisboard.dictate.provider.ProviderRegistry.LOCAL)
                     } else model,

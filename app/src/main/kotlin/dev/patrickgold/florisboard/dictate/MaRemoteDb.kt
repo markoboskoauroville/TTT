@@ -194,6 +194,18 @@ object MaRemoteDb {
         }
     }
 
+    /** Saves one benchmark result as benchmarks/<date>.json (engines + benchmark, 9.11.2026). Blocking. */
+    fun pushBenchmark(date: String, json: String): String {
+        val tok = token() ?: return "not saved to the database (no token set)"
+        return runCatching {
+            val path = "benchmarks/$date.json"
+            val sha = http.newCall(req("$API/contents/$path?ref=$BRANCH", tok).build()).execute().use { r ->
+                if (r.isSuccessful) JSONObject(r.body.string()).optString("sha").ifEmpty { null } else null
+            }
+            if (upload(path, json.toByteArray(), sha, tok) != null) "saved to RE Magic Database ($path)" else "the database refused the file"
+        }.getOrElse { "the database could not be reached" }
+    }
+
     // ---------------------------------------------------------------- the sync
 
     /** Pulls and pushes as described above; returns a one line result (also kept in [status]). */

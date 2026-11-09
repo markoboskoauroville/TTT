@@ -1,0 +1,299 @@
+/*
+ * Copyright (C) 2026 Marko Bosko, Mantra Productions
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ */
+
+package dev.patrickgold.florisboard.dictate.engines
+
+import android.content.Context
+import android.net.Uri
+import android.os.Handler
+import android.os.Looper
+import android.os.ParcelFileDescriptor
+import android.speech.RecognitionListener
+import android.speech.RecognizerIntent
+import android.speech.SpeechRecognizer
+import android.util.Base64
+import dev.patrickgold.florisboard.dictate.MaLanguage
+import dev.patrickgold.florisboard.dictate.MaProviders
+import dev.patrickgold.florisboard.dictate.provider.LocalModelManager
+import dev.patrickgold.florisboard.dictate.provider.LocalTranscriptionProvider
+import dev.patrickgold.florisboard.dictate.provider.ProviderRegistry
+import dev.patrickgold.florisboard.dictate.provider.TranscriptionRequest
+import java.io.File
+import java.io.IOException
+import java.util.concurrent.TimeUnit
+import kotlin.coroutines.resume
+import kotlin.coroutines.resumeWithException
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlinx.coroutines.withContext
+import okhttp3.Call
+import okhttp3.Callback
+import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.MultipartBody
+import okhttp3.OkHttpClient
+import okhttp3.Request
+import okhttp3.RequestBody
+import okhttp3.RequestBody.Companion.asRequestBody
+import okhttp3.RequestBody.Companion.toRequestBody
+import okhttp3.Response
+import org.json.JSONArray
+import org.json.JSONObject
+
+/**
+ * One adapter per engine: a 16 kHz mono WAV in, the text out, or an [EngineFailure] that says why
+ * (429 / 402 or a quota message = QUOTA, so the chain switches at once). Keys come from
+ * [EngineKeys] and never appear in a message, a log or an exception.
+ */
+object EngineAdapters {
+    private val http = OkHttpClient.Builder()
+        .connectTimeout(4, TimeUnit.SECONDS)
+        .readTimeout(25, TimeUnit.SECONDS)
+        .writeTimeout(25, TimeUnit.SECONDS)
+        .build()
+    private val WAV = "audio/wav".toMediaType()
+    private val JSONT = "application/json".toMediaType()
+
+    private suspend fun Call.await(): Response = suspendCancellableCoroutine { cont ->
+        cont.invokeOnCancellation { runCatching { cancel() } }
+        enqueue(object : Callback {
+            override fun onFailure(call: Call, e: IOException) { if (cont.isActive) cont.resumeWithException(e) }
+            override fun onResponse(call: Call, response: Response) { cont.resume(response) }
+        })
+    }
+
+    /** The body of a 2xx answer; any other status becomes a typed failure. The body is never put in a message. */
+    private suspend fun send(req: Request): String {
+        http.newCall(req).await().use { r ->
+            val body = runCatching { r.body.string() }.getOrDefault("")
+            if (r.isSuccessful) return body
+            val low = body.lowercase()
+            val kind = when {
+                r.code == 429 || r.code == 402 -> FailKind.QUOTA
+                r.code == 401 -> FailKind.AUTH
+                r.code == 403 -> if (low.contains("quota") || low.contains("credit") || low.contains("limit")) FailKind.QUOTA else FailKind.AUTH
+                else -> FailKind.ERROR
+            }
+            throw EngineFailure(kind, "HTTP ${r.code}")
+        }
+    }
+
+    private fun lang2(lang: String) = if (lang == "en") "en" else "hr"
+
+    private fun multipart(fields: Map<String, String>, fileField: String, wav: File): MultipartBody {
+        val b = MultipartBody.Builder().setType(MultipartBody.FORM)
+        fields.forEach { (k, v) -> b.addFormDataPart(k, v) }
+        b.addFormDataPart(fileField, "clip.wav", wav.asRequestBody(WAV))
+        return b.build()
+    }
+
+    suspend fun run(c: Context, id: String, wav: File, lang: String, names: List<String>): String {
+        if (id == EngineCatalog.FAKE) throw EngineFailure(FailKind.QUOTA, "HTTP 429 (test engine)")
+        return when (id) {
+            "parakeet" -> parakeet(c, wav, lang, names)
+            "android" -> androidRecognizer(c, wav, lang)
+            "groq_turbo" -> groq(c, "whisper-large-v3-turbo", wav, lang, names)
+            "groq_v3" -> groq(c, "whisper-large-v3", wav, lang, names)
+            "cloudflare" -> cloudflare(c, wav, lang)
+            "gemini" -> gemini(c, wav, lang, names)
+            "deepgram" -> deepgram(c, wav, lang, names)
+            "assemblyai" -> assemblyai(c, wav, lang, names)
+            "speechmatics" -> speechmatics(c, wav, lang)
+            "soniox" -> soniox(c, wav, lang)
+            "elevenlabs" -> elevenlabs(c, wav, lang)
+            else -> throw EngineFailure(FailKind.NOT_CONFIGURED, "unknown engine")
+        }
+    }
+
+    private fun key(c: Context, id: String): List<String> =
+        EngineKeys.lines(c, id).ifEmpty { throw EngineFailure(FailKind.NOT_CONFIGURED, "no key") }
+
+    // ------------------------------------------------------------------ on the phone
+
+    private suspend fun parakeet(c: Context, wav: File, lang: String, names: List<String>): String = withContext(Dispatchers.Default) {
+        val local = MaProviders.localTranscriptionAccount()
+        val model = MaProviders.transcriptionModelFor(c, local, ProviderRegistry.LOCAL)
+        if (!LocalModelManager.isInstalled(c, model)) throw EngineFailure(FailKind.NOT_CONFIGURED, "model not installed")
+        LocalTranscriptionProvider(LocalTranscriptionProvider.modelDir(c, model))
+            .transcribe(TranscriptionRequest(audioFile = wav, model = model, language = lang2(lang))).text
+    }
+
+    /** SpeechRecognizer on the device (Android 13+ reads the audio from a file descriptor). */
+    private suspend fun androidRecognizer(c: Context, wav: File, lang: String): String {
+        if (android.os.Build.VERSION.SDK_INT < 33) throw EngineFailure(FailKind.NOT_CONFIGURED, "needs Android 13")
+        if (!SpeechRecognizer.isOnDeviceRecognitionAvailable(c)) throw EngineFailure(FailKind.NOT_CONFIGURED, "no on-device recognizer")
+        val pcm = File(c.cacheDir, "engine_raw.pcm")
+        withContext(Dispatchers.IO) { wav.inputStream().use { i -> i.skip(44); pcm.outputStream().use { o -> i.copyTo(o) } } }
+        return suspendCancellableCoroutine { cont ->
+            Handler(Looper.getMainLooper()).post {
+                val sr = SpeechRecognizer.createOnDeviceSpeechRecognizer(c)
+                val pfd = ParcelFileDescriptor.open(pcm, ParcelFileDescriptor.MODE_READ_ONLY)
+                fun finish(r: Result<String>) {
+                    runCatching { sr.destroy() }; runCatching { pfd.close() }
+                    if (cont.isActive) cont.resumeWith(r)
+                }
+                cont.invokeOnCancellation { Handler(Looper.getMainLooper()).post { runCatching { sr.destroy() }; runCatching { pfd.close() } } }
+                sr.setRecognitionListener(object : RecognitionListener {
+                    override fun onReadyForSpeech(p: android.os.Bundle?) {}
+                    override fun onBeginningOfSpeech() {}
+                    override fun onRmsChanged(v: Float) {}
+                    override fun onBufferReceived(b: ByteArray?) {}
+                    override fun onEndOfSpeech() {}
+                    override fun onPartialResults(p: android.os.Bundle?) {}
+                    override fun onEvent(t: Int, p: android.os.Bundle?) {}
+                    override fun onError(e: Int) { finish(Result.failure(EngineFailure(FailKind.ERROR, "recognizer error $e"))) }
+                    override fun onResults(r: android.os.Bundle?) {
+                        val t = r?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)?.firstOrNull().orEmpty()
+                        finish(Result.success(t))
+                    }
+                })
+                val i = android.content.Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH)
+                    .putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
+                    .putExtra(RecognizerIntent.EXTRA_LANGUAGE, if (lang2(lang) == "en") "en-US" else "hr-HR")
+                    .putExtra(RecognizerIntent.EXTRA_AUDIO_SOURCE, pfd)
+                    .putExtra(RecognizerIntent.EXTRA_AUDIO_SOURCE_CHANNEL_COUNT, 1)
+                    .putExtra(RecognizerIntent.EXTRA_AUDIO_SOURCE_ENCODING, android.media.AudioFormat.ENCODING_PCM_16BIT)
+                    .putExtra(RecognizerIntent.EXTRA_AUDIO_SOURCE_SAMPLING_RATE, 16000)
+                sr.startListening(i)
+            }
+        }
+    }
+
+    // ------------------------------------------------------------------ cloud, one call
+
+    /** Groq: tries each key it holds, rolling to the next on a quota answer. */
+    private suspend fun groq(c: Context, model: String, wav: File, lang: String, names: List<String>): String {
+        var last: EngineFailure? = null
+        for (k in key(c, "groq")) {
+            val fields = linkedMapOf("model" to model, "response_format" to "json", "temperature" to "0", "language" to lang2(lang))
+            if (names.isNotEmpty()) fields["prompt"] = names.joinToString(", ").take(600)
+            val req = Request.Builder().url("https://api.groq.com/openai/v1/audio/transcriptions")
+                .header("Authorization", "Bearer $k").header("User-Agent", "curl/8")
+                .post(multipart(fields, "file", wav)).build()
+            try { return JSONObject(send(req)).getString("text") } catch (f: EngineFailure) {
+                if (f.kind != FailKind.QUOTA && f.kind != FailKind.AUTH) throw f
+                last = f
+            }
+        }
+        throw last ?: EngineFailure(FailKind.NOT_CONFIGURED, "no key")
+    }
+
+    private suspend fun cloudflare(c: Context, wav: File, lang: String): String {
+        val k = key(c, "cloudflare")
+        if (k.size < 2) throw EngineFailure(FailKind.NOT_CONFIGURED, "needs account id and token")
+        val b64 = withContext(Dispatchers.IO) { Base64.encodeToString(wav.readBytes(), Base64.NO_WRAP) }
+        val body = JSONObject().put("audio", b64).put("language", lang2(lang)).toString().toRequestBody(JSONT)
+        val req = Request.Builder().url("https://api.cloudflare.com/client/v4/accounts/${k[0]}/ai/run/@cf/openai/whisper-large-v3-turbo")
+            .header("Authorization", "Bearer ${k[1]}").post(body).build()
+        return JSONObject(send(req)).getJSONObject("result").getString("text")
+    }
+
+    private suspend fun gemini(c: Context, wav: File, lang: String, names: List<String>): String {
+        val k = key(c, "gemini").first()
+        val b64 = withContext(Dispatchers.IO) { Base64.encodeToString(wav.readBytes(), Base64.NO_WRAP) }
+        val l = if (lang2(lang) == "en") "English" else "Croatian"
+        val p = "Transcribe this speech exactly and verbatim in $l, with punctuation, no commentary." +
+            if (names.isNotEmpty()) " Names that may occur: " + names.joinToString(", ").take(600) + "." else ""
+        val b = JSONObject().put(
+            "contents",
+            JSONArray().put(
+                JSONObject().put(
+                    "parts",
+                    JSONArray().put(JSONObject().put("text", p))
+                        .put(JSONObject().put("inline_data", JSONObject().put("mime_type", "audio/wav").put("data", b64))),
+                ),
+            ),
+        )
+        val req = Request.Builder().url("https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-lite-latest:generateContent")
+            .header("x-goog-api-key", k).post(b.toString().toRequestBody(JSONT)).build()
+        return JSONObject(send(req)).getJSONArray("candidates").getJSONObject(0).getJSONObject("content")
+            .getJSONArray("parts").getJSONObject(0).getString("text").trim()
+    }
+
+    private suspend fun deepgram(c: Context, wav: File, lang: String, names: List<String>): String {
+        val k = key(c, "deepgram").first()
+        val u = Uri.Builder().scheme("https").authority("api.deepgram.com").path("/v1/listen")
+            .appendQueryParameter("model", "nova-3").appendQueryParameter("language", lang2(lang))
+            .appendQueryParameter("smart_format", "true")
+        names.take(50).forEach { u.appendQueryParameter("keyterm", it) }
+        val req = Request.Builder().url(u.build().toString()).header("Authorization", "Token $k").post(wav.asRequestBody(WAV)).build()
+        return JSONObject(send(req)).getJSONObject("results").getJSONArray("channels").getJSONObject(0)
+            .getJSONArray("alternatives").getJSONObject(0).getString("transcript")
+    }
+
+    private suspend fun elevenlabs(c: Context, wav: File, lang: String): String {
+        val k = key(c, "elevenlabs").first()
+        val req = Request.Builder().url("https://api.elevenlabs.io/v1/speech-to-text").header("xi-api-key", k)
+            .post(multipart(mapOf("model_id" to "scribe_v1", "language_code" to lang2(lang)), "file", wav)).build()
+        return JSONObject(send(req)).getString("text")
+    }
+
+    // ------------------------------------------------------------------ cloud, upload then poll
+
+    private suspend fun assemblyai(c: Context, wav: File, lang: String, names: List<String>): String {
+        val k = key(c, "assemblyai").first()
+        val up = JSONObject(
+            send(Request.Builder().url("https://api.assemblyai.com/v2/upload").header("authorization", k).post(wav.asRequestBody("application/octet-stream".toMediaType())).build()),
+        ).getString("upload_url")
+        val b = JSONObject().put("audio_url", up).put("language_code", lang2(lang)).put("speech_model", "universal")
+        if (names.isNotEmpty()) b.put("word_boost", JSONArray(names.take(100)))
+        val id = JSONObject(send(Request.Builder().url("https://api.assemblyai.com/v2/transcript").header("authorization", k).post(b.toString().toRequestBody(JSONT)).build())).getString("id")
+        while (true) {
+            val r = JSONObject(send(Request.Builder().url("https://api.assemblyai.com/v2/transcript/$id").header("authorization", k).get().build()))
+            when (r.getString("status")) {
+                "completed" -> return r.optString("text")
+                "error" -> throw EngineFailure(FailKind.ERROR, "engine error")
+            }
+            delay(700)
+        }
+    }
+
+    private suspend fun speechmatics(c: Context, wav: File, lang: String): String {
+        val k = key(c, "speechmatics").first()
+        val cfg = JSONObject().put("type", "transcription").put("transcription_config", JSONObject().put("language", lang2(lang)))
+        val form = MultipartBody.Builder().setType(MultipartBody.FORM)
+            .addFormDataPart("config", cfg.toString()).addFormDataPart("data_file", "clip.wav", wav.asRequestBody(WAV)).build()
+        val id = JSONObject(send(Request.Builder().url("https://asr.api.speechmatics.com/v2/jobs").header("Authorization", "Bearer $k").post(form).build())).getString("id")
+        while (true) {
+            val st = JSONObject(send(Request.Builder().url("https://asr.api.speechmatics.com/v2/jobs/$id").header("Authorization", "Bearer $k").get().build()))
+                .getJSONObject("job").getString("status")
+            if (st == "done") break
+            if (st == "rejected" || st == "deleted") throw EngineFailure(FailKind.ERROR, "job $st")
+            delay(800)
+        }
+        return send(Request.Builder().url("https://asr.api.speechmatics.com/v2/jobs/$id/transcript?format=txt").header("Authorization", "Bearer $k").get().build()).trim()
+    }
+
+    private suspend fun soniox(c: Context, wav: File, lang: String): String {
+        val k = key(c, "soniox").first()
+        val auth = "Bearer $k"
+        val fileId = JSONObject(
+            send(Request.Builder().url("https://api.soniox.com/v1/files").header("Authorization", auth).post(multipart(emptyMap(), "file", wav)).build()),
+        ).getString("id")
+        val body = JSONObject().put("model", "stt-async-v3").put("file_id", fileId).put("language_hints", JSONArray().put(lang2(lang)))
+        val id = JSONObject(send(Request.Builder().url("https://api.soniox.com/v1/transcriptions").header("Authorization", auth).post(body.toString().toRequestBody(JSONT)).build())).getString("id")
+        try {
+            while (true) {
+                val st = JSONObject(send(Request.Builder().url("https://api.soniox.com/v1/transcriptions/$id").header("Authorization", auth).get().build())).getString("status")
+                if (st == "completed") break
+                if (st == "error") throw EngineFailure(FailKind.ERROR, "engine error")
+                delay(600)
+            }
+            return JSONObject(send(Request.Builder().url("https://api.soniox.com/v1/transcriptions/$id/transcript").header("Authorization", auth).get().build())).getString("text")
+        } finally {
+            runCatching { http.newCall(Request.Builder().url("https://api.soniox.com/v1/files/$fileId").header("Authorization", auth).delete().build()).execute().close() }
+        }
+    }
+
+    /** A tiny test: only the HTTP status, never a body. Used to prove a key answers. */
+    suspend fun ping(c: Context, id: String, wav: File): String = try {
+        run(c, id, wav, "en", emptyList()); "answers (200)"
+    } catch (f: EngineFailure) { "${f.kind} (${f.message})" } catch (t: Throwable) { "failed (${t.javaClass.simpleName})" }
+}
