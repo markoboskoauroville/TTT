@@ -1,0 +1,23 @@
+[
+{"id":"en01","g":"en","t":"Please send the Santoshi concert recording to Svemir and Tajana before Friday."},
+{"id":"en02","g":"en","t":"I switched the transcription from AssemblyAI to Groq because it is faster and cheaper."},
+{"id":"en03","g":"en","t":"Damjan wants the new Elevate Media video in vertical format with captions burned in."},
+{"id":"en04","g":"en","t":"Order the audio interface from Thomann and check that it works with CQ MixPad."},
+{"id":"en05","g":"en","t":"Mantreshwar Percussions Academy has a new lesson for Natasha about foot bells."},
+{"id":"en06","g":"en","t":"Generate the backing track in Suno and then mix it on the Pixel seven."},
+{"id":"en07","g":"en","t":"The keyboard should type exactly what I say, including names like Ivan Delić and Mislav."},
+{"id":"hr01","g":"hr","t":"Molim te pošalji snimku koncerta Svemiru i Tajani prije petka."},
+{"id":"hr02","g":"hr","t":"Danas sam kupio novi bubanj u Zagrebu i sutra idem na probu."},
+{"id":"hr03","g":"hr","t":"Mislav i Ivan Delić dolaze u subotu da zajedno složimo pjesmu."},
+{"id":"hr04","g":"hr","t":"Nisam siguran hoće li stići na vrijeme jer je gužva na cesti."},
+{"id":"hr05","g":"hr","t":"Kahwa je gotova, možeš doći kad god želiš, čekamo te u kuhinji."},
+{"id":"hr06","g":"hr","t":"Trebamo još jednom provjeriti zvuk prije nego što krenemo na pozornicu."},
+{"id":"hr07","g":"hr","t":"Hvala ti puno na pomoći, javit ću ti se čim završim s poslom."},
+{"id":"mx01","g":"mixed","t":"Ajde pošalji Damjanu taj video, he needs the final version do petka."},
+{"id":"mx02","g":"mixed","t":"Svemir je rekao da Groq radi puno brže nego AssemblyAI, ali moramo testirati."},
+{"id":"mx03","g":"mixed","t":"Naručio sam mixer kod Thomanna, should arrive u srijedu."},
+{"id":"mx04","g":"mixed","t":"Tajana pjeva u refrenu, and then the bass comes in na drugom taktu."},
+{"id":"mx05","g":"mixed","t":"Otvori Suno i generiraj novu pjesmu za Santoshi, something slow and warm."},
+{"id":"mx06","g":"mixed","t":"Mantreshwar lekcija za Natashu je gotova, please upload it na stranicu."},
+{"id":"mx07","g":"mixed","t":"Kinisi račun ne radi, can you check the cookies prije nego što pokrenemo CQ MixPad."}
+]
