@@ -53,7 +53,7 @@ object KeyScan {
             SKU.matches(tok) ->
                 if ("speechify" in h || (tok.length >= 44 && "elevenlabs" !in h)) listOf("speechify", "elevenlabs") else listOf("elevenlabs", "speechify")
             NOT_OURS.containsMatchIn(tok) -> emptyList()
-            tok.length in 24..128 && tok.any { it.isDigit() } && tok.any { it.isLetter() } -> {
+            tok.length in 24..256 && tok.any { it.isDigit() } && tok.any { it.isLetter() } -> {
                 val shaped = when {
                     HEX64.matches(tok) -> listOf("soniox")
                     HEX40.matches(tok) -> listOf("deepgram")
