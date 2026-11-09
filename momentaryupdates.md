@@ -331,3 +331,7 @@ voices. Stopped here: a further build plus a full suite (~1 h) would not finish 
 > "From now on, whenever there is a new feature in a menu, it must be the second item from the top, so I'm not searching for something new at the bottom." (Marko, 9.11.2026)
 
 **Status:** saved first; task 67 of mac-ses9-08-nov. Build 572: engine name regular weight, 0.8 x size, auto-fit kept; Transcription model hidden in parse() so home list and order list are one set (Voice transcription buttons in both); a new settings entry is inserted at position 2 of the saved order; Voice transcription buttons moved there once.
+
+> "Please remove the text which describes this menu item, and make these models into columns. It needs to align the width of the column with the width of the button, and this will make a minimalistic, clear user interface." (Marko, 9.11.2026, screenshot of build 574, Voice transcription buttons)
+
+**Status:** saved first; task 68 of mac-ses9-08-nov. Explanation paragraph and the H/E headings removed; two columns under the two key previews, each the width of its key (same Row, weight 1f, 10 dp gap); compact provider cards with radio, short name, quota line; Advanced one full-width row.
