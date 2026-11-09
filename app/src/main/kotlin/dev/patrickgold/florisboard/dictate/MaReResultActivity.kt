@@ -99,6 +99,14 @@ class MaReResultActivity : ComponentActivity() {
                                 horizontalArrangement = Arrangement.End,
                             ) {
                                 if (result.note) {
+                                    if (result.text.trim().endsWith("?")) {
+                                        TextButton(onClick = {
+                                            done = true; MaReResult.cancel(); finish()
+                                            android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
+                                                DictateController.onMicClick(applicationContext, reprompt = true, engine = MaProviders.ENGINE_ASSEMBLYAI)
+                                            }, 700)
+                                        }) { Text("Answer", fontSize = 18.sp) }
+                                    }
                                     TextButton(onClick = { cancel() }) { Text("Close", fontSize = 18.sp) }
                                 } else {
                                     TextButton(onClick = { cancel() }) { Text("Cancel", fontSize = 18.sp) }
@@ -121,6 +129,7 @@ class MaReResultActivity : ComponentActivity() {
         if (!done) MaReResult.cancel()
         // However it closed, RE's state is reset at once: no spinner, no stuck keyboard.
         DictateController.recoverAfterPopup()
+        MaVoice.stop()
         super.onDestroy()
     }
 }

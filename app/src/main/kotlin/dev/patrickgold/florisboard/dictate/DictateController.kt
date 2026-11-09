@@ -754,6 +754,7 @@ object DictateController {
         // The bar is a leftover from a discard that is still animating — acting on it would stop a
         // recording that no longer exists.
         if (discardingBar) return
+        MaVoice.stop() // RE stops speaking when he starts dictating
         when (_state.value) {
             is UiState.Recording -> stopAndTranscribe(context)
             // Tapping the mic while transcribing or rewording aborts it (the button shows a stop icon,

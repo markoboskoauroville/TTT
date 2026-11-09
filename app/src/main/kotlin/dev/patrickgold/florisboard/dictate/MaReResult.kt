@@ -73,15 +73,22 @@ object MaReResult {
 
     /** Shows [text] (the model's answer) in the pop-up; a note when it is one. */
     fun present(context: Context, text: String, replace: Boolean, words: String) {
-        val note = isNote(text)
+        // The app in front must still be the one the command was given in (Marko, 9.11.2026): if it changed, the
+        // result is shown in the pop-up only and nothing can be inserted.
+        val now = runCatching { dev.patrickgold.florisboard.dictate.overlay.DictateAccessibilityService.frontPackage() }.getOrNull()
+        val moved = now != null && MaReprompt.lastPkg != null && now != MaReprompt.lastPkg && now != context.packageName
+        val note = isNote(text) || moved
+        val shownText = if (moved && !isNote(text)) "The app in front changed since you gave the command, so nothing is inserted. RE's draft was: " + display(text) else display(text)
+        if (note) MaVoice.say(context, shownText)
         appContextForInsert = context.applicationContext
-        shown = Result(display(text), note, replace, MaReprompt.lastPkg, MaReprompt.lastFieldId, words, viaAssistant = MaAssistant.viaOverlay)
+        shown = Result(shownText, note, replace, MaReprompt.lastPkg, MaReprompt.lastFieldId, words, viaAssistant = MaAssistant.viaOverlay)
         open(context)
     }
 
     /** Shows RE's own words (an error, a refusal, a question): the pop-up only, never insertable. */
     fun note(context: Context, text: String) {
         shown = Result(text, true, false, MaReprompt.lastPkg, MaReprompt.lastFieldId, MaReprompt.lastWords)
+        MaVoice.say(context, text)
         open(context)
     }
 
@@ -103,7 +110,10 @@ object MaReResult {
         if (r.viaAssistant) {
             val ctx = appContextForInsert
             val a = accepted
-            if (ctx != null && a != null) {
+            val front = runCatching { dev.patrickgold.florisboard.dictate.overlay.DictateAccessibilityService.frontPackage() }.getOrNull()
+            if (front != null && a?.pkg != null && front != a.pkg) {
+                accepted = null // the app changed again: nothing is inserted into another app
+            } else if (ctx != null && a != null) {
                 accepted = null
                 android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({ DictateController.insertReResult(ctx, a) }, 600)
             }

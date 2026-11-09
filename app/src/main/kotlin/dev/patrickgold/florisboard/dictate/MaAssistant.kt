@@ -11,10 +11,8 @@
 package dev.patrickgold.florisboard.dictate
 
 import android.content.Context
-import android.speech.tts.TextToSpeech
 import dev.patrickgold.florisboard.dictate.overlay.DictateAccessibilityService
 import dev.patrickgold.florisboard.dictate.overlay.MaScreenChat
-import java.util.Locale
 import kotlin.jvm.Volatile
 
 /**
@@ -58,6 +56,19 @@ object MaAssistant {
     @Volatile
     var viaOverlay = false
         private set
+
+    /** One line about the app in front, so RE adapts: chat messages, mail, or his own prompts to Claude. */
+    fun appHint(): String {
+        val p = MaReprompt.lastPkg ?: return ""
+        val what = when {
+            p.startsWith("com.whatsapp") -> "WhatsApp: the screen holds chat messages"
+            p == "com.google.android.gm" -> "Gmail: the screen holds email (sender, subject, text)"
+            p == "com.anthropic.claude" -> "the Claude app: the text is Marko's own prompts to Claude"
+            p.contains("telegram") || p.contains("messenger") || p.contains("signal") -> "a messenger: the screen holds chat messages"
+            else -> "an app ($p)"
+        }
+        return "The app in front is $what.\n"
+    }
 
     /** The keyboard's RE key was used: results go back through the keyboard field. */
     fun markKeyboard() { viaOverlay = false }
@@ -116,8 +127,7 @@ object MaAssistant {
             return
         }
         val clean = answer.trim()
-        MaReResult.note(app, clean)
-        speak(app, clean)
+        MaReResult.note(app, clean)   // the note is spoken by MaVoice (Reader voice, Voice Engine subtitles)
     }
 
     /** What the model is asked: answer his request from the screen, short, in his language, fit to be spoken. */
@@ -128,28 +138,4 @@ object MaAssistant {
             "no lists, no symbols, no markdown, short. To read messages aloud say who wrote and what, oldest of the last " +
             "few first. Never invent anything that is not on the screen; if it is not there, say so in one sentence. " +
             "Never offer to send, buy or delete.\n\n<request>\n${words.trim()}\n</request>\n\n<screen>\n${screen.text}\n</screen>"
-
-    // ---------------------------------------------------------------- speaking
-
-    @Volatile
-    private var tts: TextToSpeech? = null
-
-    @Volatile
-    private var ttsReady = false
-
-    private fun speak(context: Context, text: String) {
-        val lang = MaRewordPrompt.languageOf(text)
-        val locale = if (lang != null && lang.startsWith("Croatian", true)) Locale("hr", "HR") else Locale.getDefault()
-        val say = { t: TextToSpeech ->
-            runCatching { t.language = locale }
-            t.speak(text.take(1500), TextToSpeech.QUEUE_FLUSH, null, "re-assistant")
-        }
-        val cur = tts
-        if (cur != null && ttsReady) { say(cur); return }
-        var created: TextToSpeech? = null
-        created = TextToSpeech(context) { status ->
-            if (status == TextToSpeech.SUCCESS) { ttsReady = true; created?.let { say(it) } }
-        }
-        tts = created
-    }
 }

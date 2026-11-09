@@ -913,6 +913,7 @@ abstract class FlorisPreferenceModel : PreferenceModel() {
         // RE Magic skill (MaReSkill, 9.11.2026): learn from the corrections he makes before sending.
         val maReLearn = boolean(key = "dictate__ma_re_learn", default = true)
         // Spelling (MaSpelling, 9.11.2026): the names his speech-to-text mishears. On by default: he asked for it.
+        val maReSpeaks = boolean(key = "dictate__ma_re_speaks", default = true)
         val maReSkills = boolean(key = "dictate__ma_re_skills", default = true)
         /** Screenshot + OCR fallback for apps whose accessibility tree is empty (off by default; never for WhatsApp). */
         val maReScreenshot = boolean(key = "dictate__ma_re_screenshot", default = false)

@@ -96,7 +96,33 @@ check("rule: note allowed only when expected", judge({"id": "q", "expect": "note
 if "--device" in sys.argv:
     N = sys.argv[sys.argv.index("--device") + 1]
 
+    def front():
+        return subprocess.run(["adb", "-s", N, "shell", "dumpsys", "window"], capture_output=True, text=True, timeout=60).stdout
+
+    def wait_for_whatsapp():
+        """Marko, 9.11.2026: if he switches to another app (Claude), STOP at once: no taps, no typing, no switching.
+        Poll every 15 s; resume only after WhatsApp (or the TTT pop-up over it) has been in front for 30 s."""
+        paused = False
+        ok_since = None
+        while True:
+            out = [l for l in front().splitlines() if "mCurrentFocus" in l]
+            line = out[0] if out else ""
+            if "whatsapp" in line.lower() or "tttlight" in line:
+                ok_since = ok_since or time.time()
+                if not paused or time.time() - ok_since >= 30:
+                    if paused:
+                        print("  [resumed: WhatsApp has been in front for 30 s]", flush=True)
+                    return
+            else:
+                if not paused:
+                    print("  [paused: another app is in front: " + line.strip()[-60:] + "]", flush=True)
+                paused = True
+                ok_since = None
+            time.sleep(15)
+
     def adb(*a, t=60):
+        if a and a[0] == "shell" and len(a) > 1 and a[1] in ("input", "am"):
+            wait_for_whatsapp()
         return subprocess.run(["adb", "-s", N, *a], capture_output=True, text=True, timeout=t).stdout
 
     def dump():

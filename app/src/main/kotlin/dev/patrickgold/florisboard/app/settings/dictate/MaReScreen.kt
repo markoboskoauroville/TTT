@@ -78,6 +78,12 @@ fun MaReScreen() = FlorisScreen {
             summary = "Off. For apps whose accessibility text is empty: take a screenshot and read it on the phone (OCR). Never used in WhatsApp.",
         )
         SwitchPreference(
+            prefs.dictate.maReSpeaks,
+            title = "RE speaks",
+            summary = "RE's questions, notes and read-outs are spoken with the Reader voice, and shown as Voice Engine subtitles when " +
+                "Voice Engine is on. It stops when you start dictating. A question gets an Answer button in the pop-up.",
+        )
+        SwitchPreference(
             prefs.dictate.maReSkills,
             title = "Skills",
             summary = "After a conversation, RE updates notes on this phone, in Documents/TTTmini/skills: your style, one " +
