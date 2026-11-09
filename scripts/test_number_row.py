@@ -142,7 +142,7 @@ check("the Switchboard's Number row opens the editor",
       "the switch is a dead end and the editor has one door again")
 # A saved order must not bury it. Read DEFAULT from the source and walk the same insertion parse()
 # does: an order saved before NUMBER_ROW existed puts it straight after READER, not at the bottom.
-check("parse inserts beside the DEFAULT neighbour", "DEFAULT.subList(0, index).lastOrNull { it in all }" in order,
+check("parse inserts a new entry second from the top (Marko 9.11.2026)", "all.add(minOf(1, all.size), entry)" in order,
       "a new entry is appended under everything he arranged, where he did not find it")
 _default = re.findall(r"MaSettingsEntry\.([A-Z_0-9]+)",
                       re.search(r"val DEFAULT: List<MaSettingsEntry> = listOf\((.*?)\n    \)", order, re.S).group(1))

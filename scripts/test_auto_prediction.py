@@ -111,8 +111,8 @@ check("a late answer for gone text is dropped", "if (!MaAiPredict.stillFor(edito
 # The entry: named as he names it, the only one about prediction.
 order = code(SETTINGS / "MaSettingsOrder.kt")
 check("the entry is called Auto prediction", 'PREDICTIONS("predictions", "Auto prediction"' in order)
-check("Learn my words has no entry of its own", "it == MaSettingsEntry.VOCABULARY" in order)
-check("My corrections has no entry of its own", "it == MaSettingsEntry.CORRECTIONS" in order)
+check("Learn my words has no entry of its own", "MaSettingsEntry.VOCABULARY" in order and "val hidden" in order)
+check("My corrections has no entry of its own", "MaSettingsEntry.CORRECTIONS" in order and "val hidden" in order)
 check("My corrections is reached from it", "Routes.Settings.MaDictationCorrections" in screen)
 check("the big A icon", "MaSettingsEntry.PREDICTIONS -> Icons.Default.FontDownload" in code(SETTINGS / "MaSettingsOrderScreen.kt"))
 check("beside Prompts and its costs",

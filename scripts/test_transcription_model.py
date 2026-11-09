@@ -44,7 +44,7 @@ check("fallback takes any failure, not only offline", "anyFailure" in fb and "!a
 check("AssemblyAI-only never falls back", "engine == ENGINE_ASSEMBLYAI) return null" in fb)
 
 order = (SRC / "app/settings/MaSettingsOrder.kt").read_text()
-check("settings entry is called Transcription model", '"Transcription model"' in order and "MaSettingsEntry.TRANSCRIPTION_MODEL," in order)
+check("settings entry is called Transcription model", '"Transcription model"' in order and "MaSettingsEntry.TRANSCRIPTION_MODEL" in order and "val hidden" in order)  # hidden since 9.11.2026; screen lives under Voice transcription buttons
 screen = (SRC / "app/settings/dictate/MaTranscriptionScreen.kt").read_text()
 for t in ('"AssemblyAI"', '"Parakeet (on the phone)"', '"AssemblyAI, Parakeet as fallback"'):
     check(f"screen offers {t}", t in screen)
