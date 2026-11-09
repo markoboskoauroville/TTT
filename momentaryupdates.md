@@ -351,3 +351,9 @@ voices. Stopped here: a further build plus a full suite (~1 h) would not finish 
 > "You broke the rule. I have a rule: API keys are only entered through text files. Read the repositories Key Tester and others which have multiple keys with fallbacks. Give me one, only one, file picker, and then you recognise what type of key it is and give it to the right model. After importing you say, for example: 10 Groq keys, all 10 tested, 5 working — and then you take the 5 that work. Groq keys, Google keys, everything: detect it and put it smartly into the app, used with fallback mechanisms. I expect a simple key picker, one more row in this area where I choose the model for each [key]." (Marko, 9.11.2026)
 
 **Status:** saved first; task 70 of mac-ses9-08-nov. One row "Import keys from file" on Voice transcription buttons; every paste field removed; detect by shape and label, test with free auth calls, keep the working ones in a Keystore ring per provider, rotate keys then providers, "N keys" on the cards.
+
+## 9.11.2026 – long-press engine panel: both keys, vertical, grows up
+
+> "The implementation is not good for long pressing. First of all, long press works only on the English side. On the Croatian side it doesn't work. And then it opens the options in ONE LINE at the bottom of the screen, and I need to scroll. My idea is that it opens VERTICALLY, because we have more space in the vertical direction, the screen being in portrait mode. When I long press, it opens from the bottom, from the button itself, up to the top of the screen, and I can see everything at the same time. Please fix that." (Marko, 9.11.2026)
+
+**Status:** saved first; task 72 of mac-ses9-08-nov.

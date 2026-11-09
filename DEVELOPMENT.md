@@ -11421,3 +11421,8 @@ Marko disliked build 576 (half-size minutes). The H/E key (and both previews in 
 ### Long press on H or E opens the engines for that language (9.11.2026, task 70)
 
 Marko: long press the transcription button, a dialog with all the models, pick one, no OK, it closes. `MaEngineMenu` (end of `MaFeatureRow.kt`) is a panel inside the keyboard window (an input method cannot show a dialog), opened by `onLongClick` of the plain H and E keys only (not E|H, not the Talk-to keys). One chip per provider that is set up (name, free/paid word with minutes), the current one marked red; a tap calls `EngineLive.select` (the same store as the radios in Voice transcription buttons, so the key changes at once) and closes it. The x closes without a change. A long press does not record: `combinedClickable` fires either the click or the long click.
+
+## 9.11.2026 – engine panel by long press: every H/E key, vertical, grows up (task 72)
+
+**Cause of "only E works":** the long press was wired only when `engine == null`, so the Talk-to-AssemblyAI and Talk-to-Parakeet keys (RECORD_HR_NET/LOCAL, RECORD_EN_NET/LOCAL, which also wear H/E) had no handler; his H key was one of those. Now every H/E key except E|H opens the panel for its language.
+**Panel:** was one horizontal row inside the keyboard window (scroll needed). Now a `Popup` window (its own window, so it may extend above the IME area) anchored to the pressed key's top (bounds captured with onGloballyPositioned), a vertical list of all providers with "free N"/"paid", current one highlighted, row height shrinks (30-52 dp) to fit between key and status bar, vertical scroll only if still too tall; tap selects and closes, x or outside tap closes. Rejected: keeping the row inside the keyboard window (cannot grow up).

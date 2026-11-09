@@ -102,6 +102,8 @@ import kotlinx.coroutines.delay
 import androidx.compose.ui.graphics.Color
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.border
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.boundsInWindow
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -364,6 +366,8 @@ fun MaFeatureRow(
     var scrollMenu by remember { mutableStateOf(false) }
     // Long press on the H or E key: the engines for that language, pick one and it closes (Marko, 9.11.2026). "hr" / "en" / null.
     var engineMenu by remember { mutableStateOf<String?>(null) }
+    // Where the pressed key sits in the keyboard window (updated by the key itself), the anchor of the engine panel.
+    val engineKeyRect = remember { arrayOf<androidx.compose.ui.geometry.Rect?>(null) }
 
     // The one-minute fill mark and its clock are gone. They existed to make a tick last long enough
     // to be seen; the ring on the key says the same thing for as long as it is true, so there is
@@ -1445,7 +1449,7 @@ fun MaFeatureRow(
                     val recording = rec != null
                     ThemedKey(
                         code = KeyCode.NOOP,
-                        modifier = keyMod,
+                        modifier = keyMod.androidx_onPlaced { engineKeyRect[0] = it },
                         // ONLY THE KEY THAT STARTED IT RINGS.
                         //
                         // Both rang, on the reasoning that one recording is running and lighting one
@@ -1475,7 +1479,7 @@ fun MaFeatureRow(
                             DictateController.recordingEngine() == engine &&
                             !DictateController.isRepromptRecording()
                         ) MaRecordOutlineLive else MaRecordOutline,
-                        onLongClick = if (!translate && engine == null) {
+                        onLongClick = if (!translate) {
                             { engineMenu = if (language == MaLanguage.HR) "hr" else "en" }
                         } else null,
                         onClick = {
@@ -2085,7 +2089,7 @@ fun MaFeatureRow(
       }
 
       engineMenu?.let { lang ->
-        MaEngineMenu(lang = lang, onDismiss = { engineMenu = null })
+        MaEngineMenu(lang = lang, anchor = engineKeyRect[0], onDismiss = { engineMenu = null })
       }
 
       // The scan picker was here. It is gone with the list it drew: nothing arms it any more,
@@ -2461,59 +2465,89 @@ internal val MaEngineNetRed = androidx.compose.ui.graphics.Color(0xFFE53935)
 /** Talk to Parakeet: the dot of the phone's record keys (8.11.2026). */
 internal val MaEngineLocalAmber = androidx.compose.ui.graphics.Color(0xFFFFB300)
 
+private fun Modifier.androidx_onPlaced(f: (androidx.compose.ui.geometry.Rect) -> kotlin.Unit): Modifier =
+    this.onGloballyPositioned { f(it.boundsInWindow()) }
+
 /**
- * The engines for one language, opened by a long press on its H or E key (Marko, 9.11.2026). One tap on a
- * provider chooses it (the same store as the radios in Voice transcription buttons, so the key changes at
- * once) and the panel closes; there is no OK. The x closes it without a change. Drawn inside the keyboard's
- * window like the scroll stepper, since an input method cannot show a dialog.
+ * The engines for one language, opened by a long press on any H or E record key (Marko, 9.11.2026): a VERTICAL
+ * list in a popup window that grows UP from the pressed key to the top of the screen, every provider visible at
+ * once (rows shrink to fit; vertical scroll only as a last resort). One tap chooses (the same store as Voice
+ * transcription buttons, so the key changes at once) and the panel closes. The x, or a tap outside, closes it.
+ * A Popup is its own window, so it may extend above the keyboard's own area.
  */
 @Composable
-private fun MaEngineMenu(lang: String, onDismiss: () -> kotlin.Unit) {
+private fun MaEngineMenu(lang: String, anchor: androidx.compose.ui.geometry.Rect?, onDismiss: () -> kotlin.Unit) {
     val context = androidx.compose.ui.platform.LocalContext.current
+    val view = androidx.compose.ui.platform.LocalView.current
+    val density = androidx.compose.ui.platform.LocalDensity.current
     val live by dev.patrickgold.florisboard.dictate.engines.EngineLive.state.collectAsState()
     val chosen = live.selected[lang] ?: dev.patrickgold.florisboard.dictate.engines.EngineStore.selected(context, lang)
     val ids = dev.patrickgold.florisboard.dictate.engines.EngineCatalog.ALL.map { it.id }
         .filter { it == chosen || dev.patrickgold.florisboard.dictate.engines.EngineChain.available(context, it) }
     val red = Color(0xFFE53935)
-    Row(
-        modifier = Modifier.fillMaxWidth().background(Color(0xFF16161A)).padding(horizontal = 8.dp, vertical = 8.dp),
-        verticalAlignment = Alignment.CenterVertically,
+    val loc = IntArray(2).also { view.getLocationOnScreen(it) }
+    val keyTop = anchor?.top ?: 0f
+    val keyLeft = anchor?.left ?: 0f
+    // Room above the key down from the status bar; header row + one row per provider share it.
+    val statusPx = with(density) { 28.dp.toPx() }
+    val availPx = (loc[1] + keyTop - statusPx).coerceAtLeast(with(density) { 120.dp.toPx() })
+    val rows = ids.size + 1
+    val rowDp = with(density) { (availPx / rows).toDp() }.coerceIn(30.dp, 52.dp)
+    val panelDp = rowDp * rows
+    val panelPx = with(density) { panelDp.toPx() }.coerceAtMost(availPx)
+    val widthPx = minOf(with(density) { 300.dp.toPx() }, view.width.toFloat())
+    val x = keyLeft.coerceIn(0f, (view.width - widthPx).coerceAtLeast(0f))
+    val provider = object : androidx.compose.ui.window.PopupPositionProvider {
+        override fun calculatePosition(
+            anchorBounds: androidx.compose.ui.unit.IntRect,
+            windowSize: androidx.compose.ui.unit.IntSize,
+            layoutDirection: androidx.compose.ui.unit.LayoutDirection,
+            popupContentSize: androidx.compose.ui.unit.IntSize,
+        ) = androidx.compose.ui.unit.IntOffset(x.toInt(), (keyTop - panelPx).toInt())
+    }
+    androidx.compose.ui.window.Popup(
+        popupPositionProvider = provider,
+        onDismissRequest = onDismiss,
+        properties = androidx.compose.ui.window.PopupProperties(focusable = false, dismissOnClickOutside = true, dismissOnBackPress = true),
     ) {
-        Text(
-            text = "\u2715",
-            color = Color(0xFFECEAE3),
-            fontSize = 18.sp,
-            modifier = Modifier.clickable { onDismiss() }.padding(horizontal = 10.dp, vertical = 6.dp),
-        )
-        Text(
-            text = if (lang == "hr") "H" else "E",
-            color = red,
-            fontSize = 17.sp,
-            fontWeight = FontWeight.Bold,
-            modifier = Modifier.padding(end = 8.dp),
-        )
-        Row(modifier = Modifier.weight(1f).horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-            for (id in ids) {
+        Column(
+            modifier = Modifier
+                .width(with(density) { widthPx.toDp() })
+                .height(with(density) { panelPx.toDp() })
+                .clip(RoundedCornerShape(12.dp))
+                .background(Color(0xFF16161A))
+                .border(1.dp, Color(0x44FFFFFF), RoundedCornerShape(12.dp))
+                .verticalScroll(rememberScrollState()),
+        ) {
+            Row(modifier = Modifier.fillMaxWidth().height(rowDp).padding(horizontal = 10.dp), verticalAlignment = Alignment.CenterVertically) {
+                Text(text = if (lang == "hr") "H" else "E", color = red, fontSize = 17.sp, fontWeight = FontWeight.Bold)
+                Spacer(Modifier.weight(1f))
+                Text(
+                    text = "\u2715", color = Color(0xFFECEAE3), fontSize = 18.sp,
+                    modifier = Modifier.clickable { onDismiss() }.padding(horizontal = 12.dp, vertical = 4.dp),
+                )
+            }
+            for (id in ids.reversed()) {
                 val sel = id == chosen
-                Column(
+                Row(
                     modifier = Modifier
-                        .clip(RoundedCornerShape(10.dp))
-                        .background(if (sel) red.copy(alpha = 0.18f) else Color(0x22FFFFFF))
-                        .border(if (sel) 2.dp else 1.dp, if (sel) red else Color(0x33FFFFFF), RoundedCornerShape(10.dp))
+                        .fillMaxWidth()
+                        .height(rowDp)
+                        .background(if (sel) red.copy(alpha = 0.22f) else Color.Transparent)
                         .clickable {
                             dev.patrickgold.florisboard.dictate.engines.EngineLive.select(context, lang, id)
                             onDismiss()
                         }
-                        .padding(horizontal = 12.dp, vertical = 6.dp),
+                        .padding(horizontal = 14.dp),
+                    verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Text(
                         text = dev.patrickgold.florisboard.dictate.engines.EngineCatalog.shortName(id),
-                        color = Color(0xFFECEAE3), fontSize = 14.sp, maxLines = 1,
+                        color = if (sel) red else Color(0xFFECEAE3), fontSize = 16.sp,
+                        fontWeight = if (sel) FontWeight.Bold else FontWeight.Normal, maxLines = 1,
+                        modifier = Modifier.weight(1f),
                     )
-                    Text(
-                        text = engineSubLabel(context, id),
-                        color = Color(0x99FFFFFF), fontSize = 11.sp, maxLines = 1,
-                    )
+                    Text(text = engineSubLabel(context, id), color = Color(0x99FFFFFF), fontSize = 13.sp, maxLines = 1)
                 }
             }
         }
