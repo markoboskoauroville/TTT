@@ -10,6 +10,7 @@
 
 package dev.patrickgold.florisboard.app.settings.dictate
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -24,6 +25,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import kotlinx.coroutines.launch
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -70,6 +73,56 @@ fun MaReScreen() = FlorisScreen {
                 "accessibility text with the side of each message, 2. a screenshot read by on-device OCR, 3. nothing " +
                 "else: no picture ever leaves the phone.",
         )
+        SwitchPreference(
+            prefs.dictate.maReSkills,
+            title = "Skills",
+            summary = "After a conversation, RE updates notes on this phone, in Documents/TTTmini/skills: your style, one " +
+                "file per person and one per chat (what was agreed, what is done, what is open). RE reads that chat's notes " +
+                "before it writes the next reply. They stay on the phone and in your private repo. Say \"update skills\" to do it now.",
+        )
+        var skillTick by remember { mutableStateOf(0) }
+        var openFile by remember { mutableStateOf<java.io.File?>(null) }
+        var openText by remember { mutableStateOf("") }
+        var skillStatus by remember { mutableStateOf("") }
+        val skillFiles = remember(skillTick) { dev.patrickgold.florisboard.dictate.MaSkills.files() }
+        val skillScope = rememberCoroutineScope()
+        Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)) {
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                OutlinedButton(onClick = {
+                    skillStatus = "Updating from the chat on screen..."
+                    skillScope.launch { skillStatus = dev.patrickgold.florisboard.dictate.MaSkills.updateNow(); skillTick++ }
+                }) { Text("Update skills now") }
+                OutlinedButton(onClick = { skillTick++ }) { Text("Refresh list") }
+            }
+            if (skillStatus.isNotEmpty()) Text(skillStatus, style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(top = 4.dp))
+            Text(
+                text = if (skillFiles.isEmpty()) "No skill files yet: they appear after your first RE message in a chat." else "${skillFiles.size} skill files:",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(top = 6.dp),
+            )
+            for (f in skillFiles) {
+                Text(
+                    text = f.relativeTo(dev.patrickgold.florisboard.dictate.MaSkills.root()).path + "  ·  " + dev.patrickgold.florisboard.dictate.MaSkills.stamp(f),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.fillMaxWidth().clickable {
+                        openFile = f; openText = runCatching { f.readText() }.getOrDefault("")
+                    }.padding(vertical = 8.dp),
+                )
+            }
+            openFile?.let { f ->
+                OutlinedTextField(
+                    value = openText, onValueChange = { openText = it },
+                    label = { Text(f.name) },
+                    modifier = Modifier.fillMaxWidth().heightIn(min = 200.dp),
+                )
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(top = 6.dp)) {
+                    OutlinedButton(onClick = { runCatching { f.writeText(openText) }; skillStatus = "Saved ${f.name}."; skillTick++ }) { Text("Save file") }
+                    OutlinedButton(onClick = { openFile = null }) { Text("Close") }
+                }
+            }
+        }
         val context = androidx.compose.ui.platform.LocalContext.current
         val shotOk = dev.patrickgold.florisboard.dictate.overlay.DictateAccessibilityService.canTakeScreenshot()
         Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {

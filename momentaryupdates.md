@@ -4,6 +4,12 @@ Every request word for word, saved and pushed before any code (MANTRA_MANIFEST r
 
 
 
+## 9.11.2026: skills on the phone, written by AI after each conversation
+
+> "Is my feature coded, writing skills as we go, understanding my style of communication and what is done and what is not done? I want skills on my own phone, written by AI after each conversation, updating the skills, stored in Documents/TTT (the default folder)." (Marko, 9.11.2026, relayed by the master session: style.md, people/, threads/ in the MARKO_COMMUNICATION shape, updated by one cheap background prompt after a chat, RE uses the thread file as context, Settings lists and edits them, re-skill-sync merges both ways.)
+
+**Status:** saved first.
+
 ## 9.11.2026: RE reads the screen: "take a screenshot, read the latest message and reply to it"
 
 > "Update TTT so it can take screenshots on the phone. If I say to RE Magic 'take a screenshot, read the latest message and reply to it', it is able to do it. It has the tools inside the app, and also in the skill it understands that when I say 'take the screenshot', it takes it and transcribes it." (Marko, 9.11.2026, relayed by the master session with the plan: read the accessibility node tree first, then takeScreenshot plus on-device OCR, vision on the model only as a last paid resort; spoken intents in English and Croatian; the reply is put in the field and never sent; skill section "Screen reading"; a Read screen switch in Settings, RE Magic.)

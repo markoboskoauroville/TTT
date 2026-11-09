@@ -2067,6 +2067,11 @@ object DictateController {
             if (words.isEmpty()) return
             MaReprompt.rememberWords(words)
             val write = outSink.fullText().isBlank() && outSink.selectedText().isBlank()
+            // "Update skills" (MaSkills): the notes for the chat on screen are refreshed; the answer is a pop-up note.
+            if (MaSkills.wants(words)) {
+                MaReResult.note(appContext, MaSkills.updateNow())
+                return
+            }
             // "Take a screenshot and reply to the latest message" (MaScreenRead): read the screen first.
             var screen: MaScreenRead.Screen? = null
             if (MaScreenRead.wants(words)) {
@@ -4221,6 +4226,7 @@ object DictateController {
         if (r.replace) s.selectAll()
         s.commitText(r.text)
         MaReSkill.onComposed(r.pkg, r.fieldId, r.words, r.text)
+        MaSkills.noteComposed(r.pkg)
     }
 
     /**
@@ -4229,10 +4235,10 @@ object DictateController {
      * chose first; if that fails, the cheapest the provider has. Null when no key or both fail; never
      * throws, never touches the field.
      */
-    suspend fun askModel(userContent: String, purpose: String): String? {
+    suspend fun askModel(userContent: String, purpose: String, cheap: Boolean = false): String? {
         if (MaProviders.rewordingApiKey().isBlank()) return null
         val chosen = MaFlow.model()
-        val first = if (MaPhoneModels.isPhone(chosen)) null else runCatching {
+        val first = if (cheap || MaPhoneModels.isPhone(chosen)) null else runCatching {
             requestRewordRaw(userContent, modelOverride = chosen, purpose = purpose)
         }.getOrNull()
         if (!first.isNullOrBlank()) return first.trim()
