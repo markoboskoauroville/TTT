@@ -225,6 +225,7 @@ object MaSkills {
         if (!s.isNullOrBlank()) { write(styleFile(), mergeStyle(style, s)); wrote++ }
         synchronized(this) { c.exchanges.clear() }
         MaLog.add("skills", "updated ${c.title}: $wrote files" + (how?.let { " ($it)" } ?: ""))
+        if (wrote > 0) MaRemoteDb.syncSoon()
         return if (wrote == 0) "Nothing new to write for \"${c.title}\"." else "Skills updated for \"${c.title}\": $wrote file(s) in Documents/TTTmini/skills."
     }
 

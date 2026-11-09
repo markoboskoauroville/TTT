@@ -127,6 +127,57 @@ fun MaReScreen() = FlorisScreen {
                 }
             }
         }
+        val dbContext = androidx.compose.ui.platform.LocalContext.current
+        var tokenInput by remember { mutableStateOf("") }
+        var dbStatus by remember { mutableStateOf(dev.patrickgold.florisboard.dictate.MaRemoteDb.status) }
+        var hasToken by remember { mutableStateOf(dev.patrickgold.florisboard.dictate.MaRemoteDb.hasToken()) }
+        val dbScope = rememberCoroutineScope()
+        Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {
+            Text("RE Magic Database", style = MaterialTheme.typography.titleSmall)
+            Text(
+                text = "RE's memory lives in your private repository ${dev.patrickgold.florisboard.dictate.MaRemoteDb.REPO} and is mirrored here in " +
+                    "Documents/TTTmini. It needs a fine-grained token that you create yourself: only this repository, Contents read and write. " +
+                    "It is stored encrypted on this phone, never shown, never logged.",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Text(
+                text = if (hasToken) "Token: saved (hidden)." else "Token: none yet.",
+                style = MaterialTheme.typography.bodyMedium,
+                modifier = Modifier.padding(top = 4.dp),
+            )
+            OutlinedTextField(
+                value = tokenInput, onValueChange = { tokenInput = it },
+                label = { Text("Paste the token here") },
+                visualTransformation = androidx.compose.ui.text.input.PasswordVisualTransformation(),
+                singleLine = true,
+                modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
+            )
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(top = 6.dp)) {
+                OutlinedButton(enabled = tokenInput.isNotBlank(), onClick = {
+                    val ok = dev.patrickgold.florisboard.dictate.MaRemoteDb.saveToken(tokenInput)
+                    tokenInput = ""; hasToken = dev.patrickgold.florisboard.dictate.MaRemoteDb.hasToken()
+                    dbStatus = if (ok) "Token saved." else "Could not save the token."
+                }) { Text("Save token") }
+                OutlinedButton(enabled = hasToken, onClick = {
+                    dev.patrickgold.florisboard.dictate.MaRemoteDb.clearToken(); hasToken = false
+                    dbStatus = dev.patrickgold.florisboard.dictate.MaRemoteDb.status
+                }) { Text("Delete token") }
+            }
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(top = 6.dp)) {
+                OutlinedButton(enabled = hasToken, onClick = {
+                    dbStatus = "Syncing..."
+                    dbScope.launch { dbStatus = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) { dev.patrickgold.florisboard.dictate.MaRemoteDb.syncNow() } }
+                }) { Text("Sync now") }
+                OutlinedButton(onClick = {
+                    dbContext.startActivity(
+                        android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse(dev.patrickgold.florisboard.dictate.MaRemoteDb.TOKEN_PAGE))
+                            .addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK),
+                    )
+                }) { Text("Open the token page") }
+            }
+            Text(dbStatus, style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(top = 6.dp))
+        }
         val context = androidx.compose.ui.platform.LocalContext.current
         val shotOk = dev.patrickgold.florisboard.dictate.overlay.DictateAccessibilityService.canTakeScreenshot()
         Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {

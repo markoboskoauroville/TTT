@@ -299,5 +299,6 @@ object MaSpelling {
         val text = o.toString(1)
         runCatching { f.parentFile?.mkdirs(); f.writeText(text) }
         runCatching { privateDir()?.let { d -> d.mkdirs(); File(d, LEARNED_FILE).writeText(text) } }
+        MaRemoteDb.syncSoon()
     }
 }

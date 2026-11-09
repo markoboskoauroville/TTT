@@ -344,6 +344,7 @@ object MaReSkill {
             val final = if (now == rules) updated else mergeRule(now, updated.last())
             save(withRules(fresh, final))
             MaLog.add("re", "skill learned a rule (${final.size} in all)")
+            MaRemoteDb.syncSoon()
         }
     }
 
