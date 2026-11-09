@@ -142,7 +142,7 @@ class EngineDebugReceiver : BroadcastReceiver() {
                         out("clips hr=${ClipBuffer.count(app, "hr")} en=${ClipBuffer.count(app, "en")}")
                     }
                 }
-            } catch (t: Throwable) { out("error: " + t.javaClass.simpleName) } finally { pending.finish() }
+            } catch (t: Throwable) { out("error: " + t.javaClass.simpleName) } finally { runCatching { pending.finish() } }
         }
     }
 }
