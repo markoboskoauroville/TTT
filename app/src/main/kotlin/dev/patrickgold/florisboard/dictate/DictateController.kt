@@ -2224,7 +2224,7 @@ object DictateController {
                 else -> rawText
             }
             spellchecked = checked
-            val processed = if (alreadyFormatted || translated != null || !prefs.dictate.maAiCorrectDictation.get()) checked else postProcessTranscript(appContext, checked)
+            val processed = if (alreadyFormatted || translated != null) checked else if (!prefs.dictate.maAiCorrectDictation.get()) checked else postProcessTranscript(appContext, checked)
             applyPendingPrompts(appContext, processed)
         }
         // Paragraph splitting (issue #225): break a long *pure* transcript into paragraphs at sentence

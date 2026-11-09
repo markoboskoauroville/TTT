@@ -56,7 +56,7 @@ check("the realtime path too", "val outputText = MaParagraphs.single(" in ctrl)
 
 check("E|H runs on single-call audio too", "val translated = if (translateRecording) translateToCroatian(rawText) else null" in ctrl)
 check("a translation skips the formatting pass that turned it back into English",
-      "if (alreadyFormatted || translated != null) checked else postProcessTranscript(appContext, checked)" in ctrl)
+      "if (alreadyFormatted || translated != null) checked else if (!prefs.dictate.maAiCorrectDictation.get()) checked else postProcessTranscript(appContext, checked)" in ctrl)
 
 print(f"paragraphs and translate, test 1: {checks} checks, {len(failures)} failed")
 for f in failures:
