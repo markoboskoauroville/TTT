@@ -267,9 +267,10 @@
  {
   "id": "no-dashes",
   "lang": "en",
-  "box": "Ivan — the meeting is at five — bring the laptop.",
+  "box": "Ivan -- the meeting is at five -- bring the laptop.",
   "command": "remove the dashes",
   "must_not_contain": [
+   "--",
    "—",
    "–"
   ],

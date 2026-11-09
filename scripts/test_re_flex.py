@@ -118,11 +118,19 @@ if "--device" in sys.argv:
     def ascii_text(t):
         return t.replace(" ", "%s").replace("\n", "%s").replace("'", "").replace('"', "")
 
+    def focus_box():
+        for n in dump().iter("node"):
+            if n.get("class", "").endswith("EditText"):
+                m = re.findall(r"\d+", n.get("bounds") or "")
+                adb("shell", "input", "tap", str((int(m[0]) + int(m[2])) // 2), str((int(m[1]) + int(m[3])) // 2))
+                return True
+        return False
+
     only = [a for a in sys.argv if a.startswith("--only=")]
     todo = [s for s in SCEN if not only or s["id"] in only[0][7:].split(",")]
     rows = []
     for s in todo:
-        adb("shell", "input", "tap", "450", "2150")
+        focus_box()
         adb("shell", "input", "keycombination", "KEYCODE_CTRL_LEFT", "KEYCODE_A")
         adb("shell", "input", "keyevent", "KEYCODE_DEL")
         if s["box"]:
