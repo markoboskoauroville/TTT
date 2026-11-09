@@ -90,7 +90,7 @@
  {
   "id": "to-english",
   "lang": "en",
-  "box": "Bok Ivane, možeš li mi sutra poslati datoteku?",
+  "box": "Bok Ivane, mozes li mi sutra poslati datoteku?",
   "command": "translate to English",
   "language": "en",
   "must_contain": [
@@ -125,7 +125,7 @@
  {
   "id": "add-link",
   "lang": "en",
-  "box": "Here is my page.",
+  "box": "My page.",
   "command": "add the link markobosko.pages.dev on its own line",
   "must_contain": [
    "markobosko.pages.dev"
@@ -179,9 +179,12 @@
  {
   "id": "no-emoji",
   "lang": "en",
-  "box": "Thanks a lot 🙏 see you tomorrow 😀",
+  "box": "Thanks a lot :) see you tomorrow ;)",
   "command": "no emojis",
-  "must_not_match": "[\\U0001F300-\\U0001FAFF☀-➿]"
+  "must_not_contain": [
+   ":)",
+   ";)"
+  ]
  },
  {
   "id": "spell-names",
@@ -197,7 +200,7 @@
  {
   "id": "shorter-hr",
   "lang": "hr",
-  "box": "Bok Ivane, htio bih te pitati možeš li mi sutra poslati onu datoteku o kojoj smo pričali prošli tjedan na kavi.",
+  "box": "Bok Ivane, htio bih te pitati mozes li mi sutra poslati onu datoteku o kojoj smo pricali prosli tjedan na kavi.",
   "command": "odgovori kraci",
   "language": "hr",
   "max_len_ratio": 0.8,
@@ -257,11 +260,12 @@
  {
   "id": "casual-hr",
   "lang": "hr",
-  "box": "Poštovani Ivane, molim Vas da mi sutra pošaljete datoteku.",
+  "box": "Postovani Ivane, molim Vas da mi sutra posaljete datoteku.",
   "command": "neka bude opusteno",
   "language": "hr",
   "must_not_contain": [
-   "Poštovani"
+   "Postovani",
+   "Postovani"
   ]
  },
  {

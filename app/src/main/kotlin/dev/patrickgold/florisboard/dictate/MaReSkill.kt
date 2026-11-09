@@ -144,7 +144,9 @@ object MaReSkill {
             "answer, the request is a question, anything you would explain), return ONE line that starts with " +
             "\"RE-NOTE:\" and says what is wrong or asks your question in a few words. Never use RE-NOTE because the chat " +
             "is Marko's own or the newest message is his: then write the next message from where it stands. Never write " +
-            "commentary as if it were the message.\n\n" + MaSkills.contextBlock()
+            "commentary as if it were the message. Do not ask about style, length or channel: choose them from the skill and " +
+            "the chat and write. His default is no list and no bullets, but when he explicitly asks for a list, bullets " +
+            "or numbers, write exactly that. Spell his names right: " + MaSpelling.promptHint() + "\n\n" + MaSkills.contextBlock()
     }
 
     // ---------------------------------------------------------------- pure helpers (tested)

@@ -178,6 +178,16 @@ object MaSpelling {
     fun keytermsOf(t: Table, off: Set<String>): List<String> =
         (t.keyterms + t.pairs.filter { it.id !in off }.map { it.to }).map { it.trim() }.filter { it.isNotEmpty() }.distinct().take(100)
 
+    /** One line for the model: the right names and the misheard forms they replace. */
+    fun promptHint(): String {
+        val t = table()
+        val off = disabledIds()
+        val pairs = t.pairs.filter { it.id !in off && it.onlyIf.isEmpty() && it.unless.isEmpty() }
+            .joinToString("; ") { it.from.joinToString("/") + " means " + it.to }
+        return t.keyterms.joinToString(", ") + (if (pairs.isNotEmpty()) ". Misheard forms: $pairs" else "") +
+            ". Grok means Groq unless Elon Musk or xAI is mentioned."
+    }
+
     /** The pairs safe to hand to the engine as custom spelling: one-word result, no context rule. */
     fun engineSpelling(): List<kotlin.Pair<List<String>, String>> {
         if (!on()) return emptyList()
