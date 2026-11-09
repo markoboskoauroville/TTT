@@ -49,6 +49,7 @@ for p in ("reply to the latest message saying yes", "odgovori Ivanu da dolazim",
     check("reply: " + p, bool(W.search(p)))
 for p in ("read me the last messages", "prociitaj zadnje poruke", "what is on the screen", "summarise this chat", "who wrote last"):
     check("not a reply: " + p, not W.search(p))
+check("the keyboard RE key is an assistant too", "MaAssistant.wantsKeyboard(words)" in ctrl and "MaAssistant.wantsKeyboard(words)" in code(SRC / "FlorisImeService.kt"))
 print(f"assistant, test 1: {checks} checks, {len(failures)} failed")
 for f in failures:
     print("  FAIL ", f)

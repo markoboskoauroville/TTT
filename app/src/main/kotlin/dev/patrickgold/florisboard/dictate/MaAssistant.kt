@@ -71,13 +71,25 @@ object MaAssistant {
         )
     }
 
+    /** Commands the keyboard's RE key hears as assistant questions (read-only), besides the reply flow. */
+    private val ASK = Regex(
+        "read (me )?(the )?(last|latest|recent|new|unread) (messages|emails|mails)|read (me )?(this|the) (email|mail|chat|conversation)|" +
+            "who (wrote|messaged|sent)( last| the last)?|what'?s on (the |my )?screen|what is on (the |my )?screen|summari[sz]e (this|the) (chat|conversation|email|mail|screen)|" +
+            "pro[cč]itaj (mi )?(zadnje|posljednje|nove|ovu) (poruke|mailove|e-?mailove|poruku|e-?mail)|tko je (zadnji )?pisao|[sš]to je na ekranu|sa[zž]mi (ovaj )?(chat|razgovor)",
+        RegexOption.IGNORE_CASE,
+    )
+
+    fun wantsKeyboard(words: String) = ASK.containsMatchIn(words)
+
     fun isReply(words: String) = REPLY.containsMatchIn(words.trim())
 
     /** Handles one spoken assistant command. Always ends in a pop-up; never throws. */
-    suspend fun handle(context: Context, words: String) {
+    suspend fun handle(context: Context, words: String, overlay: Boolean = true) {
         val app = context.applicationContext
-        MaReprompt.noteField(DictateAccessibilityService.frontPackage(), 0)
-        viaOverlay = true
+        if (overlay) {
+            MaReprompt.noteField(DictateAccessibilityService.frontPackage(), 0)
+            viaOverlay = true
+        }
         val pkg = MaReprompt.lastPkg
         if (pkg != null && (pkg in REFUSED || pkg.contains("bank", true))) {
             MaReResult.note(app, "RE does not read banking or payment apps.")

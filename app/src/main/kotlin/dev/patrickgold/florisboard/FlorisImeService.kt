@@ -481,6 +481,10 @@ class FlorisImeService : LifecycleInputMethodService() {
                 val write = content.text.isBlank() && content.selectedText.isBlank()
                 lifecycleScope.launch {
                     // The typed window can say it too: "take a screenshot and reply" (MaScreenRead).
+                    if (dev.patrickgold.florisboard.dictate.MaAssistant.wantsKeyboard(words)) {
+                        dev.patrickgold.florisboard.dictate.MaAssistant.handle(this@FlorisImeService, words, overlay = false)
+                        return@launch
+                    }
                     if (dev.patrickgold.florisboard.dictate.MaSkills.wants(words)) {
                         dev.patrickgold.florisboard.dictate.MaReResult.note(
                             this@FlorisImeService, dev.patrickgold.florisboard.dictate.MaSkills.updateNow(),

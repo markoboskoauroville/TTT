@@ -2072,6 +2072,11 @@ object DictateController {
             }
             MaReprompt.rememberWords(words)
             val write = outSink.fullText().isBlank() && outSink.selectedText().isBlank()
+            // "Read me the last messages", "what's on the screen" (MaAssistant): read only, answered in the pop-up and aloud.
+            if (MaAssistant.wantsKeyboard(words)) {
+                MaAssistant.handle(appContext, words, overlay = false)
+                return
+            }
             // "Update skills" (MaSkills): the notes for the chat on screen are refreshed; the answer is a pop-up note.
             if (MaSkills.wants(words)) {
                 MaReResult.note(appContext, MaSkills.updateNow())
