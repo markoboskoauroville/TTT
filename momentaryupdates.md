@@ -4,6 +4,12 @@ Every request word for word, saved and pushed before any code (MANTRA_MANIFEST r
 
 
 
+## 9.11.2026: RE reads the screen: "take a screenshot, read the latest message and reply to it"
+
+> "Update TTT so it can take screenshots on the phone. If I say to RE Magic 'take a screenshot, read the latest message and reply to it', it is able to do it. It has the tools inside the app, and also in the skill it understands that when I say 'take the screenshot', it takes it and transcribes it." (Marko, 9.11.2026, relayed by the master session with the plan: read the accessibility node tree first, then takeScreenshot plus on-device OCR, vision on the model only as a last paid resort; spoken intents in English and Croatian; the reply is put in the field and never sent; skill section "Screen reading"; a Read screen switch in Settings, RE Magic.)
+
+**Status:** saved first.
+
 ## 9.11.2026: the AssemblyAI record key's dot is red, not blue
 
 > "Sometimes, by the way, update my app TTT. I need the red colour, the red dot, in the button in the feature row which is activating AssemblyAI. Now it's blue; make it red." (Marko, 9.11.2026, relayed by the master session)
