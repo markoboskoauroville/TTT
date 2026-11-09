@@ -1249,6 +1249,10 @@ abstract class FlorisPreferenceModel : PreferenceModel() {
          * Croatian spell check after every Croatian dictation (MaSpellcheck). On by default: he
          * called it mandatory, because AssemblyAI invents Croatian words that do not exist.
          */
+        // Marko, 9.11.2026: "I don't need the correction, remove this automatic correction." The master switch for EVERY
+        // model call made on a dictation after it was transcribed (style pass, Croatian spell check, auto-formatting,
+        // auto-apply prompts). Off, and nothing here runs; the local whole-word spelling table is not behind it.
+        val maAiCorrectDictation = boolean(key = "dictate__ma_ai_correct_dictation", default = false)
         val maSpellcheckEnabled = boolean(
             key = "dictate__ma_spellcheck_enabled",
             default = false, // AI spell check rewrites the dictation: off until switched on (AUTO v2)

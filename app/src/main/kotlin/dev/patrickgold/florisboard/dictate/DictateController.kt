@@ -2218,12 +2218,13 @@ object DictateController {
                             MaCroatianFix.looksCroatian(appContext, latin)
                         ) MaCroatianFix.apply(appContext, latin) else latin
                     }
-                    phoneStyle(local) ?: croatianSpellcheck(appContext, local)
+                    if (!prefs.dictate.maAiCorrectDictation.get()) local
+                    else phoneStyle(local) ?: croatianSpellcheck(appContext, local)
                 }
                 else -> rawText
             }
             spellchecked = checked
-            val processed = if (alreadyFormatted || translated != null) checked else postProcessTranscript(appContext, checked)
+            val processed = if (alreadyFormatted || translated != null || !prefs.dictate.maAiCorrectDictation.get()) checked else postProcessTranscript(appContext, checked)
             applyPendingPrompts(appContext, processed)
         }
         // Paragraph splitting (issue #225): break a long *pure* transcript into paragraphs at sentence

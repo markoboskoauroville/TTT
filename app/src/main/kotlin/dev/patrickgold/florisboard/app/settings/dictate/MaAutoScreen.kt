@@ -94,6 +94,11 @@ fun MaAutoScreen() = FlorisScreen {
                 summary = "Words you fixed twice in a dictation are fixed for you from then on.",
             )
             SwitchPreference(
+                prefs.dictate.maAiCorrectDictation,
+                title = "Correct Croatian dictation with AI",
+                summary = "Off: after transcription no model is called, no tokens are spent. On: the passes below may run.",
+            )
+            SwitchPreference(
                 prefs.dictate.maPhoneStyleEnabled,
                 title = "Phone style rewrite",
                 summary = "An AI pass that rewrites a longer dictation the way you write on the phone.",
