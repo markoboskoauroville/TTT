@@ -339,3 +339,9 @@ voices. Stopped here: a further build plus a full suite (~1 h) would not finish 
 > "I choose something and it's not reflected in the buttons." / "On the buttons, push the model name to the LEFT side, next to the letter, and add the free minutes next to it, half the font size." / "The model name can be a bit smaller so it also fits the free time." (Marko, 9.11.2026)
 
 **Status:** saved first; same build as task 68. Key layout: dot, letter, name (left), quota at half size; the key reads EngineStore directly when the live state is not yet loaded (no "assemblyai" flash); the Talk-to AssemblyAI key stays forced by design and is labelled so.
+
+> "I don't like it. Bring back the old size of the model name on the button of transcription, and make the minutes the same size, and just shorten them. 'Minutes' is too long. Just make it one word: free or paid."
+
+**Status:** saved first; task 69 of mac-ses9-08-nov. H/E key: name at the build 574 size plus one word free/paid at the same size, fitted together.
+
+> "Yes, free and paid, but there should be a number of how many minutes."

@@ -42,8 +42,9 @@ internal fun MaEngineKeyContent(letter: String, dot: Color, name: String, fallba
         // Marko, 9.11.2026: name left, right after the letter, a bit smaller; the quota at half the name's size on the same line.
         // The dot, letter and gaps take about 48 dp; a glyph is about 0.58 of its size wide; the sub is half size.
         val room = (maxWidth.value - 52f).coerceAtLeast(20f)
-        val units = shown.length * 0.58f + sub.length * 0.58f * 0.5f + (if (sub.isEmpty()) 0f else 0.6f)
-        val size = (room / units).coerceIn(8f, 16f)
+        // Marko, 9.11.2026: name and the one word (free/paid) at the SAME size, the build 574 size (0.8 x 26 max); both shrink together if narrow.
+        val units = shown.length * 0.58f + sub.length * 0.58f + (if (sub.isEmpty()) 0f else 0.6f)
+        val size = minOf(26f * 0.8f, room / units).coerceAtLeast(6f)
         Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth().padding(start = 10.dp, end = 6.dp)) {
             androidx.compose.foundation.layout.Box(modifier = Modifier.size(9.dp).clip(CircleShape).background(dot))
             Spacer(Modifier.width(4.dp))
@@ -52,22 +53,23 @@ internal fun MaEngineKeyContent(letter: String, dot: Color, name: String, fallba
             Text(text = shown, color = fg, fontSize = size.sp, fontWeight = FontWeight.Normal, maxLines = 1, softWrap = false, overflow = TextOverflow.Clip)
             if (sub.isNotEmpty()) {
                 Spacer(Modifier.width(4.dp))
-                Text(text = sub, color = fg.copy(alpha = 0.75f), fontSize = (size / 2f).sp, fontWeight = FontWeight.Normal, maxLines = 1, softWrap = false, overflow = TextOverflow.Clip)
+                Text(text = sub, color = fg.copy(alpha = 0.75f), fontSize = size.sp, fontWeight = FontWeight.Normal, maxLines = 1, softWrap = false, overflow = TextOverflow.Clip)
             }
         }
     }
 }
 
-/** The quota under a provider, one wording everywhere: "480 min free", "free", "$0.10/h paid". */
+/** One short label on the key: "free 480" (minutes left, 38k when large) while the provider still has free quota, "paid" when it has not. */
 internal fun engineSubLabel(c: android.content.Context, id: String): String {
     val spec = dev.patrickgold.florisboard.dictate.engines.EngineCatalog.byId(id) ?: return ""
     return when {
         spec.freeSeconds == Long.MAX_VALUE -> "free"
-        spec.paid -> "$%.2f/h paid".format(java.util.Locale.ROOT, spec.pricePerHour)
+        spec.paid -> "paid"
         else -> {
-            val min = dev.patrickgold.florisboard.dictate.engines.Quota.remainingSeconds(
-                spec, dev.patrickgold.florisboard.dictate.engines.EngineStore.usage(c, id), System.currentTimeMillis()) / 60
-            if (min > 0) "$min min free" else "paid"
+            val sec = dev.patrickgold.florisboard.dictate.engines.Quota.remainingSeconds(
+                spec, dev.patrickgold.florisboard.dictate.engines.EngineStore.usage(c, id), System.currentTimeMillis())
+            val min = sec / 60
+            if (sec <= 0) "paid" else if (min >= 10000) "free ${min / 1000}k" else "free $min"
         }
     }
 }

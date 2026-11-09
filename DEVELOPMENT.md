@@ -11403,3 +11403,7 @@ Marko: no description text, the models as columns, each column as wide as its ke
 ### Key label: one source of truth, name left with the quota (9.11.2026)
 
 Marko: Settings said H = Groq, the key said AssemblyAI. Two causes found. (1) The key fell back to the literal "assemblyai" while `EngineLive` was still empty (before its `LaunchedEffect` ran); it now falls back to `EngineStore.selected`, the same store the radio list writes. (2) The "Talk to" keys (RECORD_HR_NET / RECORD_EN_NET) force AssemblyAI for one recording by design and are labelled AssemblyAI; they are not the H key. `EngineLive` stays the one live state both screens observe. Layout: `MaEngineKeyContent` = dot, letter, name left (8 to 16 sp, auto-fit), quota at half the name size on the same line ("480 min free", "free", "$0.10/h paid"; "paid" once the free minutes are gone: no paid balance is known to the app, only the price). `engineSubLabel` is the one wording.
+
+### Key label: name and one word at the same size (9.11.2026, task 69)
+
+Marko disliked build 576 (half-size minutes). The H/E key (and both previews in Voice transcription buttons) now shows dot, letter, provider name, then one word, `free` when the provider still has free quota and `paid` when not, both at the build 574 size (0.8 x 26 sp, regular weight). If the key is narrow both shrink by the same factor, never cut. The radio cards keep their small quota line.
