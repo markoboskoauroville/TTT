@@ -55,9 +55,10 @@ check("engine custom spelling: one word, no context rule", "it.unless.isEmpty() 
 check("no key shapes", not re.search(r"(sk-ant|AIza)", sp + screen))
 
 # the file the Mac builds
-r = subprocess.run([str(Path.home() / ".local/bin/re-skill-sync"), "corrections", "build"], capture_output=True, text=True)
+tool = Path.home() / ".local/bin/re-skill-sync"
 mac = Path.home() / "Downloads/API/dictation_corrections.json"
-if r.returncode == 0 and mac.exists():
+r = subprocess.run([str(tool), "corrections", "build"], capture_output=True, text=True) if tool.exists() else None
+if r is not None and r.returncode == 0 and mac.exists():  # only on the Mac; CI has no tool
     d = json.loads(mac.read_text())
     ids = {p["id"]: p for p in d["pairs"]}
     check("the table has Grok with its exception", ids["grok"]["unless"] == ["Elon Musk", "xAI"])
