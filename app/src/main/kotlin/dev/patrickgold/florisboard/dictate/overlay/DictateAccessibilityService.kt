@@ -104,6 +104,16 @@ class DictateAccessibilityService : AccessibilityService() {
     override fun onServiceConnected() {
         super.onServiceConnected()
         instance = this
+        // The assistant's second way in (MaAssistant): the accessibility button starts or stops RE listening.
+        runCatching {
+            accessibilityButtonController.registerAccessibilityButtonCallback(
+                object : android.accessibilityservice.AccessibilityButtonController.AccessibilityButtonCallback() {
+                    override fun onClicked(controller: android.accessibilityservice.AccessibilityButtonController) {
+                        dev.patrickgold.florisboard.dictate.MaAssistant.toggle(this@DictateAccessibilityService)
+                    }
+                },
+            )
+        }
         // The single most useful line in the log.
         //
         // Everything this app does beyond typing runs through this service, and when it will not
@@ -954,6 +964,14 @@ class DictateAccessibilityService : AccessibilityService() {
                     )
                 }.onFailure { if (cont.isActive) cont.resumeWith(Result.success(null)) }
             }
+        }
+
+        /** The package of the app in front (not the keyboard, not this app), or null. */
+        fun frontPackage(): String? {
+            val ims = instance ?: return null
+            return runCatching {
+                MaScreenTargets.appWindowRoots(ims).firstOrNull()?.packageName?.toString()
+            }.getOrNull()
         }
 
         fun readableScreenText(): String {

@@ -2065,6 +2065,11 @@ object DictateController {
             _state.value = UiState.Idle
             val words = rawText.trim()
             if (words.isEmpty()) return
+            // The assistant (MaAssistant): started from the tile or the accessibility button, no field involved.
+            if (MaAssistant.take()) {
+                MaAssistant.handle(appContext, words)
+                return
+            }
             MaReprompt.rememberWords(words)
             val write = outSink.fullText().isBlank() && outSink.selectedText().isBlank()
             // "Update skills" (MaSkills): the notes for the chat on screen are refreshed; the answer is a pop-up note.

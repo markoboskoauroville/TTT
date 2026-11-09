@@ -226,6 +226,18 @@
 
         <!-- Reprompt (MaReprompt): the small window where the instruction for the field's text is
              written or dictated. Its own task, so closing it returns to the app he was in. -->
+        <!-- The assistant tile (MaAssistant): RE listens when no text field is focused. -->
+        <service
+            android:name="dev.patrickgold.florisboard.dictate.MaAssistantTile"
+            android:label="RE"
+            android:icon="@drawable/ic_dictate_overlay_mic"
+            android:exported="true"
+            android:permission="android.permission.BIND_QUICK_SETTINGS_TILE">
+            <intent-filter>
+                <action android:name="android.service.quicksettings.action.QS_TILE"/>
+            </intent-filter>
+        </service>
+
         <activity
             android:name="dev.patrickgold.florisboard.dictate.MaReResultActivity"
             android:theme="@style/FlorisAppTheme.Transparent"

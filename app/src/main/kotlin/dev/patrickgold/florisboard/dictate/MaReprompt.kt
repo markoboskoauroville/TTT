@@ -81,6 +81,7 @@ object MaReprompt {
 
     /** The key was pressed in this field (a press that records, or the long press). */
     fun noteField(packageName: String?, fieldId: Int) {
+        MaAssistant.markKeyboard()
         if (packageName != null && packageName != ownPackage) {
             lastPkg = packageName
             lastFieldId = fieldId

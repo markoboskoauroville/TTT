@@ -4,6 +4,12 @@ Every request word for word, saved and pushed before any code (MANTRA_MANIFEST r
 
 
 
+## 9.11.2026: RE Magic as an assistant, a GitHub token, the RE Magic Database, the pop-up, the flexibility tests
+
+> "RE Magic should actually become an accessibility service. It can do anything I ask. I can ask 'read me the last messages'. It's like a Siri for WhatsApp, or email, or whatever is in front." / "TTT should also be able to load a GitHub token, and then if I ask RE something related to GitHub, or to find some history on GitHub to fill the chat, it can do it." / "RE has its own repository on GitHub called RE Magic Database and stores its data there, in a private repo." / "Teach TTT not to write its replies to me into the chat. There must be a pop-up window: I read its reply and I say OK. Only messages go into the chat." / "Write a test for TTT. Also test the corrections: changing the style, taking out certain words, adding punctuation, anything. Imagine what a user can ask: delete this message and create a new one. Just test the flexibility of the system." (Marko, 9.11.2026, relayed by the master session; plan in RE_ASSISTANT_PLAN.md.)
+
+**Status:** saved (late, after the work started; the pop-up, flexibility tests, RE Magic Database seed and sync, and assistant slice 1 are built or coded, the GitHub history token is next).
+
 ## 9.11.2026: skills on the phone, written by AI after each conversation
 
 > "Is my feature coded, writing skills as we go, understanding my style of communication and what is done and what is not done? I want skills on my own phone, written by AI after each conversation, updating the skills, stored in Documents/TTT (the default folder)." (Marko, 9.11.2026, relayed by the master session: style.md, people/, threads/ in the MARKO_COMMUNICATION shape, updated by one cheap background prompt after a chat, RE uses the thread file as context, Settings lists and edits them, re-skill-sync merges both ways.)

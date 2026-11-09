@@ -48,7 +48,11 @@ object MaReResult {
         val fieldId: Int,
         val words: String,
         val at: Long = System.currentTimeMillis(),
+        val viaAssistant: Boolean = false,
     )
+
+    @Volatile
+    var appContextForInsert: Context? = null
 
     @Volatile
     var shown: Result? = null
@@ -70,7 +74,8 @@ object MaReResult {
     /** Shows [text] (the model's answer) in the pop-up; a note when it is one. */
     fun present(context: Context, text: String, replace: Boolean, words: String) {
         val note = isNote(text)
-        shown = Result(display(text), note, replace, MaReprompt.lastPkg, MaReprompt.lastFieldId, words)
+        appContextForInsert = context.applicationContext
+        shown = Result(display(text), note, replace, MaReprompt.lastPkg, MaReprompt.lastFieldId, words, viaAssistant = MaAssistant.viaOverlay)
         open(context)
     }
 
@@ -94,6 +99,15 @@ object MaReResult {
         markClosed()
         if (r.note || finalText.isBlank()) return
         accepted = r.copy(text = finalText.trim(), at = System.currentTimeMillis())
+        // From the assistant there is no keyboard field to wait for: the accessibility sink inserts into the app behind.
+        if (r.viaAssistant) {
+            val ctx = appContextForInsert
+            val a = accepted
+            if (ctx != null && a != null) {
+                accepted = null
+                android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({ DictateController.insertReResult(ctx, a) }, 600)
+            }
+        }
         if (!MaReSkill.same(r.text, finalText)) MaReSkill.noteCorrection(r.pkg, r.words, r.text, finalText.trim(), "popup-edit")
     }
 
