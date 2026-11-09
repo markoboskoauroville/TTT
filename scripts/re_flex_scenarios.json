@@ -1,0 +1,324 @@
+[
+ {
+  "id": "shorter",
+  "lang": "en",
+  "box": "Hi Mislav, I wanted to ask if you are free on Tuesday for a coffee in Teslina street. Let me know what works for you.",
+  "command": "make it shorter",
+  "max_len_ratio": 0.75,
+  "must_contain": [
+   "Tuesday"
+  ]
+ },
+ {
+  "id": "more-formal",
+  "lang": "en",
+  "box": "hey ivan can u send me the file tomorrow thx",
+  "command": "make it more formal",
+  "must_not_contain": [
+   "hey",
+   "thx",
+   " u "
+  ]
+ },
+ {
+  "id": "more-casual",
+  "lang": "en",
+  "box": "Dear Ivan, I would be grateful if you could send me the file tomorrow.",
+  "command": "make it more casual",
+  "must_not_contain": [
+   "Dear",
+   "grateful"
+  ]
+ },
+ {
+  "id": "my-style",
+  "lang": "en",
+  "box": "Hi Mislav, I wanted to ask if you are free on Tuesday for a coffee in Teslina street. Let me know what works for you.",
+  "command": "write it in my style",
+  "must_not_contain": [
+   "—",
+   "–",
+   "!"
+  ],
+  "no_list": true
+ },
+ {
+  "id": "remove-word",
+  "lang": "en",
+  "box": "Hi Ivan, I really wanted to ask you about the file tomorrow.",
+  "command": "remove the word really",
+  "must_not_contain": [
+   "really"
+  ],
+  "must_contain": [
+   "Ivan",
+   "file"
+  ]
+ },
+ {
+  "id": "add-punct",
+  "lang": "en",
+  "box": "hi ivan can you send me the file tomorrow thanks",
+  "command": "add punctuation",
+  "must_match": "[.?,]",
+  "must_contain": [
+   "Ivan"
+  ]
+ },
+ {
+  "id": "fix-capitals",
+  "lang": "en",
+  "box": "hi ivan, we meet in zagreb on wednesday with mislav.",
+  "command": "fix the capitals",
+  "must_contain": [
+   "Ivan",
+   "Zagreb",
+   "Wednesday",
+   "Mislav"
+  ]
+ },
+ {
+  "id": "to-croatian",
+  "lang": "hr-out",
+  "box": "Hi Ivan, can you send me the file tomorrow?",
+  "command": "translate to Croatian",
+  "language": "hr",
+  "must_contain": [
+   "Ivan"
+  ]
+ },
+ {
+  "id": "to-english",
+  "lang": "en",
+  "box": "Bok Ivane, možeš li mi sutra poslati datoteku?",
+  "command": "translate to English",
+  "language": "en",
+  "must_contain": [
+   "Ivan"
+  ]
+ },
+ {
+  "id": "new-message",
+  "lang": "en",
+  "box": "Hi Ivan, can you send me the file tomorrow?",
+  "command": "delete this message and write a new one saying I am running late, 20 minutes",
+  "must_contain": [
+   "20"
+  ],
+  "must_not_contain": [
+   "file",
+   "tomorrow"
+  ]
+ },
+ {
+  "id": "replace-day",
+  "lang": "en",
+  "box": "See you on Tuesday at five in Kahwa.",
+  "command": "replace Tuesday with Wednesday",
+  "must_contain": [
+   "Wednesday"
+  ],
+  "must_not_contain": [
+   "Tuesday"
+  ]
+ },
+ {
+  "id": "add-link",
+  "lang": "en",
+  "box": "Here is my page.",
+  "command": "add the link markobosko.pages.dev on its own line",
+  "must_contain": [
+   "markobosko.pages.dev"
+  ],
+  "link_own_line": true
+ },
+ {
+  "id": "no-list",
+  "lang": "en",
+  "box": "I need three things: the file, the invoice and the password.",
+  "command": "make it a list",
+  "expect_list": true
+ },
+ {
+  "id": "no-list-default",
+  "lang": "en",
+  "box": "tell Ivan the meeting is at 5, bring the laptop, and the cables",
+  "command": "write it as a message",
+  "no_list": true,
+  "expect": "draft"
+ },
+ {
+  "id": "undo",
+  "lang": "en",
+  "box": "Hi Ivan, the meeting is at five.",
+  "command": "undo the last change",
+  "expect": "either"
+ },
+ {
+  "id": "to-ivan",
+  "lang": "en",
+  "box": "Hi Mislav, are you free on Wednesday at five?",
+  "command": "say it to Ivan not Mislav",
+  "must_contain": [
+   "Ivan"
+  ],
+  "must_not_contain": [
+   "Mislav"
+  ]
+ },
+ {
+  "id": "greeting",
+  "lang": "en",
+  "box": "Can you send me the file tomorrow?",
+  "command": "add a greeting",
+  "must_match": "^(Hi|Hey|Hello|Bok|Dear)",
+  "must_contain": [
+   "file"
+  ]
+ },
+ {
+  "id": "no-emoji",
+  "lang": "en",
+  "box": "Thanks a lot 🙏 see you tomorrow 😀",
+  "command": "no emojis",
+  "must_not_match": "[\\U0001F300-\\U0001FAFF☀-➿]"
+ },
+ {
+  "id": "spell-names",
+  "lang": "en",
+  "box": "tell sfemeri that satoshi plays on friday and grok is down",
+  "command": "spell the names right",
+  "must_contain": [
+   "Svemir",
+   "Santoshi",
+   "Groq"
+  ]
+ },
+ {
+  "id": "shorter-hr",
+  "lang": "hr",
+  "box": "Bok Ivane, htio bih te pitati možeš li mi sutra poslati onu datoteku o kojoj smo pričali prošli tjedan na kavi.",
+  "command": "odgovori kraci",
+  "language": "hr",
+  "max_len_ratio": 0.8,
+  "must_contain": [
+   "Ivan"
+  ]
+ },
+ {
+  "id": "remove-last",
+  "lang": "hr",
+  "box": "Bok Ivane, vidimo se u srijedu u pet. Javi ako ti ne odgovara. Pozdrav svima.",
+  "command": "makni zadnju recenicu",
+  "language": "hr",
+  "must_not_contain": [
+   "Pozdrav svima"
+  ],
+  "must_contain": [
+   "srijedu"
+  ]
+ },
+ {
+  "id": "add-period",
+  "lang": "hr",
+  "box": "Vidimo se u srijedu u pet",
+  "command": "dodaj tocku",
+  "language": "hr",
+  "must_match": "\\.$",
+  "must_contain": [
+   "srijedu"
+  ]
+ },
+ {
+  "id": "rewrite",
+  "lang": "hr",
+  "box": "Bok, nema me danas",
+  "command": "napisi ispocetka: javljam da kasnim petnaest minuta",
+  "language": "hr",
+  "must_contain": [
+   "15",
+   "petnaest"
+  ],
+  "any_of": true,
+  "must_not_contain": [
+   "nema me"
+  ]
+ },
+ {
+  "id": "formal-hr",
+  "lang": "hr",
+  "box": "ej ivane, posalji mi to sutra",
+  "command": "napisi formalnije",
+  "language": "hr",
+  "must_not_contain": [
+   "ej "
+  ]
+ },
+ {
+  "id": "casual-hr",
+  "lang": "hr",
+  "box": "Poštovani Ivane, molim Vas da mi sutra pošaljete datoteku.",
+  "command": "neka bude opusteno",
+  "language": "hr",
+  "must_not_contain": [
+   "Poštovani"
+  ]
+ },
+ {
+  "id": "no-dashes",
+  "lang": "en",
+  "box": "Ivan — the meeting is at five — bring the laptop.",
+  "command": "remove the dashes",
+  "must_not_contain": [
+   "—",
+   "–"
+  ],
+  "must_contain": [
+   "Ivan"
+  ]
+ },
+ {
+  "id": "question",
+  "lang": "en",
+  "box": "Hi Ivan.",
+  "command": "what time is it in Tokyo?",
+  "expect": "note"
+ },
+ {
+  "id": "empty-ask",
+  "lang": "en",
+  "box": "",
+  "command": "write a message to Svemir that we play on Friday",
+  "expect": "draft",
+  "must_contain": [
+   "Svemir"
+  ],
+  "no_list": true
+ },
+ {
+  "id": "empty-ask-hr",
+  "lang": "hr",
+  "box": "",
+  "command": "napisi poruku Mislavu da se vidimo u srijedu u pet u Kahwi",
+  "language": "hr",
+  "expect": "draft",
+  "must_contain": [
+   "Mislav"
+  ],
+  "no_list": true
+ },
+ {
+  "id": "keep-meaning",
+  "lang": "en",
+  "box": "The concert starts at nine on Saturday.",
+  "command": "make it sound nicer",
+  "must_contain": [
+   "nine",
+   "Saturday"
+  ],
+  "must_not_contain": [
+   "ten",
+   "Sunday"
+  ]
+ }
+]
