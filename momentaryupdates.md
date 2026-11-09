@@ -357,3 +357,9 @@ voices. Stopped here: a further build plus a full suite (~1 h) would not finish 
 > "The implementation is not good for long pressing. First of all, long press works only on the English side. On the Croatian side it doesn't work. And then it opens the options in ONE LINE at the bottom of the screen, and I need to scroll. My idea is that it opens VERTICALLY, because we have more space in the vertical direction, the screen being in portrait mode. When I long press, it opens from the bottom, from the button itself, up to the top of the screen, and I can see everything at the same time. Please fix that." (Marko, 9.11.2026)
 
 **Status:** saved first; task 72 of mac-ses9-08-nov.
+
+## 9.11.2026 – history, re-transcribe and benchmark with accuracy percent
+
+> "Benchmark every provided key and engine on the last 5 Croatian and the last 5 English dictations, on the phone. Go into the history; if it doesn't exist, build it. There we can re-transcribe: the user chooses which model, Croatian version or English version — everything offered in one list — and transcribes again. Use this mechanism to compare our transcriptions, find the right one, and assess the quality of each algorithm for English and Croatian. Write what you find into our repository. In parentheses next to each model, the accuracy: 100% is the best model, less is worse. I want the percentage next to the model in Settings and on my button." (Marko, 9.11.2026)
+
+**Status:** saved first; task 73 of mac-ses9-08-nov. Slice: History screen (date, language, sent text, Re-transcribe with one list of all engines marked HR/EN, result beside the original with differences), benchmark of the last 5 HR + 5 EN, "(96%)" after the provider name in Settings cards, on the H/E keys and in the long-press panel, docs/benchmark-2026-11-09.md.
