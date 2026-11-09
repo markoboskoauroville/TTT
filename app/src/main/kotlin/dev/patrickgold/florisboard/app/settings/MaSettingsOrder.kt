@@ -64,6 +64,8 @@ enum class MaSettingsEntry(val id: String, val title: String, val summary: Strin
     BUCKETS("buckets", "Paste timing", "How long each step waits, for the buckets, AP and AC"),
     RECORDING("recording", "Recording", null),
     // Every setting about the suggestion row, the AI key's model and Learn my words (27.10.2026).
+    // Every automatic change to text, one switch each (Marko, 9.11.2026). Its icon is the AUTO cut-out.
+    AUTO("auto", "AUTO corrections", "Every automatic text change, each its own switch, all off until you turn one on"),
     PREDICTIONS("predictions", "Auto prediction", "Word prediction, the AI key's model, your corrections"),
     MAPPINGS("mappings", "Custom mappings", null),
     OUTPUT("output", "Output", null),
@@ -92,6 +94,7 @@ object MaSettingsOrder {
      */
     val DEFAULT: List<MaSettingsEntry> = listOf(
         MaSettingsEntry.PERMISSIONS,
+        MaSettingsEntry.AUTO,
         MaSettingsEntry.TRANSCRIPTION_MODEL,
         MaSettingsEntry.SETTINGS_ORDER,
         MaSettingsEntry.BUCKETS,

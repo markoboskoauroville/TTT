@@ -141,6 +141,8 @@ object KeyCode {
     const val MA_ROW_DIACRITICS =           -246
     // Marko: the copy and paste row, the one from the transcribe view, shown or hidden in either view.
     const val MA_TOGGLE_EDIT_ROW =          -247
+    // AUTO (Marko, 9.11.2026): opens the one screen that holds every automatic text change, each a switch.
+    const val MA_AUTO =                     -250
 
     const val SYSTEM_INPUT_METHOD_PICKER =  -221
     const val SYSTEM_PREV_INPUT_METHOD =    -222

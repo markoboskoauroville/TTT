@@ -81,6 +81,8 @@ data class QuickActionArrangement(
                 // this panel gets opened for. Each says in words which set it brings, since no glyph
                 // can. Digits doubles as the way to turn the row off, being the set it falls back to
                 // and so having nothing else to toggle to.
+                // AUTO first: the switch for every automatic text change (Marko, 9.11.2026).
+                QuickAction.InsertKey(TextKeyData.MA_AUTO),
                 QuickAction.InsertKey(TextKeyData.MA_ROW_EDITING),
                 QuickAction.InsertKey(TextKeyData.MA_ROW_DIACRITICS),
                 QuickAction.InsertKey(TextKeyData.MA_ROW_BRACKETS),
@@ -142,8 +144,13 @@ data class QuickActionArrangement(
             // keeps it in the stored arrangement.
             val missing = (listOfNotNull(Default.stickyAction) + Default.dynamicActions + Default.hiddenActions)
                 .filter { it !in stored }
-            return if (missing.isEmpty()) stored
-            else stored.copy(dynamicActions = stored.dynamicActions + missing).distinct()
+            if (missing.isEmpty()) return stored
+            // AUTO goes to the FRONT of an arrangement written before it existed, not to the end behind
+            // twenty keys where it would be as good as missing.
+            val auto = QuickAction.InsertKey(TextKeyData.MA_AUTO)
+            val rest = missing.filter { it != auto }
+            val front = if (auto in missing) listOf(auto) else emptyList()
+            return stored.copy(dynamicActions = front + stored.dynamicActions + rest).distinct()
         }
     }
 }

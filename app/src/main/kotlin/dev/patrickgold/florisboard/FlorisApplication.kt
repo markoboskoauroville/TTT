@@ -165,6 +165,7 @@ class FlorisApplication : Application() {
             DictateLegacyMigrator.applyRemovalV15IfNeeded()
             DictateLegacyMigrator.applyLanguagesV16IfNeeded(this@FlorisApplication)
             DictateLegacyMigrator.applyDashboardV18IfNeeded()
+            DictateLegacyMigrator.applyAutoOffV1IfNeeded()
             DictateLegacyMigrator.applyActionRowV19IfNeeded()
             DictateLegacyMigrator.applyActionRowV20IfNeeded()
             DictateLegacyMigrator.movePredictionsBesidePromptsIfNeeded()

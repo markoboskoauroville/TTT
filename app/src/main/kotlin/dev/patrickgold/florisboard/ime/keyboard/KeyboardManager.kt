@@ -1374,6 +1374,7 @@ class KeyboardManager(context: Context) : InputKeyEventReceiver {
                 }
             }
             KeyCode.SETTINGS -> FlorisImeService.launchSettings()
+            KeyCode.MA_AUTO -> FlorisImeService.launchSettings("settings/dictate/auto")
             KeyCode.SHIFT -> handleShiftUp(data)
             KeyCode.SPACE -> handleSpace(data)
             KeyCode.SYSTEM_INPUT_METHOD_PICKER -> InputMethodUtils.showImePicker(appContext)
@@ -1458,7 +1459,12 @@ class KeyboardManager(context: Context) : InputKeyEventReceiver {
                     else -> when (data.type) {
                         KeyType.CHARACTER, KeyType.NUMERIC ->{
                             val text = data.asString(isForDisplay = false)
-                            if (!UCharacter.isUAlphabetic(UCharacter.codePointAt(text, 0))) {
+                            // A digit is part of a word, never its end (AT2020, 3D, B2B, 4K, mp3). Treating
+                            // it as punctuation committed the fix for "AT" and ate the digits after it
+                            // (Marko, 9.11.2026: "I type 2, 0, 2, 0 and the keyboard deletes the 2").
+                            val endsWord = !UCharacter.isUAlphabetic(UCharacter.codePointAt(text, 0)) &&
+                                !UCharacter.isDigit(UCharacter.codePointAt(text, 0))
+                            if (endsWord) {
                                 nlpManager.getAutoCommitCandidate()?.let { commitCandidate(it) }
                                 // Punctuation ends the word — drop the tap evidence for it (issue #242).
                                 TouchTrace.reset()

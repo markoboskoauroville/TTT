@@ -308,6 +308,8 @@ fun ComputingEvaluator.computeImageVector(data: KeyData): ImageVector? {
         KeyCode.MA_ROW_DIGITS,
         KeyCode.MA_ROW_DIACRITICS -> null
         KeyCode.MA_TOGGLE_EDIT_ROW -> Icons.Default.ContentPasteGo
+        // AUTO: white rounded square, the word cut out (the icon standard of 9.11.2026).
+        KeyCode.MA_AUTO -> dev.patrickgold.florisboard.app.settings.MaAutoIcon
         KeyCode.LANGUAGE_SWITCH -> {
             Icons.Default.Language
         }

@@ -145,6 +145,7 @@ data class TextKeyData(
                 MA_ROW_DIGITS,
                 MA_ROW_DIACRITICS,
                 MA_TOGGLE_EDIT_ROW,
+                MA_AUTO,
                 MA_TOGGLE_EXTRA_ROW,
                 SYSTEM_INPUT_METHOD_PICKER,
                 SYSTEM_PREV_INPUT_METHOD,
@@ -481,6 +482,10 @@ data class TextKeyData(
         /** Row set: Croatian diacritics. */
         val MA_ROW_DIACRITICS = TextKeyData(
             type = KeyType.SYSTEM_GUI, code = KeyCode.MA_ROW_DIACRITICS, label = "ma_row_diacritics",
+        )
+        /** AUTO: opens Settings, AUTO corrections. */
+        val MA_AUTO = TextKeyData(
+            type = KeyType.SYSTEM_GUI, code = KeyCode.MA_AUTO, label = "ma_auto",
         )
         /** Menu Macro: show or hide the copy and paste row. */
         val MA_TOGGLE_EDIT_ROW = TextKeyData(

@@ -179,7 +179,7 @@ abstract class FlorisPreferenceModel : PreferenceModel() {
     inner class Correction {
         val autoCapitalization = boolean(
             key = "correction__auto_capitalization",
-            default = true,
+            default = false, // AUTO: nothing changes unless switched on (Marko, 9.11.2026)
         )
         val autoSpacePunctuation = boolean(
             key = "correction__auto_space_punctuation",
@@ -187,7 +187,7 @@ abstract class FlorisPreferenceModel : PreferenceModel() {
         )
         val doubleSpacePeriod = boolean(
             key = "correction__double_space_period",
-            default = true,
+            default = false,
         )
         val rememberCapsLockState = boolean(
             key = "correction__remember_caps_lock_state",
@@ -861,6 +861,25 @@ abstract class FlorisPreferenceModel : PreferenceModel() {
         // dictionary contains, and it cannot learn them while switched off.
         val maNgramEnabled = boolean(
             key = "dictate__ma_ngram_enabled",
+            default = true,
+        )
+        // AUTO (Marko, 9.11.2026: "I want no automatic replacement of anything"): the one-time reset that
+        // switched every automatic text change off on installs that already existed, and the two switches
+        // that only the AUTO screen holds. See MaAutoScreen and DictateLegacyMigrator.applyAutoOffV1IfNeeded.
+        val maAutoOffV1Applied = boolean(
+            key = "dictate__ma_auto_off_v1_applied",
+            default = false,
+        )
+        // Spoken fix-ups of a dictation: Croatian spelling and diacritics, name spelling, a dictated
+        // address or time put together. Off: the transcript is written as the engine returned it.
+        // Dictation features he asked for by name keep their state; the typing ones are what AUTO turned off.
+        val maSpokenFixups = boolean(
+            key = "dictate__ma_spoken_fixups",
+            default = true,
+        )
+        // His find-and-replace list (Settings, Replacements) applied to dictation.
+        val maTextReplacements = boolean(
+            key = "dictate__ma_text_replacements",
             default = true,
         )
         // Learn from my corrections (MaDictationCorrections): a word he fixes in a dictation, fixed the same way
@@ -2360,7 +2379,7 @@ abstract class FlorisPreferenceModel : PreferenceModel() {
         // without autocorrect.
         val autoCorrect = boolean(
             key = "suggestion__auto_correct",
-            default = true,
+            default = false, // AUTO: off until he switches it on
         )
         // Multilingual typing (issue #190): accept words from every configured keyboard language, not just
         // the active one, so a bilingual's second-language words aren't flagged as typos or autocorrected

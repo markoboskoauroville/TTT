@@ -411,6 +411,10 @@ class NlpManager(context: Context) {
         // before the suggestions for "is" were ready, and the fix for "i", "I", replaced "is").
         val forWord = suggestedForWord
         if (forWord != null && !forWord.equals(editorInstance.activeContent.currentWordText, ignoreCase = true)) return null
+        // Nothing is ever replaced behind his back: the AUTO switch for correcting words must be on,
+        // and a word with a digit in it (AT2020, B2B, 4K) is a name or a code, never a typo.
+        if (!prefs.suggestion.autoCorrect.get()) return null
+        if (editorInstance.activeContent.currentWordText.any { it.isDigit() }) return null
         return activeCandidates.firstOrNull { it.isEligibleForAutoCommit }
     }
 

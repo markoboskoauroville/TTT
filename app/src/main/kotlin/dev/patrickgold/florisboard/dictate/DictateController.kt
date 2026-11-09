@@ -2128,7 +2128,8 @@ object DictateController {
                     // so Parakeet offline gets it too; the model passes below then start from closer text.
                     val latin = MaCyrillic.toLatin(rawText)
                     val local = withContext(Dispatchers.Default) {
-                        if (MaLanguage.active() == MaLanguage.HR || latin != rawText ||
+                        if (!prefs.dictate.maSpokenFixups.get()) latin
+                        else if (MaLanguage.active() == MaLanguage.HR || latin != rawText ||
                             MaCroatianFix.looksCroatian(appContext, latin)
                         ) MaCroatianFix.apply(appContext, latin) else latin
                     }
@@ -2164,7 +2165,7 @@ object DictateController {
             finalText
         }
         // Deterministic find-and-replace dictionary (issue #129), applied right before insert.
-        val mapped = prefs.dictate.customMappings.get().apply(paragraphed)
+        val mapped = if (prefs.dictate.maTextReplacements.get()) prefs.dictate.customMappings.get().apply(paragraphed) else paragraphed
         // Case forced last, after every other transformation, so nothing downstream can put a capital
         // back. Only for plain transcripts: a rewrite asked for in words is allowed to choose its own
         // capitals, and flattening a prompt's answer would undo the very thing it was asked to do.
@@ -2839,7 +2840,10 @@ object DictateController {
         // Croatian on the Pixel 7, 8.11.2026), his name with k, then a dictated address put together and
         // matched to the address book (MaSpokenEmail, 8.11.2026):
         // "marco.bosco at gmail.com" is written as the saved marko.bosko@gmail.com.
-        var body = MaParagraphs.single(MaSpokenTime.apply(MaSpokenEmail.apply(MaNameSpelling.apply(MaCyrillic.toLatin(MaSpokenFormat.apply(text))))))
+        val spoken = MaCyrillic.toLatin(MaSpokenFormat.apply(text))
+        var body = MaParagraphs.single(
+            if (prefs.dictate.maSpokenFixups.get()) MaSpokenTime.apply(MaSpokenEmail.apply(MaNameSpelling.apply(spoken))) else spoken,
+        )
         if (prefs.dictate.maVoiceCommands.get() && DictateAccessibilityService.isRunning) {
             val split = MaVoiceCommand.splitTrailing(body)
             if (split != null) {

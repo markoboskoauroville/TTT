@@ -631,6 +631,21 @@ object DictateLegacyMigrator {
     }
 
     /**
+     * AUTO (Marko, 9.11.2026: "I want no automatic replacement of anything"): once, every automatic
+     * change to TYPED text is switched off on an install that already exists. Fresh installs get the
+     * same from the defaults. After this he alone turns them on, on the AUTO screen.
+     */
+    suspend fun applyAutoOffV1IfNeeded() {
+        val prefs by FlorisPreferenceStore
+        if (prefs.dictate.maAutoOffV1Applied.get()) return
+        prefs.suggestion.autoCorrect.set(false)
+        prefs.correction.autoCapitalization.set(false)
+        prefs.correction.doubleSpacePeriod.set(false)
+        prefs.correction.autoSpacePunctuation.set(false)
+        prefs.dictate.maAutoOffV1Applied.set(true)
+    }
+
+    /**
      * Moves the row sets to the front of a panel that has already been written.
      *
      * Changing what the number row holds is the thing this panel gets opened for, so those five come

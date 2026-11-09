@@ -111,6 +111,8 @@ val MaSettingsEntry.icon: ImageVector
         MaSettingsEntry.RECORDING -> Icons.Default.Mic
         // A big A, as he asked (27.10.2026). FontDownload is already resolved in this app (theme icons).
         MaSettingsEntry.PREDICTIONS -> Icons.Default.FontDownload
+        // The new icon standard (9.11.2026): white square, the word cut out, as the A above.
+        MaSettingsEntry.AUTO -> MaAutoIcon
         MaSettingsEntry.MAPPINGS -> Icons.Default.Spellcheck
         MaSettingsEntry.OUTPUT -> Icons.Default.Keyboard
         MaSettingsEntry.HISTORY -> Icons.Default.History
@@ -153,6 +155,7 @@ val MaSettingsEntry.route: Any
         MaSettingsEntry.BUCKETS -> Routes.Settings.MaBuckets
         MaSettingsEntry.RECORDING -> Routes.Settings.DictateRecording
         MaSettingsEntry.PREDICTIONS -> Routes.Settings.MaPredictions
+        MaSettingsEntry.AUTO -> Routes.Settings.MaAuto
         MaSettingsEntry.MAPPINGS -> Routes.Settings.DictateMappings
         MaSettingsEntry.OUTPUT -> Routes.Settings.DictateOutput
         MaSettingsEntry.HISTORY -> Routes.Settings.DictateHistory
