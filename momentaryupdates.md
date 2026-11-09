@@ -4,6 +4,12 @@ Every request word for word, saved and pushed before any code (MANTRA_MANIFEST r
 
 
 
+## 9.11.2026: the AssemblyAI record key's dot is red, not blue
+
+> "Sometimes, by the way, update my app TTT. I need the red colour, the red dot, in the button in the feature row which is activating AssemblyAI. Now it's blue; make it red." (Marko, 9.11.2026, relayed by the master session)
+
+**Status:** saved first; the dot of the E/H network keys (RECORD_EN_NET, RECORD_HR_NET) is now clear red (0xFFE53935), Parakeet's stays amber.
+
 ## 9.11.2026: Spelling: misheard words collected and corrected automatically (AssemblyAI keyterms + a local pass)
 
 > "Any misspelled words — you understand from the content what the correct spelling is. Just collect those mistakes somewhere and correct them automatically in the future, because my AssemblyAI is doing this. What can I do?" (Marko, 9.11.2026, relayed by the master session with the plan: keyterms/custom spelling on every request; a local post-correction pass with the same table, Grok stays only with Elon Musk/xAI; one file Documents/TTTmini/dictation_corrections.json generated from MANTRA_MANIFEST modules/dictation-corrections.md by `re-skill-sync corrections push`; the RE learning loop appends pairs he changes twice to a learned list that `re-skill-sync pull` brings back; Settings, a small Spelling page with on/off per pair.)

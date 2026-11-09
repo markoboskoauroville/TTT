@@ -1427,7 +1427,7 @@ fun MaFeatureRow(
                         else -> null
                     }
                     val dot = when (engine) {
-                        MaProviders.ENGINE_ASSEMBLYAI -> MaEngineNetBlue
+                        MaProviders.ENGINE_ASSEMBLYAI -> MaEngineNetRed
                         MaProviders.ENGINE_LOCAL -> MaEngineLocalAmber
                         else -> MaRecordRed
                     }
@@ -2423,8 +2423,8 @@ internal fun maFeatureToken(button: MaRows.Button): String = when (button) {
     is MaRows.Button.Macro -> "M${button.slot}"
 }
 
-/** Talk to AssemblyAI: the dot of the network's record keys (8.11.2026). */
-internal val MaEngineNetBlue = androidx.compose.ui.graphics.Color(0xFF4FC3F7)
+/** Talk to AssemblyAI: the dot of the network's record keys (8.11.2026). Red since 9.11.2026 (Marko: "make it red"), it was blue. */
+internal val MaEngineNetRed = androidx.compose.ui.graphics.Color(0xFFE53935)
 
 /** Talk to Parakeet: the dot of the phone's record keys (8.11.2026). */
 internal val MaEngineLocalAmber = androidx.compose.ui.graphics.Color(0xFFFFB300)

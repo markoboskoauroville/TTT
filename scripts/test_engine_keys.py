@@ -36,7 +36,8 @@ for k in ("RECORD_EN_NET", "RECORD_HR_NET", "RECORD_EN_LOCAL", "RECORD_HR_LOCAL"
     check(f"{k} shown in the Rows editor", f"MaFeatureKey.{k} ->" in rows)
 check("network keys go to AssemblyAI", "MaFeatureKey.RECORD_EN_NET, MaFeatureKey.RECORD_HR_NET -> MaProviders.ENGINE_ASSEMBLYAI" in row)
 check("local keys go to Parakeet", "MaFeatureKey.RECORD_EN_LOCAL, MaFeatureKey.RECORD_HR_LOCAL -> MaProviders.ENGINE_LOCAL" in row)
-check("same key, the dot's colour differs", "MaEngineNetBlue" in row and "MaEngineLocalAmber" in row and ".background(dot)" in row)
+check("AssemblyAI dot is red, not blue (9.11.2026)", "Color(0xFFE53935)" in row and "4FC3F7" not in row)
+check("same key, the dot's colour differs", "MaEngineNetRed" in row and "MaEngineLocalAmber" in row and ".background(dot)" in row)
 check("engine override beats the setting", "engineOverride ?: prefs.dictate.maTranscriptionEngine.get()" in prov)
 check("every start takes and clears the override",
       "MaProviders.engineOverride = nextRecordingEngine\n        nextRecordingEngine = null" in ctrl)
