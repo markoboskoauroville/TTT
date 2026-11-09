@@ -189,14 +189,16 @@ object EngineStore {
      * benchmark never changes it by itself; only "Use best per language" does.
      */
     fun selected(c: Context, lang: String): String {
-        val l = if (lang == "en") "en" else "hr"
-        p(c).getString("sel_$l", null)?.let { if (EngineCatalog.byId(it) != null) return it }
+        p(c).getString(slotKey(lang), null)?.let { if (EngineCatalog.byId(it) != null) return it }
         return runCatching {
             val prefs by dev.patrickgold.florisboard.app.FlorisPreferenceStore
             if (prefs.dictate.maTranscriptionEngine.get() == dev.patrickgold.florisboard.dictate.MaProviders.ENGINE_LOCAL) "parakeet" else "assemblyai"
         }.getOrDefault("assemblyai")
     }
-    fun setSelected(c: Context, lang: String, id: String) = p(c).edit().putString("sel_" + (if (lang == "en") "en" else "hr"), id).apply()
+    fun setSelected(c: Context, lang: String, id: String) = p(c).edit().putString(slotKey(lang), id).apply()
+
+    /** The one preference slot of a language's chosen engine: H and E read and write through this and nothing else. */
+    fun slotKey(lang: String): String = "sel_" + (if (lang == "en") "en" else "hr")
 
     /** The last key import or re-test summary (counts only, never a key). */
     fun lastKeys(c: Context): String? = p(c).getString("keys_last", null)

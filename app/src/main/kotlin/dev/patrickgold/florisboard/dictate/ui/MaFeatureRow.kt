@@ -1427,14 +1427,14 @@ fun MaFeatureRow(
                     ) MaLanguage.HR else MaLanguage.EN
                     // Talk to AssemblyAI / Parakeet (8.11.2026): the engine for this one recording, and
                     // the dot's colour that says which. Null = the Transcription model setting.
-                    val engine = when (button.key) {
-                        MaFeatureKey.RECORD_EN_NET, MaFeatureKey.RECORD_HR_NET -> MaProviders.ENGINE_ASSEMBLYAI
-                        MaFeatureKey.RECORD_EN_LOCAL, MaFeatureKey.RECORD_HR_LOCAL -> MaProviders.ENGINE_LOCAL
-                        else -> null
-                    }
-                    val dot = when (engine) {
-                        MaProviders.ENGINE_ASSEMBLYAI -> MaEngineNetRed
-                        MaProviders.ENGINE_LOCAL -> MaEngineLocalAmber
+                    // Marko, 9.11.2026: "the Croatian button does not change". The H/E keys that were hard-bound to
+                    // AssemblyAI / Parakeet ignored the engine chosen in Settings and in the long-press panel, so a
+                    // row holding such an H showed and used one provider forever. Every H/E key now follows the
+                    // chosen engine of its language (the same EngineStore slot); only the dot colour still tells the old kinds apart.
+                    val engine: String? = null
+                    val dot = when (button.key) {
+                        MaFeatureKey.RECORD_EN_NET, MaFeatureKey.RECORD_HR_NET -> MaEngineNetRed
+                        MaFeatureKey.RECORD_EN_LOCAL, MaFeatureKey.RECORD_HR_LOCAL -> MaEngineLocalAmber
                         else -> MaRecordRed
                     }
                     // E>H records English like E, and the transcript is then written in Croatian.

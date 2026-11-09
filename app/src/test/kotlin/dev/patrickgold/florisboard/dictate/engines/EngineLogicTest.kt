@@ -162,3 +162,12 @@ class EngineLogicTest {
         assertEquals(acct + "\ncfut_abcdefghijklmnopqrstuvwxyz0123456789ABCD", cf)
     }
 }
+
+class EngineSlotTest {
+    @kotlin.test.Test
+    fun `H and E use one slot each through the same function`() {
+        kotlin.test.assertEquals("sel_hr", EngineStore.slotKey("hr"))
+        kotlin.test.assertEquals("sel_en", EngineStore.slotKey("en"))
+        kotlin.test.assertEquals("sel_hr", EngineStore.slotKey("anything-else"))
+    }
+}
