@@ -46,8 +46,8 @@ order_screen = code(APP / "app/settings/MaSettingsOrderScreen.kt")
 routes = code(APP / "app/Routes.kt")
 
 # ---------------------------------------------------------------- spell check
-check("on by default", re.search(r'maSpellcheckEnabled = boolean\(\s*key = "[^"]+",\s*default = true', prefs) is not None,
-      "he called it mandatory")
+check("off by default (AUTO v2, 9.11.2026: no automatic replacement of anything)", re.search(r'maSpellcheckEnabled = boolean\(\s*key = "[^"]+",\s*default = false', prefs) is not None,
+      "it rewrites the dictation")
 check("runs on the dictation path", "croatianSpellcheck(appContext, local)" in ctrl)
 check("before the rest of post-processing", ctrl.find("croatianSpellcheck(appContext, local)")
       < ctrl.find("postProcessTranscript(appContext, checked)"))

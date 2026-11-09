@@ -89,7 +89,7 @@ check("the wrong words are unlearned", "modelFor(language).unlearn(w)" in ngram)
 check("settle hands every fix to the typing side", "MaNgram.learnFix(s.wrong, s.right, p.language)" in corr)
 
 # Settings.
-check("pref on", re.search(r'maCorrectionsEnabled = boolean\(\s*key = "dictate__ma_corrections_enabled",\s*default = true', prefs) is not None)
+check("pref exists, off by default (AUTO v2, 9.11.2026)", re.search(r'maCorrectionsEnabled = boolean\(\s*key = "dictate__ma_corrections_enabled",\s*default = false', prefs) is not None)
 # 27.10.2026: the screen sits inside Auto prediction, and its switch is there with the others.
 check("screen: its switch is on Auto prediction", "maCorrectionsEnabled" not in screen and
       "prefs.dictate.maCorrectionsEnabled" in code(APP / "app/settings/dictate/MaPredictionsScreen.kt"))

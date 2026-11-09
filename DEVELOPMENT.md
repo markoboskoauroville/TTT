@@ -11273,3 +11273,8 @@ double-space-period are off by default (fresh install) and were switched off onc
 **Dictation fix-ups he asked for by name** (spoken fix-ups, text replacements, learned corrections, phone style, AI spell
 check, Markdown cues, auto Enter) keep their state but each has its switch under "On dictation". Icon: white square with
 the word cut out, `tools/make_auto_icon.py` (MANTRA_MANIFEST modules/six-letter-icon.md).
+
+**AUTO v2 (9.11.2026, his principle, answered by main):** dictation fix-ups are off too: spoken fix-ups, text replacements, learned
+corrections, phone style, AI spell check (it rewrites, there is no underline-only mode), Markdown cues, auto Enter. Fresh
+installs by default, existing installs once by `applyAutoOffV2IfNeeded` (guard `dictate__ma_auto_off_v2_applied`). Each is its own
+switch on the AUTO screen. Supersedes the "dictation ones keep their state" paragraph above.

@@ -866,6 +866,10 @@ abstract class FlorisPreferenceModel : PreferenceModel() {
         // AUTO (Marko, 9.11.2026: "I want no automatic replacement of anything"): the one-time reset that
         // switched every automatic text change off on installs that already existed, and the two switches
         // that only the AUTO screen holds. See MaAutoScreen and DictateLegacyMigrator.applyAutoOffV1IfNeeded.
+        val maAutoOffV2Applied = boolean(
+            key = "dictate__ma_auto_off_v2_applied",
+            default = false,
+        )
         val maAutoOffV1Applied = boolean(
             key = "dictate__ma_auto_off_v1_applied",
             default = false,
@@ -875,19 +879,19 @@ abstract class FlorisPreferenceModel : PreferenceModel() {
         // Dictation features he asked for by name keep their state; the typing ones are what AUTO turned off.
         val maSpokenFixups = boolean(
             key = "dictate__ma_spoken_fixups",
-            default = true,
+            default = false,
         )
         // His find-and-replace list (Settings, Replacements) applied to dictation.
         val maTextReplacements = boolean(
             key = "dictate__ma_text_replacements",
-            default = true,
+            default = false,
         )
         // Learn from my corrections (MaDictationCorrections): a word he fixes in a dictation, fixed the same way
         // twice, is fixed for him from then on. On: it is local, free, and every rule can be switched
         // off on its own screen.
         val maCorrectionsEnabled = boolean(
             key = "dictate__ma_corrections_enabled",
-            default = true,
+            default = false, // AUTO v2 (9.11.2026)
         )
         // AUTO PREDICTION (Settings → Auto prediction): the AI key at the end of the suggestion row,
         // and the Claude model it asks. Stored as a tier alias, so the newest of the tier is used
@@ -1220,7 +1224,7 @@ abstract class FlorisPreferenceModel : PreferenceModel() {
          */
         val maSpellcheckEnabled = boolean(
             key = "dictate__ma_spellcheck_enabled",
-            default = true,
+            default = false, // AI spell check rewrites the dictation: off until switched on (AUTO v2)
         )
 
         /** Its wordings, the same named-set shape as Ctrl+P and Ctrl+F (MaPrompts). */
@@ -1249,7 +1253,7 @@ abstract class FlorisPreferenceModel : PreferenceModel() {
          * Style after every dictation, the Mac's rules (MaPhoneStyle, §191). On, and inert until its
          * model is downloaded: he asked for it, and a switch that does nothing until then costs nothing.
          */
-        val maPhoneStyleEnabled = boolean(key = "dictate__ma_phone_style_enabled", default = true)
+        val maPhoneStyleEnabled = boolean(key = "dictate__ma_phone_style_enabled", default = false)
         val maPhoneStylePrompt = string(key = "dictate__ma_phone_style_prompt", default = "")
         val maPhoneStyleModel = string(key = "dictate__ma_phone_style_model", default = MaPhoneModels.QWEN3_4B.choice)
 

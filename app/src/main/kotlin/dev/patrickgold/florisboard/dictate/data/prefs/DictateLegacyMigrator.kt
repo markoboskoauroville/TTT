@@ -646,6 +646,23 @@ object DictateLegacyMigrator {
     }
 
     /**
+     * AUTO v2 (9.11.2026, Marko's principle: no automatic replacement of anything): once, every
+     * automatic change to DICTATED text is switched off too, on installs that already exist.
+     */
+    suspend fun applyAutoOffV2IfNeeded() {
+        val prefs by FlorisPreferenceStore
+        if (prefs.dictate.maAutoOffV2Applied.get()) return
+        prefs.dictate.maSpokenFixups.set(false)
+        prefs.dictate.maTextReplacements.set(false)
+        prefs.dictate.maCorrectionsEnabled.set(false)
+        prefs.dictate.maPhoneStyleEnabled.set(false)
+        prefs.dictate.maSpellcheckEnabled.set(false)
+        prefs.dictate.autoFormattingEnabled.set(false)
+        prefs.dictate.autoEnter.set(false)
+        prefs.dictate.maAutoOffV2Applied.set(true)
+    }
+
+    /**
      * Moves the row sets to the front of a panel that has already been written.
      *
      * Changing what the number row holds is the thing this panel gets opened for, so those five come

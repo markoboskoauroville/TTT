@@ -30,8 +30,8 @@ import kotlinx.coroutines.launch
  *
  * The rule (TAKEOVER, LESSONS): nothing in this app changes text he typed unless its switch is on
  * here. Every new automatic behaviour gets a switch on this screen, off by default, in the same commit.
- * The typing ones are all off on a fresh install and were switched off once on every existing one
- * (DictateLegacyMigrator.applyAutoOffV1IfNeeded). The dictation ones keep the state he gave them.
+ * Typing and dictation ones are all off on a fresh install and were switched off once on every existing
+ * one (DictateLegacyMigrator.applyAutoOffV1IfNeeded, V2 for dictation).
  */
 @Composable
 fun MaAutoScreen() = FlorisScreen {
