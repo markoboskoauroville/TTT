@@ -60,6 +60,8 @@ object EngineCatalog {
         EngineSpec("deepgram", "Deepgram Nova-3", EngineKind.CLOUD, 2_300_000, QuotaReset.ONE_OFF, 0.31, false, "Deepgram key", "USD 200 credit"),
         EngineSpec("assemblyai", "AssemblyAI", EngineKind.CLOUD, 1_200_000, QuotaReset.ONE_OFF, 0.15, false, "AssemblyAI key", "USD 50 credit"),
         EngineSpec("speechmatics", "Speechmatics", EngineKind.CLOUD, 1_500_000, QuotaReset.ONE_OFF, 0.24, false, "Speechmatics key", "USD 100 credit"),
+        EngineSpec("google_v1", "Google Speech v1", EngineKind.CLOUD, 3_600, QuotaReset.MONTHLY, 1.44, false, "Google Cloud Speech API key (AIza...)", "free 60 min/month, then USD 0.024/min; clips up to 1 min"),
+        EngineSpec("google_chirp", "Google Chirp 3 (v2)", EngineKind.CLOUD, 3_600, QuotaReset.MONTHLY, 0.96, false, "service account JSON (OAuth)", "assumed 60 min/month free (unverified), then USD 0.016/min"),
         EngineSpec("soniox", "Soniox", EngineKind.CLOUD, 0, QuotaReset.NONE, 0.10, true, "Soniox key", "no free quota shown: only when enabled, USD 0.10/h"),
         EngineSpec("elevenlabs", "ElevenLabs Scribe", EngineKind.CLOUD, 0, QuotaReset.NONE, 0.22, true, "ElevenLabs key", "no free quota shown: only when enabled, USD 0.22/h"),
     )
@@ -70,8 +72,8 @@ object EngineCatalog {
     fun byId(id: String): EngineSpec? = if (id == FAKE) FAKE_SPEC else ALL.firstOrNull { it.id == id }
 
     /** Recommended chains from docs/stt-providers.md, the rest appended so every engine has a place. */
-    val DEFAULT_EN = listOf("parakeet", "groq_turbo", "cloudflare", "deepgram", "assemblyai", "gemini", "speechmatics", "groq_v3", "android", "soniox", "elevenlabs")
-    val DEFAULT_HR = listOf("groq_v3", "elevenlabs", "deepgram", "parakeet", "cloudflare", "gemini", "assemblyai", "speechmatics", "groq_turbo", "android", "soniox")
+    val DEFAULT_EN = listOf("parakeet", "groq_turbo", "cloudflare", "deepgram", "assemblyai", "gemini", "speechmatics", "groq_v3", "android", "google_chirp", "google_v1", "soniox", "elevenlabs")
+    val DEFAULT_HR = listOf("groq_v3", "elevenlabs", "deepgram", "parakeet", "cloudflare", "gemini", "assemblyai", "speechmatics", "groq_turbo", "android", "google_chirp", "google_v1", "soniox")
 
     fun defaultOrder(lang: String): List<String> = if (lang == "en") DEFAULT_EN else DEFAULT_HR
 
@@ -81,6 +83,7 @@ object EngineCatalog {
         val out = LinkedHashSet<String>()
         stored.filter { it in known }.forEach { out.add(it) }
         defaultOrder(lang).forEach { out.add(it) }
+        ALL.forEach { out.add(it.id) }
         return out.toList()
     }
 }
@@ -330,7 +333,16 @@ object KeyText {
         return acct + "\n" + token
     }
 
+    /** The service account file as one line, only when it holds what OAuth needs. */
+    fun serviceAccount(text: String): String? = runCatching {
+        val o = org.json.JSONObject(text)
+        if (o.optString("client_email").isEmpty() || !o.optString("private_key").contains("PRIVATE KEY")) null
+        else org.json.JSONObject().put("client_email", o.getString("client_email")).put("private_key", o.getString("private_key"))
+            .put("project_id", o.optString("project_id")).put("token_uri", o.optString("token_uri", "https://oauth2.googleapis.com/token")).toString()
+    }.getOrNull()
+
     fun forEngine(id: String, text: String): String? = when (id) {
+        "google_chirp" -> serviceAccount(text)
         "cloudflare" -> cloudflare(text)
         "groq_turbo", "groq_v3" -> firstKeys(text).filter { it.startsWith("gsk_") }.joinToString("\n").ifEmpty { null }
         else -> firstKeys(text).firstOrNull()

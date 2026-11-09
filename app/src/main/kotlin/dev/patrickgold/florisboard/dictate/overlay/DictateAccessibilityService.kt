@@ -104,16 +104,9 @@ class DictateAccessibilityService : AccessibilityService() {
     override fun onServiceConnected() {
         super.onServiceConnected()
         instance = this
-        // The assistant's second way in (MaAssistant): the accessibility button starts or stops RE listening.
-        runCatching {
-            accessibilityButtonController.registerAccessibilityButtonCallback(
-                object : android.accessibilityservice.AccessibilityButtonController.AccessibilityButtonCallback() {
-                    override fun onClicked(controller: android.accessibilityservice.AccessibilityButtonController) {
-                        dev.patrickgold.florisboard.dictate.MaAssistant.toggle(this@DictateAccessibilityService)
-                    }
-                },
-            )
-        }
+        // No accessibility button (Marko, 9.11.2026: "the round badge follows me on every screen"): the RE
+        // assistant starts only from the Quick Settings tile and the RE key. Never a floating button
+        // or overlay unless Marko asks for one.
         // The single most useful line in the log.
         //
         // Everything this app does beyond typing runs through this service, and when it will not

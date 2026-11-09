@@ -107,6 +107,8 @@ object EngineAdapters {
             "assemblyai" -> assemblyai(c, wav, lang, names)
             "speechmatics" -> speechmatics(c, wav, lang)
             "soniox" -> soniox(c, wav, lang)
+            "google_v1" -> googleV1(c, wav, lang, names)
+            "google_chirp" -> googleChirp(c, wav, lang)
             "elevenlabs" -> elevenlabs(c, wav, lang)
             else -> throw EngineFailure(FailKind.NOT_CONFIGURED, "unknown engine")
         }
@@ -233,6 +235,58 @@ object EngineAdapters {
         val req = Request.Builder().url("https://api.elevenlabs.io/v1/speech-to-text").header("xi-api-key", k)
             .post(multipart(mapOf("model_id" to "scribe_v1", "language_code" to lang2(lang)), "file", wav)).build()
         return JSONObject(send(req)).getString("text")
+    }
+
+    private fun gLang(lang: String) = if (lang2(lang) == "en") "en-US" else "hr-HR"
+
+    private suspend fun googleV1(c: Context, wav: File, lang: String, names: List<String>): String {
+        val k = key(c, "google_v1").first()
+        val b64 = withContext(Dispatchers.IO) { Base64.encodeToString(wav.readBytes(), Base64.NO_WRAP) }
+        val cfg = JSONObject().put("encoding", "LINEAR16").put("sampleRateHertz", 16000).put("languageCode", gLang(lang))
+            .put("enableAutomaticPunctuation", true)
+        if (names.isNotEmpty()) cfg.put("speechContexts", JSONArray().put(JSONObject().put("phrases", JSONArray(names.take(100)))))
+        val body = JSONObject().put("config", cfg).put("audio", JSONObject().put("content", b64))
+        val req = Request.Builder().url("https://speech.googleapis.com/v1/speech:recognize").header("x-goog-api-key", k)
+            .post(body.toString().toRequestBody(JSONT)).build()
+        val res = JSONObject(send(req)).optJSONArray("results") ?: return ""
+        return (0 until res.length()).joinToString(" ") { res.getJSONObject(it).getJSONArray("alternatives").getJSONObject(0).optString("transcript") }.trim()
+    }
+
+    @Volatile private var gToken: Pair<String, Long>? = null
+
+    private fun b64url(b: ByteArray) = Base64.encodeToString(b, Base64.URL_SAFE or Base64.NO_WRAP or Base64.NO_PADDING)
+
+    /** OAuth for the service account: a signed JWT exchanged for an access token (cached 50 min). */
+    private suspend fun googleToken(c: Context): String {
+        gToken?.let { if (it.second > System.currentTimeMillis()) return it.first }
+        val sa = JSONObject(key(c, "google_chirp").first())
+        val now = System.currentTimeMillis() / 1000
+        val head = b64url("""{"alg":"RS256","typ":"JWT"}""".toByteArray())
+        val uri = sa.optString("token_uri", "https://oauth2.googleapis.com/token")
+        val claims = b64url(
+            JSONObject().put("iss", sa.getString("client_email")).put("scope", "https://www.googleapis.com/auth/cloud-platform")
+                .put("aud", uri).put("iat", now).put("exp", now + 3000).toString().toByteArray(),
+        )
+        val pem = sa.getString("private_key").replace("-----BEGIN PRIVATE KEY-----", "").replace("-----END PRIVATE KEY-----", "").replace(Regex("\\s"), "")
+        val pk = java.security.KeyFactory.getInstance("RSA").generatePrivate(java.security.spec.PKCS8EncodedKeySpec(Base64.decode(pem, Base64.DEFAULT)))
+        val sig = java.security.Signature.getInstance("SHA256withRSA").apply { initSign(pk); update("$head.$claims".toByteArray()) }.sign()
+        val form = okhttp3.FormBody.Builder().add("grant_type", "urn:ietf:params:oauth:grant-type:jwt-bearer").add("assertion", "$head.$claims.${b64url(sig)}").build()
+        val tok = JSONObject(send(Request.Builder().url(uri).post(form).build())).getString("access_token")
+        gToken = tok to System.currentTimeMillis() + 50 * 60_000L
+        return tok
+    }
+
+    /** Chirp 3 on the v2 API, regional endpoint "us". */
+    private suspend fun googleChirp(c: Context, wav: File, lang: String): String {
+        val project = JSONObject(key(c, "google_chirp").first()).optString("project_id").ifEmpty { throw EngineFailure(FailKind.NOT_CONFIGURED, "no project id") }
+        val tok = googleToken(c)
+        val b64 = withContext(Dispatchers.IO) { Base64.encodeToString(wav.readBytes(), Base64.NO_WRAP) }
+        val cfg = JSONObject().put("autoDecodingConfig", JSONObject()).put("languageCodes", JSONArray().put(gLang(lang))).put("model", "chirp_3")
+        val body = JSONObject().put("config", cfg).put("content", b64)
+        val req = Request.Builder().url("https://us-speech.googleapis.com/v2/projects/$project/locations/us/recognizers/_:recognize")
+            .header("Authorization", "Bearer $tok").post(body.toString().toRequestBody(JSONT)).build()
+        val res = JSONObject(send(req)).optJSONArray("results") ?: return ""
+        return (0 until res.length()).joinToString(" ") { res.getJSONObject(it).getJSONArray("alternatives").getJSONObject(0).optString("transcript") }.trim()
     }
 
     // ------------------------------------------------------------------ cloud, upload then poll

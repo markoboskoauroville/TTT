@@ -40,3 +40,6 @@ issues; commands like "what did we agree with Mislav", "status of the CQ project
 ## Order and rules
 1 (read + reply in WhatsApp w4b and Gmail from the trigger), 2 (the database), 3 (GitHub history). Each slice: written plan, build on GitHub only, installed on the
 Nothing, tested in his self-chat and his own inbox (read-only), docs updated. Nothing is sent, bought, deleted or changed without his spoken confirmation.
+
+## Correction 9.11.2026: no accessibility button
+Marko, 9.11.2026: "It goes on my nerves... it's following me" (the round badge of Android's accessibility button, requested by the service flag since build 561). The flag `flagRequestAccessibilityButton` and the button callback are removed. The assistant starts only from the Quick Settings tile and the RE key. Rule for TTT: never a floating overlay, badge or accessibility button unless Marko asks for one.
