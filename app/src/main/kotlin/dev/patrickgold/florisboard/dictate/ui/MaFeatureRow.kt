@@ -1497,6 +1497,22 @@ fun MaFeatureRow(
                             )
                         },
                     ) { fg ->
+                        if (!translate) {
+                            // The key says which engine it uses (Marko, 9.11.2026): letter and dot left, name big.
+                            val engLang = if (language == MaLanguage.HR) "hr" else "en"
+                            val liveEngines by dev.patrickgold.florisboard.dictate.engines.EngineLive.state.collectAsState()
+                            androidx.compose.runtime.LaunchedEffect(Unit) {
+                                dev.patrickgold.florisboard.dictate.engines.EngineLive.load(context)
+                            }
+                            val chosen = liveEngines.selected[engLang] ?: "assemblyai"
+                            val answering = liveEngines.active[engLang]
+                            val keyName = when (engine) {
+                                MaProviders.ENGINE_ASSEMBLYAI -> "AssemblyAI"
+                                MaProviders.ENGINE_LOCAL -> "Parakeet"
+                                else -> dev.patrickgold.florisboard.dictate.engines.EngineCatalog.shortName(answering ?: chosen)
+                            }
+                            MaEngineKeyContent(label, dot, keyName, engine == null && answering != null && answering != chosen, fg)
+                        } else
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             // E|H wears no red dot (Marko, 2.11.2026); the red outline says it records.
                             if (!translate) {

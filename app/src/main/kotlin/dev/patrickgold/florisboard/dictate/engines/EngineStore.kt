@@ -159,6 +159,21 @@ object EngineStore {
         p(c).edit().putString("use_$id", JSONObject().put("w", u.windowStart).put("s", u.seconds).put("c", u.costUsd).toString()).apply()
     }
 
+    /**
+     * The engine chosen for the H or E key (Marko, 9.11.2026). Until he chooses, it is what the keyboard
+     * already used: AssemblyAI, or Parakeet when the Transcription model setting says on the phone. The
+     * benchmark never changes it by itself; only "Use best per language" does.
+     */
+    fun selected(c: Context, lang: String): String {
+        val l = if (lang == "en") "en" else "hr"
+        p(c).getString("sel_$l", null)?.let { if (EngineCatalog.byId(it) != null) return it }
+        return runCatching {
+            val prefs by dev.patrickgold.florisboard.app.FlorisPreferenceStore
+            if (prefs.dictate.maTranscriptionEngine.get() == dev.patrickgold.florisboard.dictate.MaProviders.ENGINE_LOCAL) "parakeet" else "assemblyai"
+        }.getOrDefault("assemblyai")
+    }
+    fun setSelected(c: Context, lang: String, id: String) = p(c).edit().putString("sel_" + (if (lang == "en") "en" else "hr"), id).apply()
+
     fun lastBenchmark(c: Context): String? = p(c).getString("bench_last", null)
     fun setLastBenchmark(c: Context, json: String) = p(c).edit().putString("bench_last", json).apply()
 }

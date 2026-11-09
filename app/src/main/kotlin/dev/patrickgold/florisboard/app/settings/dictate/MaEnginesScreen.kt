@@ -40,6 +40,7 @@ import dev.patrickgold.florisboard.dictate.engines.EngineBenchmarkJob
 import dev.patrickgold.florisboard.dictate.engines.EngineCatalog
 import dev.patrickgold.florisboard.dictate.engines.EngineChain
 import dev.patrickgold.florisboard.dictate.engines.EngineKeys
+import dev.patrickgold.florisboard.dictate.engines.EngineLive
 import dev.patrickgold.florisboard.dictate.engines.EngineStore
 import dev.patrickgold.florisboard.dictate.engines.Quota
 import dev.patrickgold.florisboard.dictate.engines.QuotaReset
@@ -69,7 +70,7 @@ private fun quotaLine(c: android.content.Context, id: String): String {
  */
 @Composable
 fun MaEnginesScreen() = FlorisScreen {
-    title = "Engines"
+    title = "Advanced: fallback and benchmark"
 
     content {
         val c = LocalContext.current
@@ -203,7 +204,7 @@ fun MaEnginesScreen() = FlorisScreen {
                     bench = r.rows; benchNote = (r.skipped + r.saved).joinToString("\n"); running = false; tick++
                 }
             }) { Text(if (running) "Running…" else "Benchmark voice engines") }
-            OutlinedButton(enabled = bench.isNotEmpty(), onClick = { EngineBenchmark.applyBest(c, bench); tick++ }) { Text("Use best per language") }
+            OutlinedButton(enabled = bench.isNotEmpty(), onClick = { EngineBenchmark.applyBest(c, bench); EngineBenchmark.bestPerLanguage(bench).forEach { (l, id) -> EngineLive.select(c, l, id) }; tick++ }) { Text("Use best per language") }
         }
         if (running) Text(progress, style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(horizontal = 16.dp))
         SelectionContainer {

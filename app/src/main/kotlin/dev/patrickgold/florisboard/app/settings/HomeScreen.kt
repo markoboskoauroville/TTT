@@ -336,7 +336,8 @@ fun HomeScreen() = FlorisScreen {
             // honest version and on a phone it is also two screens shorter.
             val storedOrder by prefs.dictate.maSettingsOrder.collectAsState()
             val entries = remember(storedOrder) { MaSettingsOrder.parse(storedOrder) }
-            entries.forEach { entry ->
+            // The old Transcription model menu is hidden (Marko, 9.11.2026): the H and E keys' radio lists replace it.
+            entries.filter { it != MaSettingsEntry.TRANSCRIPTION_MODEL }.forEach { entry ->
                 Preference(
                     icon = entry.icon,
                     title = entry.title,

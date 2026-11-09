@@ -131,6 +131,10 @@ object EngineBenchmark {
         }
     }
 
+    /** The winner per language, for the keys; only when "Use best per language" is pressed. */
+    fun bestPerLanguage(rows: List<BenchMath.Row>): Map<String, String> =
+        listOf("hr", "en").mapNotNull { l -> BenchMath.bestOrder(rows.filter { it.lang == l }, emptyList()).firstOrNull()?.let { l to it } }.toMap()
+
     fun rowsFromJson(json: String): List<BenchMath.Row> = runCatching {
         val o = JSONObject(json)
         val out = ArrayList<BenchMath.Row>()

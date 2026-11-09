@@ -142,7 +142,7 @@ val MaSettingsEntry.route: Any
         MaSettingsEntry.VOICE_COMMANDS -> Routes.Settings.MaVoiceCommands
         MaSettingsEntry.PERMISSIONS -> Routes.Settings.MaPermissions
         MaSettingsEntry.TRANSCRIPTION_MODEL -> Routes.Settings.MaTranscription
-        MaSettingsEntry.ENGINES -> Routes.Settings.MaEngines
+        MaSettingsEntry.ENGINES -> Routes.Settings.MaVoiceButtons
         MaSettingsEntry.SHORTCUTS -> Routes.Settings.MaShortcuts
         MaSettingsEntry.PROMPTS -> Routes.Settings.MaPrompts
         MaSettingsEntry.CLAUDE_COSTS -> Routes.Settings.MaClaudeCosts

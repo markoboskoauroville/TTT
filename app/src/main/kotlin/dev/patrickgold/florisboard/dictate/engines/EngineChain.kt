@@ -61,27 +61,42 @@ object EngineChain {
     fun timeoutMs(sec: Double, local: Boolean) = if (local) 40_000L else 8_000L + (sec * 500).toLong()
 
     /**
-     * The dictation entry: stages the clip and runs the chain (when [runChain]). Returns null when
-     * no engine answers or none is set up, so the caller's old path goes on.
+     * The dictation entry. The key's own engine ([first]) goes first; the others follow in the stored
+     * order and are tried only after a real failure (error, timeout, quota). [skip] holds an engine
+     * that already failed outside this chain (the old AssemblyAI path). Returns null when no engine
+     * answers or none is set up, so the caller's old path goes on. The key label shows the engine that
+     * is really answering ([EngineLive]) and the status line says every switch.
      */
-    suspend fun dictate(c: Context, wav: File, lang: String, runChain: Boolean, onStatus: (String) -> Unit): ChainResult? {
+    suspend fun dictate(
+        c: Context,
+        wav: File,
+        lang: String,
+        first: String?,
+        skip: Set<String>,
+        legacyFailed: String?,
+        onStatus: (String) -> Unit,
+    ): ChainResult? {
         val l = if (lang == "en") "en" else "hr"
-        var result: ChainResult? = null
-        if (runChain) {
-            val ids = usableIds(c, l)
-            if (ids.isNotEmpty()) {
-                val sec = ClipBuffer.seconds(wav)
-                val chain = ids.map { candidate(c, it, wav, l) }
-                // The local engine in the chain is bounded longer; the rest by clip length.
-                result = try {
-                    FallbackRunner.run(chain, timeoutMs(sec, false), onStatus)
-                } catch (e: AllEnginesFailed) {
-                    onStatus("all engines failed, using the old path")
-                    null
-                }
+        val letter = if (l == "en") "E" else "H"
+        var ids = usableIds(c, l).filter { it !in skip }
+        if (first != null && first in ids) ids = listOf(first) + ids.filter { it != first }
+        if (ids.isEmpty()) return null
+        val sec = ClipBuffer.seconds(wav)
+        val chain = ids.map { id ->
+            val cand = candidate(c, id, wav, l)
+            Candidate(cand.id, cand.name, cand.quotaLeftSeconds, cand.isLocal) {
+                EngineLive.setActive(l, id)
+                cand.call()
             }
         }
-        if (result != null) ClipBuffer.add(c, wav, l, result.text, result.engineId)
-        return result
+        if (legacyFailed != null) onStatus("$letter \u00b7 $legacyFailed failed \u2192 switching to ${chain.first().name}")
+        return try {
+            FallbackRunner.run(chain, timeoutMs(sec, false), { s -> onStatus(if (s.contains("\u2192")) "$letter \u00b7 $s" else s) })
+        } catch (e: AllEnginesFailed) {
+            onStatus("$letter \u00b7 all engines failed")
+            null
+        } finally {
+            EngineLive.setActive(l, null)
+        }
     }
 }

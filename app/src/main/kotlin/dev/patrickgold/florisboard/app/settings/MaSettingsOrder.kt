@@ -28,7 +28,7 @@ enum class MaSettingsEntry(val id: String, val title: String, val summary: Strin
     // Marko, 7.11.2026: "Transcription model is the settings entry." The on-device engine is Parakeet.
     TRANSCRIPTION_MODEL("transcription_model", "Transcription model", "AssemblyAI, Parakeet on the phone, or Parakeet as fallback"),
     // Engines (Marko, 9.11.2026): the free engines, their order per language, quotas, keys and the benchmark.
-    ENGINES("engines", "Engines", "Fallback between free engines, quotas, keys, and Benchmark voice engines"),
+    ENGINES("engines", "Voice transcription buttons", "Choose the provider on the H and E keys; fallback and benchmark under Advanced"),
     SWITCHBOARD("switchboard", "Switchboard", "Every row the keyboard can show, in one place"),
     FEATURE_ROW("feature_row", "Feature row", "Three rows of keys, drag them into the order you want"),
     MAGIC("magic", "Magic finger", "What it presses on screen, and which it tries first"),
@@ -100,9 +100,9 @@ object MaSettingsOrder {
      */
     val DEFAULT: List<MaSettingsEntry> = listOf(
         MaSettingsEntry.PERMISSIONS,
+        MaSettingsEntry.ENGINES,
         MaSettingsEntry.AUTO,
         MaSettingsEntry.TRANSCRIPTION_MODEL,
-        MaSettingsEntry.ENGINES,
         MaSettingsEntry.SETTINGS_ORDER,
         MaSettingsEntry.BUCKETS,
         MaSettingsEntry.SWITCHBOARD,

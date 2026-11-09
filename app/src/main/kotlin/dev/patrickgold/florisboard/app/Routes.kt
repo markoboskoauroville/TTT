@@ -263,6 +263,10 @@ object Routes {
         object MaEngines
 
         @Serializable
+        @Deeplink("settings/dictate/voice-buttons")
+        object MaVoiceButtons
+
+        @Serializable
         @Deeplink("settings/dictate/predictions")
         object MaPredictions
 
@@ -521,6 +525,7 @@ object Routes {
             composableWithDeepLink(Settings.MaPermissions::class) { MaPermissionsScreen() }
             composableWithDeepLink(Settings.MaAuto::class) { MaAutoScreen() }
             composableWithDeepLink(Settings.MaSpelling::class) { dev.patrickgold.florisboard.app.settings.dictate.MaSpellingScreen() }
+            composableWithDeepLink(Settings.MaVoiceButtons::class) { dev.patrickgold.florisboard.app.settings.dictate.MaVoiceButtonsScreen() }
             composableWithDeepLink(Settings.MaEngines::class) { dev.patrickgold.florisboard.app.settings.dictate.MaEnginesScreen() }
             composableWithDeepLink(Settings.MaRe::class) { dev.patrickgold.florisboard.app.settings.dictate.MaReScreen() }
             composableWithDeepLink(Settings.MaPredictions::class) { MaPredictionsScreen() }

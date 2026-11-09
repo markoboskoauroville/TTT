@@ -1764,15 +1764,26 @@ object DictateController {
                 // ENGINES (9.11.2026): the fallback chain for this language first, with the status line;
                 // when no engine in it answers, the path below runs exactly as before.
                 var engineOutcome: dev.patrickgold.florisboard.dictate.engines.ChainResult? = null
-                if (!chatAudio && (dev.patrickgold.florisboard.dictate.engines.EngineStore.chainOn(appContext) ||
-                        dev.patrickgold.florisboard.dictate.engines.EngineStore.clipsOn(appContext))) {
+                // The engine of the H / E key (Marko, 9.11.2026): AssemblyAI goes the old way first and the
+                // chain only catches a real failure; any other chosen engine goes first through the chain.
+                // The Talk-to keys and RE force one engine: no chain at all.
+                val engLang = MaLanguage.active()
+                val engLetter = if (engLang == MaLanguage.EN) "E" else "H"
+                val engSelected = dev.patrickgold.florisboard.dictate.engines.EngineStore.selected(appContext, engLang)
+                val engForced = MaProviders.engineOverride != null
+                val engChain = !chatAudio && !engForced && dev.patrickgold.florisboard.dictate.engines.EngineStore.chainOn(appContext)
+                var stageWav: File? = null
+                if (!chatAudio && (engChain || dev.patrickgold.florisboard.dictate.engines.EngineStore.clipsOn(appContext))) {
                     val engWav = MaResample.toTargetRate(uploadFile) ?: uploadFile
                     try {
-                        engineOutcome = dev.patrickgold.florisboard.dictate.engines.EngineChain.dictate(
-                            appContext, engWav, MaLanguage.active(),
-                            runChain = dev.patrickgold.florisboard.dictate.engines.EngineStore.chainOn(appContext),
-                            onStatus = { _maStatus.value = it },
-                        )
+                        stageWav = File(appContext.cacheDir, "engine_stage.wav")
+                        runCatching { engWav.copyTo(stageWav, overwrite = true) }
+                        if (engChain && engSelected != "assemblyai") {
+                            engineOutcome = dev.patrickgold.florisboard.dictate.engines.EngineChain.dictate(
+                                appContext, engWav, engLang, first = engSelected, skip = emptySet(), legacyFailed = null,
+                                onStatus = { _maStatus.value = it },
+                            )
+                        }
                     } finally {
                         if (engWav !== uploadFile && engWav !== audioFile) runCatching { engWav.delete() }
                     }
@@ -1940,20 +1951,39 @@ object DictateController {
                     } catch (e: DictateApiException) {
                         // Offline fallback (#104): the cloud call failed because we're offline (after its
                         // retries) — transcribe on-device with the downloaded model instead of erroring.
-                        val fallback = MaProviders.localFallbackProvider(appContext, preset, e) ?: throw e
-                        _state.value = UiState.Transcribing()
-                        LocalTranscriptionProvider.setIdleUnloadMillis(
-                            prefs.dictate.localModelUnloadMinutes.get() * 60_000L,
-                        )
-                        // History says who really transcribed it (live test 8.11.2026: a refused AssemblyAI
-                        // key fell back to Parakeet and the entry still read "AssemblyAI").
-                        usedLocalFallback = true
-                        // The current file, not the one the request was built with: a fast path that
-                        // handed over to the slow one re-encoded and deleted its WAV on the way.
-                        fallback.transcribe(request.copy(audioFile = uploadFile))
+                        // A real failure of the key's engine: the chain takes over, and says so on the key and the line.
+                        val stage = stageWav
+                        val alt = if (engChain && stage != null && engSelected == "assemblyai") {
+                            dev.patrickgold.florisboard.dictate.engines.EngineChain.dictate(
+                                appContext, stage, engLang, first = null, skip = setOf("assemblyai"),
+                                legacyFailed = "AssemblyAI", onStatus = { _maStatus.value = it },
+                            )
+                        } else null
+                        if (alt != null) {
+                            engineOutcome = alt
+                            TranscriptionResult(alt.text)
+                        } else {
+                            val fallback = MaProviders.localFallbackProvider(appContext, preset, e) ?: throw e
+                            _state.value = UiState.Transcribing()
+                            LocalTranscriptionProvider.setIdleUnloadMillis(
+                                prefs.dictate.localModelUnloadMinutes.get() * 60_000L,
+                            )
+                            // History says who really transcribed it (live test 8.11.2026: a refused AssemblyAI
+                            // key fell back to Parakeet and the entry still read "AssemblyAI").
+                            usedLocalFallback = true
+                            // The current file, not the one the request was built with: a fast path that
+                            // handed over to the slow one re-encoded and deleted its WAV on the way.
+                            fallback.transcribe(request.copy(audioFile = uploadFile))
+                        }
                     }
                 }
                 logLatency(latencyTrace, "providerCompleted", providerStartedNanos)
+                // The clip buffer (20 per language): the staged 16 kHz audio and what came back, as the first reference.
+                stageWav?.let { w ->
+                    dev.patrickgold.florisboard.dictate.engines.ClipBuffer.add(
+                        appContext, w, engLang, result.text, engineOutcome?.engineId ?: engSelected,
+                    )
+                }
                 // The number the whole format experiment turns on: how long the words took to come
                 // back, measured across encoding, upload, queue and answer. Stored rather than only
                 // shown, so a comparison run over an evening survives being forgotten.

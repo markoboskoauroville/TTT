@@ -69,6 +69,25 @@ object EngineCatalog {
     /** The debug-only provider that always answers 429, to show the switch. */
     val FAKE_SPEC = EngineSpec(FAKE, "Test engine (always 429)", EngineKind.CLOUD, Long.MAX_VALUE, QuotaReset.NONE, 0.0, false, "", "debug")
 
+    /** The name written on a key: short, one or two words. */
+    fun shortName(id: String): String = when (id) {
+        "parakeet" -> "Parakeet"
+        "android" -> "Android"
+        "groq_turbo" -> "Groq turbo"
+        "groq_v3" -> "Groq"
+        "cloudflare" -> "Cloudflare"
+        "gemini" -> "Gemini"
+        "deepgram" -> "Deepgram"
+        "assemblyai" -> "AssemblyAI"
+        "speechmatics" -> "Speechmatics"
+        "google_v1" -> "Google"
+        "google_chirp" -> "Chirp 3"
+        "soniox" -> "Soniox"
+        "elevenlabs" -> "ElevenLabs"
+        FAKE -> "Test 429"
+        else -> id
+    }
+
     fun byId(id: String): EngineSpec? = if (id == FAKE) FAKE_SPEC else ALL.firstOrNull { it.id == id }
 
     /** Recommended chains from docs/stt-providers.md, the rest appended so every engine has a place. */
