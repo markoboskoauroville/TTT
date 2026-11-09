@@ -215,8 +215,9 @@ object MaSkills {
         val person = if (self) "" else runCatching { personFile(slug).takeIf { it.exists() }?.readText() }.getOrNull().orEmpty()
         val thread = runCatching { threadFile(slug).takeIf { it.exists() }?.readText() }.getOrNull().orEmpty()
         val style = runCatching { styleFile().takeIf { it.exists() }?.readText() }.getOrNull().orEmpty()
-        val answer = DictateController.askModel(prompt(c, person, thread, style), "RE skills", cheap = true)
-            ?: return "No answer from the model: skills not updated."
+        val answer = kotlinx.coroutines.withTimeoutOrNull(60_000L) {
+            DictateController.askModel(prompt(c, person, thread, style), "RE skills", cheap = true)
+        } ?: return "No answer from the model within 60 seconds: skills not updated."
         val (p, t, s) = parse(answer)
         var wrote = 0
         if (t != null) { write(threadFile(slug), t); wrote++ }

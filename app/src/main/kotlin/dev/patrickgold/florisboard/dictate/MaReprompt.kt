@@ -48,6 +48,9 @@ object MaReprompt {
 
     const val NAME = "Reprompt"
 
+    /** How long RE waits for the model before the pop-up says it did not answer (never an endless spinner). */
+    const val RE_TIMEOUT_MS = 45_000L
+
     /** How long an instruction waits for its field to come back. */
     const val WAIT_MS = 60_000L
 

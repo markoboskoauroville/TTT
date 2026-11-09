@@ -69,9 +69,13 @@ fun MaReScreen() = FlorisScreen {
             prefs.dictate.maReScreen,
             title = "Read screen",
             summary = "Say \"take a screenshot and reply to the latest message\" (or in Croatian, \"odgovori na zadnju poruku\"): " +
-                "RE reads the chat on screen and writes the reply into the field. It never sends. Order: 1. the app's " +
-                "accessibility text with the side of each message, 2. a screenshot read by on-device OCR, 3. nothing " +
-                "else: no picture ever leaves the phone.",
+                "RE reads the chat on screen and shows the reply in a pop-up; OK puts it in the field. It never sends. It reads " +
+                "the app's accessibility text with the side of each message (the only reader in WhatsApp). No picture ever leaves the phone.",
+        )
+        SwitchPreference(
+            prefs.dictate.maReScreenshot,
+            title = "Screenshot fallback",
+            summary = "Off. For apps whose accessibility text is empty: take a screenshot and read it on the phone (OCR). Never used in WhatsApp.",
         )
         SwitchPreference(
             prefs.dictate.maReSkills,

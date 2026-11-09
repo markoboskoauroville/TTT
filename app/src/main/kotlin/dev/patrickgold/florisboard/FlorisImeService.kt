@@ -490,7 +490,7 @@ class FlorisImeService : LifecycleInputMethodService() {
                         screen = dev.patrickgold.florisboard.dictate.MaScreenRead.read()
                         if (screen == null) {
                             dev.patrickgold.florisboard.dictate.MaReResult.note(
-                                this@FlorisImeService, "Could not read the screen: the app's text and a screenshot both came back empty. Nothing was written.",
+                                this@FlorisImeService, "Could not read the screen: the app showed no readable chat text (the accessibility tree was empty). Nothing was written.",
                             )
                             return@launch
                         }

@@ -2078,7 +2078,7 @@ object DictateController {
                 MaMessage.show("RE: reading the screen")
                 screen = MaScreenRead.read()
                 if (screen == null) {
-                    MaReResult.note(appContext, "Could not read the screen: the app's text and a screenshot both came back empty. Nothing was written.")
+                    MaReResult.note(appContext, "Could not read the screen: the app showed no readable chat text (the accessibility tree was empty). Nothing was written.")
                     return
                 }
             }
@@ -3830,7 +3830,21 @@ object DictateController {
         rewordJob = scope.launch {
             try {
                 val text = if (bare && model != null && !MaPhoneModels.isPhone(model)) {
-                    requestRewordRaw(MaReprompt.message(raw, input), modelOverride = model, purpose = prompt.name ?: "Prompt")
+                    // RE never spins forever (Marko, 9.11.2026: "it's just going in a circle"): the model gets
+                    // RE_TIMEOUT_MS, then the pop-up says so.
+                    if (prompt.name == MaReprompt.NAME) {
+                        try {
+                            kotlinx.coroutines.withTimeout(MaReprompt.RE_TIMEOUT_MS) {
+                                requestRewordRaw(MaReprompt.message(raw, input), modelOverride = model, purpose = prompt.name ?: "Prompt")
+                            }
+                        } catch (t: kotlinx.coroutines.TimeoutCancellationException) {
+                            _state.value = UiState.Idle
+                            MaReResult.note(appContext, "The model did not answer within ${MaReprompt.RE_TIMEOUT_MS / 1000} seconds. Nothing was written. Try again, or check the connection.")
+                            return@launch
+                        }
+                    } else {
+                        requestRewordRaw(MaReprompt.message(raw, input), modelOverride = model, purpose = prompt.name ?: "Prompt")
+                    }
                 } else {
                     requestReword(
                         raw, input, prompt.reasoningEffort, prompt.reasoningEffortCustom,

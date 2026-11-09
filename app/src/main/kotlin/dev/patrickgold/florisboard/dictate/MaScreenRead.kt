@@ -66,7 +66,22 @@ object MaScreenRead {
     fun hears(words: String): Boolean = WANTS.containsMatchIn(words)
 
     /** The screen as text, or null when no source could read it. */
-    suspend fun read(): Screen? {
+    suspend fun read(): Screen? = runCatching {
+        kotlinx.coroutines.withTimeout(READ_TIMEOUT_MS) { readInner() }
+    }.getOrNull()
+
+    /** The whole read may take this long: no screenshot or OCR call can hang RE. */
+    const val READ_TIMEOUT_MS = 8_000L
+
+    /** Apps whose accessibility tree is the only reader (Marko, 9.11.2026: "accessibility can read WhatsApp"). */
+    private val TREE_ONLY = setOf("com.whatsapp", "com.whatsapp.w4b")
+
+    private fun screenshotFallbackOn(): Boolean = runCatching {
+        val prefs by FlorisPreferenceStore
+        prefs.dictate.maReScreenshot.get()
+    }.getOrDefault(false)
+
+    private suspend fun readInner(): Screen? {
         // (a) the node tree
         val tree = runCatching { DictateAccessibilityService.chatItems() }.getOrNull()
         if (tree != null) {
@@ -74,7 +89,8 @@ object MaScreenRead {
             MaLog.add("re", "screen tree: ${tree.first.size} items, ${text.length} chars")
             if (tree.first.size >= 2 && text.count { it.isLetterOrDigit() } >= 12) return Screen(text, "accessibility tree")
         }
-        // (b) screenshot + OCR
+        // (b) screenshot + OCR: only when switched on, and never in WhatsApp (its tree is complete).
+        if (!screenshotFallbackOn() || MaReprompt.lastPkg in TREE_ONLY) return null
         val bmp = runCatching { DictateAccessibilityService.screenshotAboveKeyboard() }.getOrNull()
         if (bmp != null) {
             val text = runCatching { ocr(bmp) }.getOrDefault("")
