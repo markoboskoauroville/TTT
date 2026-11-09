@@ -40,3 +40,7 @@ Cost per hour of dictation is tiny everywhere: Marko dictates minutes a day, so 
 ## What to verify next
 
 Google Chirp 3 pricing (page would not load), Gemini audio token rate, Groq's actual free-plan limits for Marko's org, Soniox free credit and context, Cloudflare/Gemini Croatian quality. The harness `tools/stt_bakeoff/run_bakeoff.py` has adapters for Groq, AssemblyAI, Gemini, Deepgram and local Parakeet.
+
+## In the app since 9.11.2026 (Engines + benchmark)
+
+Settings > Engines lists every engine of this catalogue that has a free quota or runs on the phone: Parakeet, Android on-device, Groq turbo and large-v3, Cloudflare Workers AI, Gemini Flash-Lite, Deepgram Nova-3, AssemblyAI, Speechmatics, Google Speech v1, Google Chirp 3 (v2, service-account OAuth), plus Soniox and ElevenLabs Scribe which have no free quota shown and run only when switched on. Order per language is draggable; defaults are the chains above. "Benchmark voice engines" scores the last 10 clips per language (WER, names from dictation_corrections.json, latency, cost) inside each free quota. Code: app/src/main/kotlin/.../dictate/engines/. Unit tests: EngineLogicTest (CI job unit-tests).
