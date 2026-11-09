@@ -79,6 +79,7 @@
                 <action android:name="dev.ttt.engines.KEYS"/>
                 <action android:name="dev.ttt.engines.SEED"/>
                 <action android:name="dev.ttt.engines.FAKE"/>
+                <action android:name="dev.ttt.engines.ENABLE"/>
                 <action android:name="dev.ttt.engines.DEMO"/>
                 <action android:name="dev.ttt.engines.PING"/>
                 <action android:name="dev.ttt.engines.BENCH"/>

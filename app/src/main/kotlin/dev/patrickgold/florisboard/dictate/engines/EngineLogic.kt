@@ -344,6 +344,7 @@ object KeyText {
     fun forEngine(id: String, text: String): String? = when (id) {
         "google_chirp" -> serviceAccount(text)
         "cloudflare" -> cloudflare(text)
+        "gemini" -> firstKeys(text).take(30).joinToString("\n").ifEmpty { null }
         "groq_turbo", "groq_v3" -> firstKeys(text).filter { it.startsWith("gsk_") }.joinToString("\n").ifEmpty { null }
         else -> firstKeys(text).firstOrNull()
     }

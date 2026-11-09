@@ -83,7 +83,13 @@ class EngineDebugReceiver : BroadcastReceiver() {
         CoroutineScope(SupervisorJob() + Dispatchers.IO).launch {
             try {
                 when (i.action) {
-                    "dev.ttt.engines.KEYS" -> EngineKeys.importPushed(app).forEach { out("keys " + it) }
+                    "dev.ttt.engines.KEYS" -> EngineKeys.importPushed(app).forEach {
+                        out("keys " + it)
+                        // A key pushed over adb is Marko's own act: an engine with no free quota is then switched on.
+                        val id = it.substringBefore(":")
+                        if (it.endsWith("stored") && EngineCatalog.byId(id)?.paid == true) EngineStore.setEnabled(app, id, true)
+                    }
+                    "dev.ttt.engines.ENABLE" -> { EngineStore.setEnabled(app, i.getStringExtra("e") ?: "", i.getStringExtra("v") != "off"); out("enable " + i.getStringExtra("e")) }
                     "dev.ttt.engines.SEED" -> {
                         val d = File(app.getExternalFilesDir(null), "seed")
                         var n = 0

@@ -198,7 +198,18 @@ object EngineAdapters {
     }
 
     private suspend fun gemini(c: Context, wav: File, lang: String, names: List<String>): String {
-        val k = key(c, "gemini").first()
+        var last: EngineFailure? = null
+        // Several free-tier keys may be stored (one per line): a quota or refused key rolls to the next.
+        for (k in key(c, "gemini")) {
+            try { return geminiWith(k, wav, lang, names) } catch (f: EngineFailure) {
+                if (f.kind != FailKind.QUOTA && f.kind != FailKind.AUTH) throw f
+                last = f
+            }
+        }
+        throw last ?: EngineFailure(FailKind.NOT_CONFIGURED, "no key")
+    }
+
+    private suspend fun geminiWith(k: String, wav: File, lang: String, names: List<String>): String {
         val b64 = withContext(Dispatchers.IO) { Base64.encodeToString(wav.readBytes(), Base64.NO_WRAP) }
         val l = if (lang2(lang) == "en") "English" else "Croatian"
         val p = "Transcribe this speech exactly and verbatim in $l, with punctuation, no commentary." +
@@ -296,7 +307,7 @@ object EngineAdapters {
         val up = JSONObject(
             send(Request.Builder().url("https://api.assemblyai.com/v2/upload").header("authorization", k).post(wav.asRequestBody("application/octet-stream".toMediaType())).build()),
         ).getString("upload_url")
-        val b = JSONObject().put("audio_url", up).put("language_code", lang2(lang)).put("speech_model", "universal")
+        val b = JSONObject().put("audio_url", up).put("language_code", lang2(lang)).put("speech_models", JSONArray().put("universal-3-5-pro").put("universal-2"))
         if (names.isNotEmpty()) b.put("word_boost", JSONArray(names.take(100)))
         val id = JSONObject(send(Request.Builder().url("https://api.assemblyai.com/v2/transcript").header("authorization", k).post(b.toString().toRequestBody(JSONT)).build())).getString("id")
         while (true) {
@@ -331,7 +342,7 @@ object EngineAdapters {
         val fileId = JSONObject(
             send(Request.Builder().url("https://api.soniox.com/v1/files").header("Authorization", auth).post(multipart(emptyMap(), "file", wav)).build()),
         ).getString("id")
-        val body = JSONObject().put("model", "stt-async-v3").put("file_id", fileId).put("language_hints", JSONArray().put(lang2(lang)))
+        val body = JSONObject().put("model", "stt-async-v6").put("file_id", fileId).put("language_hints", JSONArray().put(lang2(lang)))
         val id = JSONObject(send(Request.Builder().url("https://api.soniox.com/v1/transcriptions").header("Authorization", auth).post(body.toString().toRequestBody(JSONT)).build())).getString("id")
         try {
             while (true) {
