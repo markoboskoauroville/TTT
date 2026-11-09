@@ -2840,9 +2840,13 @@ object DictateController {
         // Croatian on the Pixel 7, 8.11.2026), his name with k, then a dictated address put together and
         // matched to the address book (MaSpokenEmail, 8.11.2026):
         // "marco.bosco at gmail.com" is written as the saved marko.bosko@gmail.com.
-        val spoken = MaCyrillic.toLatin(MaSpokenFormat.apply(text))
+        // AUTO: the spoken fix-ups (time, address, name) only when their switch is on.
         var body = MaParagraphs.single(
-            if (prefs.dictate.maSpokenFixups.get()) MaSpokenTime.apply(MaSpokenEmail.apply(MaNameSpelling.apply(spoken))) else spoken,
+            if (prefs.dictate.maSpokenFixups.get()) {
+                MaSpokenTime.apply(MaSpokenEmail.apply(MaNameSpelling.apply(MaCyrillic.toLatin(MaSpokenFormat.apply(text)))))
+            } else {
+                MaCyrillic.toLatin(MaSpokenFormat.apply(text))
+            },
         )
         if (prefs.dictate.maVoiceCommands.get() && DictateAccessibilityService.isRunning) {
             val split = MaVoiceCommand.splitTrailing(body)

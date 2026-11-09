@@ -50,7 +50,8 @@ check("teaching from dictations is reached from there", "Routes.Settings.MaVocab
 
 # ... and on no other settings screen. The Switchboard's one-tap row for the suggestion row is a
 # shortcut that opens this screen, so it is allowed.
-ALLOWED = {"dictate/MaPredictionsScreen.kt", "dictate/MaSwitchboardScreen.kt", "dictate/MaNgramSetting.kt"}
+ALLOWED = {"dictate/MaPredictionsScreen.kt", "dictate/MaSwitchboardScreen.kt", "dictate/MaNgramSetting.kt",
+           "dictate/MaAutoScreen.kt"}  # AUTO lists every automatic change as a switch (9.11.2026)
 for path in SETTINGS.rglob("*.kt"):
     rel = str(path.relative_to(SETTINGS))
     if rel in ALLOWED or "/search/" in str(path):
