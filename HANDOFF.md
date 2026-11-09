@@ -24,6 +24,9 @@ learning.
 >
 > Structured per `MANTRA_MANIFEST/modules/repository-documents.md`.
 
+**AUTO (9.11.2026):** no automatic text replacement unless switched on in AUTO (toolbar key AUTO, or Settings, AUTO corrections).
+All typing corrections are off by default. A digit never ends a word (AT2020 bug). See DEVELOPMENT.md, "AUTO".
+
 ## What to read, and in what order
 
 1. **This file.** Everything true about the app now.

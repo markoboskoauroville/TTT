@@ -11257,3 +11257,19 @@ it's always in English language by default."
 - A long press still opens the typing window.
 
 Checks: `scripts/test_reprompt.py` (42).
+
+# AUTO: nothing changes his text unless he switched it on (9.11.2026)
+
+**Bug.** Typing AT2020 on Amazon lost a 2. In `KeyboardManager`, any non-alphabetic character, a digit included, committed the
+auto-correct candidate for the word before it. "AT" had a fix, so pressing "2" replaced the composing word and the digits
+typed so far went with it. **Fix:** a digit never ends a word; `NlpManager.getAutoCommitCandidate` returns nothing when the
+current word contains a digit or when Auto-correct is off; the provider offers no corrections for a word with a digit.
+
+**Rule (his):** no automatic text replacement unless switched on in AUTO. Auto-correct, auto-capitalise, auto-space and
+double-space-period are off by default (fresh install) and were switched off once on existing installs
+(`applyAutoOffV1IfNeeded`, guard `dictate__ma_auto_off_v1_applied`). One screen holds them: toolbar key AUTO
+(`KeyCode.MA_AUTO` -250, first in the panel, also put first in an older saved arrangement) and Settings, AUTO corrections
+(`MaAutoScreen`, route `settings/dictate/auto`). Every new automatic behaviour gets a switch there in the same commit.
+**Dictation fix-ups he asked for by name** (spoken fix-ups, text replacements, learned corrections, phone style, AI spell
+check, Markdown cues, auto Enter) keep their state but each has its switch under "On dictation". Icon: white square with
+the word cut out, `tools/make_auto_icon.py` (MANTRA_MANIFEST modules/six-letter-icon.md).
