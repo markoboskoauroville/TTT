@@ -323,3 +323,11 @@ voices. Stopped here: a further build plus a full suite (~1 h) would not finish 
 > "Explore options from free to high-end; be flexible and cheap." (Marko, 9.11.2026)
 
 **Status:** saved first; task 63 of mac-ses9-08-nov. Slice: clip buffer (20 per language), pluggable engines with Keystore-encrypted keys, fallback chain per language with status line, Settings > Engines with benchmark, unit tests (CI), phone test with seeded clips and a fake 429 provider. Never OpenAI. Paid engines only when explicitly enabled.
+
+## 9.11.2026 – build 571 feedback: engine name smaller, menu ghost, new entries second
+
+> "The name on the button, AssemblyAI, is too big. Make it non-bold and 20% smaller."
+> "Transcription model appears in the reordering list ('Settings order') but not in the settings list. Fix the bug."
+> "From now on, whenever there is a new feature in a menu, it must be the second item from the top, so I'm not searching for something new at the bottom." (Marko, 9.11.2026)
+
+**Status:** saved first; task 67 of mac-ses9-08-nov. Build 572: engine name regular weight, 0.8 x size, auto-fit kept; Transcription model hidden in parse() so home list and order list are one set (Voice transcription buttons in both); a new settings entry is inserted at position 2 of the saved order; Voice transcription buttons moved there once.
