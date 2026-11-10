@@ -142,7 +142,11 @@ fun TextInputLayout(
             // right way round for something read a hundred times a day.
             // The word-prediction row belongs to the open keyboard (Marko, 10.11.2026): with the letters folded away it is not composed at all.
             val maZoneKeyboardForSmartbar by prefs.dictate.maZoneKeyboard.collectAsState()
-            if (maZoneKeyboardForSmartbar) Smartbar()
+            // The recorder lives in the same strip and must never go with the suggestions (Marko, 10.11.2026): while dictation is
+            // anything but idle (recording, sending, an error to act on) the strip is shown in every view; the suggestions only
+            // appear when the letter keys are open.
+            val maDictationBusy by dev.patrickgold.florisboard.dictate.DictateController.state.collectAsState()
+            if (maZoneKeyboardForSmartbar || maDictationBusy !is dev.patrickgold.florisboard.dictate.DictateController.UiState.Idle) Smartbar()
         }
         // The macro bar is gone. It was the editable strip of user macros — undo, redo, all, copy —
         // and it has been superseded by the M1 to M10 buttons in the feature rows, which do the same

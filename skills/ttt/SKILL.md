@@ -17,6 +17,7 @@ description: TTT, Talk to Type Advanced Keyboard (repo TTT, folder TTT_MINI): Ma
 10. Key ring is forward-only: persistent cursor per provider, never back to a lower key, wraps to 1 after the last. H/E label: "Gemini 2/25 45" (name, n/total, minutes left); percent only in panel/pickers.
 11. NEVER switch engine/provider/model automatically: same engine, retry every 3 s (10 times), next key of the same provider only on quota/refused, network errors never move the ring; audio kept, Resend from History.
 12. Before EVERY TTT upgrade: export the Nothing UI (broadcast dev.ttt.engines.EXPORT_UI, pull ui_config.json), check for secrets, refresh app/src/main/assets/default_config.json (raise version). UI only. RE engine = Anthropic or Groq (switch in Settings and long press on RE).
+13. The recorder (dictation not idle) is shown in every view; suggestions only with the letter keys open. Test: collapse the keyboard, press record, screenshot.
 ## Run log
 - 10.11.2026: shipped default UI, RE Groq switch, Groq small model gpt-oss-20b.
 - 10.11.2026: no automatic engine switch, 3 s retries.

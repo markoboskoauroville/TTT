@@ -459,3 +459,9 @@ voices. Stopped here: a further build plus a full suite (~1 h) would not finish 
 **Status:** saved first; task 76. RE gets Groq chat models as a selectable engine (numbered forward-only key ring, no automatic switch, 3 s retry on network errors, next key of the same provider on quota); models from the official live list, default the best free one; low temperature; system prompt: rewrite faithfully, same language, only the text. Existing RE options stay.
 
 > "so in settings and of course as usual long press on a button whatever it brings there is will be a switch one or the other a tropic or a Groq" (Marko, 10.11.2026; "a tropic" = Anthropic): the RE button gets an engine switch with exactly two choices, Anthropic or Groq, in Settings (RE section) and as a long-press panel on the RE button (active one marked, pick closes it); the RE label shows the active one; each has its own numbered key ring; no automatic switching between the two.
+
+## 10.11.2026 – bug: the recording interface vanished with the suggestion row
+
+> "separate recording interface from status line for correcting the words and not hiding that status line, that recorder in any view. Now because I asked to remove the line, suggestions are coming when I collapse my keyboard and Press my record button. I don't have any more recording interface. It is completely gone. That's the bug. These two parts should be separated. Please fix that." (Marko, 10.11.2026)
+
+**Status:** saved first; task 96. The recorder (timer, trash, send, status) shows whenever dictation is not idle, in every view; the word-suggestion strip shows only while the letter keys are open and never in place of the recorder.
