@@ -41,7 +41,7 @@ def small_for(pid):
 check("anthropic gets haiku", "haiku" in small_for("anthropic"), small_for("anthropic"))
 check("and by any id spelling", small_for("anthropic_claude") == small_for("claude"),
       "a lookup that misses silently returns to the expensive path")
-check("groq gets the 8b", "8b" in small_for("groq"))
+check("groq gets the small gpt-oss-20b (llama-3.1-8b-instant retired 16.8.2026)", small_for("groq") == "openai/gpt-oss-20b")
 check("gemini gets flash", "flash" in small_for("gemini"))
 check("an unknown provider falls through", small_for("something_new") is None,
       "a provider nobody has thought about should keep working, not fail")
