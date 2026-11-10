@@ -417,3 +417,9 @@ voices. Stopped here: a further build plus a full suite (~1 h) would not finish 
 > "Now the big disaster happened. It my TTT. Gemini was not responding. And then the whole engine fall back to I don't want that. I want it tries. If it doesn't pass after some time Make a break of three seconds and try again. Tem tres. Tem tres. There is problem with internet connection. If key is exhausted, go in the next key of the same provider. Change models. Automatically never do that." (Marko, 10.11.2026)
 
 **Status:** saved first; task 76. No cross-engine fallback in the dictation path; no response / timeout / network error: wait 3 s, retry the same engine with the same key, up to 10 times, show "Gemini · retry 2/10 · no internet", keep the audio; only quota/401/403 move to the next key of the same provider; if all keys are out, stop and say so.
+
+## 10.11.2026 – apps tested on the Pixel 7 keep their icon on the desktop
+
+> "please any you are testing on Pixel 7 leave its icon on the desktop" (Marko, 10.11.2026)
+
+**Status:** saved first; task 76. Anything installed on the Pixel 7 for a test stays installed with its launcher icon; no uninstall. TTT is a keyboard, so its settings-activity icon stays.
