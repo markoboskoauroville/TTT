@@ -435,3 +435,9 @@ voices. Stopped here: a further build plus a full suite (~1 h) would not finish 
 > "instead of testing TTT on my phone, Nothing phone, use Pixel 7 phone and then when everything is confirmed, you just install it directly to my phone, Nothing phone, and let me know you did it" (Marko, 10.11.2026)
 
 **Status:** saved first; task 76. All TTT tests and screenshots on the Pixel 7 (100.70.23.53:5555 or USB 41241FDH2S10SJ); the Nothing gets only the final confirmed release, then the master is told.
+
+## 10.11.2026 – export his TTT configuration and ship it as the default
+
+> "Before any upgrades and every upgrades of TTT and do it right now, you need to export my configuration of TTT from my Nothing phone and then distribute it as default configuration with the app itself. So any new update gets also UI update." (Marko, 10.11.2026)
+
+**Status:** saved first; task 76, before any further change. Export the Nothing's layout/behaviour settings (read-only), strip every secret, ship as assets/default_config.json: a fresh install starts with his layout, an update applies the new UI defaults and keeps his keys and history. Rule: before every TTT upgrade, export the Nothing's config and refresh the shipped default first.
