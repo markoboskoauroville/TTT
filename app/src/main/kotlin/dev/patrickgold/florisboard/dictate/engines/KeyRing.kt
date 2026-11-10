@@ -57,7 +57,6 @@ object KeyRing {
                 if (n == 1 && live.size > 1 && testKey1Fails()) {
                     throw EngineFailure(FailKind.QUOTA, "HTTP 429 (test: key 1 fails)")
                 }
-                if (i == 0 && live.size > 1 && testKey1Fails()) throw EngineFailure(FailKind.QUOTA, "HTTP 429 (test: key 1 fails)")
                 val r = block(k)
                 val before = active.put(ringId, n)
                 if (before != null && before != n) statusSink?.invoke("${tag(label, n)} active")
