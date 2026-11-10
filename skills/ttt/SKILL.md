@@ -25,3 +25,5 @@ description: TTT, Talk to Type Advanced Keyboard (repo TTT, folder TTT_MINI): Ma
 - 10.11.2026: builds 577 to 590 (labels, key picker, engine panel, benchmark percent); open: Croatian voice check, history re-transcribe by hand.
 
 - **Pressable controls highlight** on hover/press, nothing else does: MANTRA_MANIFEST modules/workflow-interface.md, "Pressable controls highlight" (Marko 10.11.2026).
+
+**Copyright footer (10.11.2026):** at the very bottom of the app's Settings, one muted centred line "© 2026 Mantra Productions" (MANTRA_MANIFEST modules/copyright-footer.md).

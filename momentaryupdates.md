@@ -451,3 +451,9 @@ voices. Stopped here: a further build plus a full suite (~1 h) would not finish 
 > "please also at the bottom of every of my app which is published on the website put copyright Mantra Productions at the bottom of settings" (Marko, 10.11.2026)
 
 **Status:** saved first; task 76. The very bottom of the TTT settings screen: one quiet centred line "© 2026 Mantra Productions", muted, never cut; part of the app, not of the shipped default UI config.
+
+## 10.11.2026 – RE button: Groq text-to-text again
+
+> "Please in my TTT add option again to use Groq for text-to-text. So, RE button can be used by Groq text-to-text model, so I can prompt for changing in a text." (Marko, 10.11.2026)
+
+**Status:** saved first; task 76. RE gets Groq chat models as a selectable engine (numbered forward-only key ring, no automatic switch, 3 s retry on network errors, next key of the same provider on quota); models from the official live list, default the best free one; low temperature; system prompt: rewrite faithfully, same language, only the text. Existing RE options stay.
