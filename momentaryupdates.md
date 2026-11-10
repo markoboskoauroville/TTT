@@ -381,3 +381,9 @@ voices. Stopped here: a further build plus a full suite (~1 h) would not finish 
 > "regarding the TTT Uvijek, to učinite lijepo i razlika je lijepa, ali tekst Groq 100% free 479, što je sada na ovom butonu, ima više spasa da se vrti. Pa, počinimo da imamo tekst prije H ili E. let's aim to have text next to HNE, actually, uh, trying to be the size of HNE, but if there is no space, it shrinks" (Marko, 10.11.2026; screenshot /Users/markobosko/.claude/uploads/c3ae2f6d-b032-46d8-af48-dd5ba976fc2f/9adf9b1b-image.png)
 
 **Status:** saved first; task 76 continues. The widths work and he likes them; the label next to H/E should aim at the size of the letter, shrink step by step on one line if it does not fit, never cut.
+
+## 10.11.2026 – active key "Groq 2/3" on the label, fallback always on
+
+> "sada sam čitajući i sada sam u koncu quota or not, I want to have next to the Gemini or Groq ... minus and then key slash how many keys I have or any other model having multiple keys, Groq 2 slash whatever number is there, and I don't see that label, please give me that label. A simple fallback mechanism for the multiple keys accounts providers should be there automatically. There is no disable enable for this. It just goes on as we know, and then it goes from the beginning again when it comes to the end." (Marko, 10.11.2026)
+
+**Status:** saved first; task 76 continues. Label shows the active key number over the key count ("Groq 2/3") with the same size rule; fallback has no switch, wraps to key 1 at the end; the "key 1 fails" test switch becomes hidden debug or is removed.
