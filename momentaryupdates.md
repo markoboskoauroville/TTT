@@ -375,3 +375,9 @@ voices. Stopped here: a further build plus a full suite (~1 h) would not finish 
 > "Add the feature to TTT and that is for each button inside the feature row have another parameter how much percentage button is taking from the length of feature row. So if you take for example this configuration, you can see here I would uh give uh greater percentage to H and E and smaller percentage to F1." (Marko, 10.11.2026; screenshot /Users/markobosko/.claude/uploads/c3ae2f6d-b032-46d8-af48-dd5ba976fc2f/2b20d9b6-image.png)
 
 **Status:** saved first; task 76, second feature. Each feature-row button gets a width percent (default H 40 / F1 20 / E 40), normalised when the sum is not 100, minimum so labels never cut.
+
+## 10.11.2026 – engine label as large as H/E, shrinks to fit
+
+> "regarding the TTT Uvijek, to učinite lijepo i razlika je lijepa, ali tekst Groq 100% free 479, što je sada na ovom butonu, ima više spasa da se vrti. Pa, počinimo da imamo tekst prije H ili E. let's aim to have text next to HNE, actually, uh, trying to be the size of HNE, but if there is no space, it shrinks" (Marko, 10.11.2026; screenshot /Users/markobosko/.claude/uploads/c3ae2f6d-b032-46d8-af48-dd5ba976fc2f/9adf9b1b-image.png)
+
+**Status:** saved first; task 76 continues. The widths work and he likes them; the label next to H/E should aim at the size of the letter, shrink step by step on one line if it does not fit, never cut.
