@@ -1531,7 +1531,7 @@ fun MaFeatureRow(
                                     val total = androidx.compose.runtime.remember(ringId, context) {
                                         runCatching { dev.patrickgold.florisboard.dictate.engines.EngineKeys.lines(context, ringId).size }.getOrDefault(0)
                                     }
-                                    val act = (dev.patrickgold.florisboard.dictate.engines.KeyRing.active[ringId] ?: 1).coerceAtMost(maxOf(total, 1))
+                                    val act = (dev.patrickgold.florisboard.dictate.engines.KeyRing.active[ringId] ?: (dev.patrickgold.florisboard.dictate.engines.KeyRing.cursor(context, ringId) + 1)).coerceAtMost(maxOf(total, 1))
                                     dev.patrickgold.florisboard.dictate.engines.EngineCatalog.shortName(it) +
                                         (if (total > 1) " $act/$total" else "")
                                 }

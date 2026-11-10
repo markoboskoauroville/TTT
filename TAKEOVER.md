@@ -15,3 +15,5 @@
 **Next.** Marko dictates Croatian once and taps Re-transcribe; then judge the benchmark again after correcting the history texts by hand (removes the Groq circularity).
 
 **10.11.2026 (build 608).** Rotation verified on the Nothing with the test switch: status "E - Gemini-1 out of free use -> Gemini-2", text came back. H/E label shows the active key over the key count ("Groq 2/3") when a provider has several keys; fallback has no switch (the "key 1 fails" test pref is hidden, off); when all keys rest, the next call starts again at key 1. Label text aims at the letter size and shrinks by measurement. Not yet seen on screen: the "n/total" label (keyboard was closed when build 608 was installed).
+
+**10.11.2026 (forward-only ring).** KeyRing keeps a persistent cursor per provider (SharedPreferences ttt_key_cursor): when key n is out of free use or refused it moves to n+1 and stays there, never back to a lower number; it wraps to key 1 only after the last key; kept across restarts. The H/E button label is provider + key n/total + minutes left ("Gemini 2/25 45"), no "free", no percent (percent stays in the panel and pickers), 18 sp target with measured shrink.

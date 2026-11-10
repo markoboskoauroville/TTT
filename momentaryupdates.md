@@ -393,3 +393,9 @@ voices. Stopped here: a further build plus a full suite (~1 h) would not finish 
 > "and for the keyboard, you can remove three I want to say remove the free text and also percentage text from the button, but percentage text keep when I choose the models and when I see models in any other view, except on the button itself because we want bigger screen. So basically, for example, there will be e- Gemini 2/25 45, which is 45 minutes left. That's it." (Marko, 10.11.2026)
 
 **Status:** saved first; task 76. On the H/E buttons only: "Gemini 2/25 45", no "free", no "(90%)"; accuracy percent stays in the engine panel, model picker and other views; label as big as the letter (17 sp) or larger, auto-shrink as fallback.
+
+## 10.11.2026 – never look back: forward-only key cursor
+
+> "Also, for TTT, if the first account is exhausted and I'm on second, you don't retry on the first. You just understand now I'm on second, then I'm going on third. So never look back." (Marko, 10.11.2026)
+
+**Status:** saved first; task 76. KeyRing keeps a persistent cursor per provider: key n exhausted -> cursor n+1 and stays; wraps to key 1 only after the last key; kept across restarts; replaces "every call starts at the lowest key not resting".

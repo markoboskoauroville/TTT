@@ -42,24 +42,40 @@ object KeyRing {
 
     private fun nextUtcMidnight(now: Long): Long = (now / 86_400_000L + 1) * 86_400_000L
 
+    private fun cursorPrefs(c: Context) = c.applicationContext.getSharedPreferences("ttt_key_cursor", Context.MODE_PRIVATE)
+
+    /** The key the ring is on, 0-based; kept across restarts (Marko, 10.11.2026: "never look back"). */
+    fun cursor(c: Context, ringId: String): Int = cursorPrefs(c).getInt(ringId, 0)
+
+    private fun setCursor(c: Context, ringId: String, idx: Int) {
+        cursorPrefs(c).edit().putInt(ringId, idx).apply()
+        active[ringId] = idx + 1
+    }
+
+    /**
+     * Forward only: the ring stays on the key it is on. When that key is out of free use or refused, the cursor
+     * moves to the next one and STAYS there; it never goes back to a lower number, and wraps to key 1 only after
+     * the last key. The status line says every move ("Groq-1 out of free use -> Groq-2"). A key still resting
+     * (until 00:00 UTC for a daily quota) is skipped on the way round unless every key rests.
+     */
     suspend fun <T> run(c: Context, ringId: String, label: String, block: suspend (String) -> T): T {
         val all = EngineKeys.lines(c, ringId).ifEmpty { throw EngineFailure(FailKind.NOT_CONFIGURED, "no key") }
+        val n = all.size
         val now = System.currentTimeMillis()
-        val numbered = all.mapIndexed { i, k -> (i + 1) to k }
-        val live = numbered.filter { (rest["$ringId:${it.second.hashCode()}"] ?: 0L) <= now }.ifEmpty { numbered }
+        val start = cursor(c, ringId).let { if (it in 0 until n) it else 0 }
+        val order = (0 until n).map { (start + it) % n }
+        val ready = order.filter { (rest["$ringId:${all[it].hashCode()}"] ?: 0L) <= now }.ifEmpty { order }
         var last: Throwable = EngineFailure(FailKind.NOT_CONFIGURED, "no key")
-        for ((i, nk) in live.withIndex()) {
-            val n = nk.first
-            val k = nk.second
-            val more = i < live.size - 1
+        for ((pos, idx) in ready.withIndex()) {
+            val k = all[idx]
+            val number = idx + 1
             var what = ""
             try {
-                if (n == 1 && live.size > 1 && testKey1Fails()) {
+                if (idx == 0 && n > 1 && testKey1Fails()) {
                     throw EngineFailure(FailKind.QUOTA, "HTTP 429 (test: key 1 fails)")
                 }
                 val r = block(k)
-                val before = active.put(ringId, n)
-                if (before != null && before != n) statusSink?.invoke("${tag(label, n)} active")
+                setCursor(c, ringId, idx)
                 return r
             } catch (f: EngineFailure) {
                 if (f.kind != FailKind.QUOTA && f.kind != FailKind.AUTH) throw f
@@ -77,7 +93,9 @@ object KeyRing {
                 what = "timed out"
                 last = e
             }
-            if (more) statusSink?.invoke("${tag(label, n)} $what → ${tag(label, live[i + 1].first)}")
+            val nextIdx = ready.getOrNull(pos + 1) ?: ((idx + 1) % n)
+            setCursor(c, ringId, nextIdx)
+            if (pos < ready.size - 1) statusSink?.invoke("${tag(label, number)} $what \u2192 ${tag(label, nextIdx + 1)}")
         }
         throw last
     }

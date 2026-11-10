@@ -110,7 +110,7 @@ object EngineKeys {
             "google_chirp" -> if (l.size == 1) "1 account" else "${l.size} accounts"
             else -> {
                 val base = if (l.size == 1) "1 key" else "${l.size} keys"
-                val a = KeyRing.active[keyId(engineId)]
+                val a = KeyRing.active[keyId(engineId)] ?: (KeyRing.cursor(c, keyId(engineId)) + 1)
                 if (l.size > 1 && a != null) "$base, active $a" else base
             }
         }
