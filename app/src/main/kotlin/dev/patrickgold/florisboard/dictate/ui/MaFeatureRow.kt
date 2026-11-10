@@ -1527,7 +1527,7 @@ fun MaFeatureRow(
                                 MaProviders.ENGINE_LOCAL -> "Parakeet"
                                 else -> (answering ?: chosen).let {
                                     // Marko, 10.11.2026: "Groq 2/3" = active key number over the number of keys, when a provider has several.
-                                    val ringId = dev.patrickgold.florisboard.dictate.engines.EngineStore.keyId(it)
+                                    val ringId = dev.patrickgold.florisboard.dictate.engines.EngineKeys.keyId(it)
                                     val total = androidx.compose.runtime.remember(ringId, context) {
                                         runCatching { dev.patrickgold.florisboard.dictate.engines.EngineKeys.lines(context, ringId).size }.getOrDefault(0)
                                     }
