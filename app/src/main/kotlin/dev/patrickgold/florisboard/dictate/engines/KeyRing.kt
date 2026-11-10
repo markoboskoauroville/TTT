@@ -40,11 +40,6 @@ object KeyRing {
         prefs.dictate.maTestKey1Fails.get()
     }.getOrDefault(false)
 
-    private fun testKey1Fails(): Boolean = runCatching {
-        val prefs by dev.patrickgold.florisboard.app.FlorisPreferenceStore
-        prefs.dictate.maTestKey1Fails.get()
-    }.getOrDefault(false)
-
     private fun nextUtcMidnight(now: Long): Long = (now / 86_400_000L + 1) * 86_400_000L
 
     suspend fun <T> run(c: Context, ringId: String, label: String, block: suspend (String) -> T): T {

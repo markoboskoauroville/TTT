@@ -1761,12 +1761,6 @@ abstract class FlorisPreferenceModel : PreferenceModel() {
             default = false,
         )
 
-        /** Diagnostics: the lowest-numbered key of a ring answers a simulated 429, to see the switch to the next number. Off by default. */
-        val maTestKey1Fails = boolean(
-            key = "dictate__ma_test_key1_fails",
-            default = false,
-        )
-
         val maScrollPages = int(
             key = "dictate__ma_scroll_pages",
             default = 4,
