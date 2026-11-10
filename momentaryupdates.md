@@ -429,3 +429,9 @@ voices. Stopped here: a further build plus a full suite (~1 h) would not finish 
 > "Also please update the app. TTT, if there is no keyboard open to type things, then also the row for predicting the words is not on the screen, it's hidden." (Marko, 10.11.2026)
 
 **Status:** saved first; task 76. The suggestion strip (ENG / to / the / that / AI) is shown only while the keyboard is open for typing; hidden when only the feature row is on screen; back the moment the keyboard shows.
+
+## 10.11.2026 – test on the Pixel 7, install on the Nothing only when confirmed
+
+> "instead of testing TTT on my phone, Nothing phone, use Pixel 7 phone and then when everything is confirmed, you just install it directly to my phone, Nothing phone, and let me know you did it" (Marko, 10.11.2026)
+
+**Status:** saved first; task 76. All TTT tests and screenshots on the Pixel 7 (100.70.23.53:5555 or USB 41241FDH2S10SJ); the Nothing gets only the final confirmed release, then the master is told.
