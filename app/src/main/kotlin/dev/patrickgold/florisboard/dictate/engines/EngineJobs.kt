@@ -120,6 +120,22 @@ class EngineDebugReceiver : BroadcastReceiver() {
                         val f = dev.patrickgold.florisboard.dictate.MaUiConfig.exportTo(app, i.getIntExtra("v", 1))
                         out("ui exported " + f.length() + " bytes")
                     }
+                    "dev.ttt.engines.SIMNET" -> {
+                        KeyRing.simulateNetFailures = i.getIntExtra("n", 3)
+                        out("simulating " + KeyRing.simulateNetFailures + " network failures")
+                    }
+                    "dev.ttt.engines.RE" -> {
+                        // Debug: one RE rewrite with the chosen RE engine, the result's first words logged (a test sentence, no key).
+                        val t = i.getStringExtra("t") ?: "Make this shorter: the weather today is very very nice and sunny."
+                        val t0 = System.currentTimeMillis()
+                        val r = runCatching {
+                            if (dev.patrickgold.florisboard.dictate.MaReEngine.engine() == dev.patrickgold.florisboard.dictate.MaReEngine.GROQ)
+                                dev.patrickgold.florisboard.dictate.MaReEngine.groq(app, t) { out("status: " + it) }
+                            else dev.patrickgold.florisboard.dictate.DictateController.askModel(t, "debug RE") ?: "(no answer)"
+                        }
+                        out("re " + dev.patrickgold.florisboard.dictate.MaReEngine.label() + " " + (System.currentTimeMillis() - t0) + " ms: " +
+                            (r.getOrNull()?.take(100) ?: ("failed " + r.exceptionOrNull()?.message)))
+                    }
                     "dev.ttt.engines.PING" -> {
                         val id = i.getStringExtra("e") ?: "groq_turbo"
                         val clip = ClipBuffer.latest(app, "en", 1).firstOrNull() ?: ClipBuffer.latest(app, "hr", 1).firstOrNull()

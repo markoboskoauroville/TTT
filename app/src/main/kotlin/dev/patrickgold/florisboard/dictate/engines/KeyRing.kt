@@ -37,6 +37,9 @@ object KeyRing {
 
     private fun nextUtcMidnight(now: Long): Long = (now / 86_400_000L + 1) * 86_400_000L
 
+    /** Debug only (adb): the next N calls fail as if the network were down, to see the 3 s retries without cutting the phone's connection. */
+    @Volatile var simulateNetFailures = 0
+
     private fun cursorPrefs(c: Context): android.content.SharedPreferences {
         val sp = c.applicationContext.getSharedPreferences("ttt_key_cursor", Context.MODE_PRIVATE)
         // One-time reset of the leftovers of the "key 1 fails" test (cursors, and the hidden test switch is no longer read).
@@ -72,6 +75,7 @@ object KeyRing {
             var what = ""
             try {
                 // One source of truth: the label reads the cursor, and the request uses the key the cursor names.
+                if (simulateNetFailures > 0) { simulateNetFailures--; throw EngineFailure(FailKind.NETWORK, "simulated") }
                 active[ringId] = number
                 android.util.Log.i("TTT-KEY", "$ringId key $number/$n used")
                 val r = block(k)

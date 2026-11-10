@@ -83,6 +83,8 @@
                 <action android:name="dev.ttt.engines.ENABLE"/>
                 <action android:name="dev.ttt.engines.DEMO"/>
                 <action android:name="dev.ttt.engines.PING"/>
+                <action android:name="dev.ttt.engines.SIMNET"/>
+                <action android:name="dev.ttt.engines.RE"/>
                 <action android:name="dev.ttt.engines.EXPORT_UI"/>
                 <action android:name="dev.ttt.engines.BENCH"/>
                 <action android:name="dev.ttt.engines.REPORT"/>
