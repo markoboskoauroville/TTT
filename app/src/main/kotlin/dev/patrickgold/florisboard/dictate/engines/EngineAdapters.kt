@@ -75,6 +75,10 @@ object EngineAdapters {
             val body = runCatching { r.body.string() }.getOrDefault("")
             if (r.isSuccessful) return body
             val low = body.lowercase()
+            // A retired model id is said plainly, never a silent failure (Marko / research 10.11.2026).
+            if (r.code == 404 && (low.contains("model_not_found") || low.contains("decommission") || low.contains("does not exist"))) {
+                throw EngineFailure(FailKind.NOT_CONFIGURED, "model retired")
+            }
             val kind = when {
                 r.code == 429 || r.code == 402 -> FailKind.QUOTA
                 r.code == 401 -> FailKind.AUTH
@@ -171,6 +175,17 @@ object EngineAdapters {
     // ------------------------------------------------------------------ cloud, one call
 
     /** Groq with one key; [KeyRing] rolls to the next key on a quota or refused answer. */
+    /** One Groq text-to-text call (RE): faithful rewrite, same language, only the text back. Temperature low. */
+    suspend fun groqChat(k: String, model: String, system: String, user: String): String {
+        val msgs = org.json.JSONArray()
+            .put(JSONObject().put("role", "system").put("content", system))
+            .put(JSONObject().put("role", "user").put("content", user))
+        val body = JSONObject().put("model", model).put("messages", msgs).put("temperature", 0.2).toString().toRequestBody(JSONT)
+        val req = Request.Builder().url("https://api.groq.com/openai/v1/chat/completions")
+            .header("Authorization", "Bearer $k").header("User-Agent", "curl/8").post(body).build()
+        return JSONObject(send(req)).getJSONArray("choices").getJSONObject(0).getJSONObject("message").getString("content").trim()
+    }
+
     private suspend fun groq(k: String, model: String, wav: File, lang: String, names: List<String>): String {
         val fields = linkedMapOf("model" to model, "response_format" to "json", "temperature" to "0", "language" to lang2(lang))
         if (names.isNotEmpty()) fields["prompt"] = names.joinToString(", ").take(600)

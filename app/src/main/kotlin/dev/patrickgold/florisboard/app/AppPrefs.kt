@@ -1761,6 +1761,18 @@ abstract class FlorisPreferenceModel : PreferenceModel() {
             default = false,
         )
 
+        /** Which model family RE rewrites with: "anthropic" (default, as before) or "groq". Chosen by Marko; never switched automatically. */
+        val maReEngine = string(
+            key = "dictate__ma_re_engine",
+            default = "anthropic",
+        )
+
+        /** The Groq model RE uses when maReEngine is "groq": openai/gpt-oss-20b (default) or openai/gpt-oss-120b. */
+        val maReGroqModel = string(
+            key = "dictate__ma_re_groq_model",
+            default = "openai/gpt-oss-20b",
+        )
+
         val maScrollPages = int(
             key = "dictate__ma_scroll_pages",
             default = 4,

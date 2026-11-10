@@ -242,6 +242,24 @@ fun MaRowsScreen() = FlorisScreen {
 
         // The "Test: key 1 fails" switch is no longer shown (Marko, 10.11.2026: fallback has no on/off). The pref stays as a hidden debug flag.
 
+        // RE engine: exactly two choices (Marko, 10.11.2026), never switched automatically.
+        val reEngine by prefs.dictate.maReEngine.collectAsState()
+        val reGroqModel by prefs.dictate.maReGroqModel.collectAsState()
+        Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)) {
+            Text("RE engine", style = MaterialTheme.typography.bodyLarge)
+            Text("Which model rewrites with RE. Long press the RE key for the same switch.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            listOf(
+                Triple("Anthropic", "anthropic", ""),
+                Triple("Groq \u00b7 gpt-oss-20b", "groq", "openai/gpt-oss-20b"),
+                Triple("Groq \u00b7 gpt-oss-120b", "groq", "openai/gpt-oss-120b"),
+            ).forEach { (name, eng, model) ->
+                val on = if (eng == "anthropic") reEngine != "groq" else reEngine == "groq" && (if (model == "openai/gpt-oss-120b") reGroqModel == model else reGroqModel != "openai/gpt-oss-120b")
+                TextButton(onClick = { spacerScope.launch {
+                    prefs.dictate.maReEngine.set(eng); if (model.isNotEmpty()) prefs.dictate.maReGroqModel.set(model)
+                } }) { Text((if (on) "\u2713 " else "    ") + name) }
+            }
+        }
+
         // The "Row 2 becomes Row 1" buttons are gone. The tabs are dragged instead — see the strip
         // below. Six rows made the button version untenable anyway: it was five buttons per tab,
         // thirty sentences to read, for a thing his finger can say in one movement.

@@ -2153,10 +2153,15 @@ object DictateController {
                     return
                 }
             }
-            applyPrompt(
-                appContext, MaReprompt.prompt(words, write, screen), model = MaFlow.model(),
-                allowGrowth = true, bare = true,
-            )
+            MaReEngine.inRe = true
+            try {
+                applyPrompt(
+                    appContext, MaReprompt.prompt(words, write, screen), model = MaFlow.model(),
+                    allowGrowth = true, bare = true,
+                )
+            } finally {
+                MaReEngine.inRe = false
+            }
             return
         }
         // The transcript after the Croatian spell check: a correction, not a rewrite, so paragraph
@@ -4346,6 +4351,16 @@ object DictateController {
         /** What the cost log says this request was for. */
         purpose: String = if (cheapest) "Suggestion" else "Rewording",
     ): String {
+        // RE with Groq (Marko, 10.11.2026): only the chosen engine; no fallback to Anthropic.
+        if (MaReEngine.inRe && MaReEngine.engine() == MaReEngine.GROQ) {
+            MaRewordPrompt.recordSent(MaReEngine.groqModel(), userContent)
+            try {
+                return MaReEngine.groq(maAppContext!!, userContent) { _maStatus.value = it }
+            } catch (e: dev.patrickgold.florisboard.dictate.engines.EngineFailure) {
+                MaMessage.show(if (e.message == "model retired") "RE: Groq model retired, pick another in Settings" else "RE: " + (e.message ?: "Groq failed"))
+                throw DictateApiException(DictateApiException.Kind.UNKNOWN, e.message)
+            }
+        }
         val account = MaProviders.rewordingAccount()
         // Blank rewording key falls back to the transcription account's key (legacy "reuse" behavior).
         // Through the ring in both cases, and under the id of whichever account the key came from,

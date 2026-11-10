@@ -1611,9 +1611,13 @@ fun MaFeatureRow(
                     val rec = DictateController.state.collectAsState().value as?
                         DictateController.UiState.Recording
                     val recordingThis = rec != null && DictateController.isRepromptRecording()
+                    var reMenu by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(false) }
+                    val reEngine by prefs.dictate.maReEngine.collectAsState()
+                    val reGroqModel by prefs.dictate.maReGroqModel.collectAsState()
+                    Box(modifier = keyMod) {
                     ThemedKey(
                         code = KeyCode.NOOP,
-                        modifier = keyMod,
+                        modifier = Modifier.fillMaxSize(),
                         ring = if (recordingThis) MaRecordOutlineLive else MaRecordOutline,
                         onClick = {
                             if (rec == null) {
@@ -1626,22 +1630,13 @@ fun MaFeatureRow(
                             DictateController.onMicClick(context, reprompt = true, engine = MaProviders.ENGINE_ASSEMBLYAI)
                             MaMessage.show(if (rec == null) "RE: say the instruction (AssemblyAI)" else "RE: sending")
                         },
-                        onLongClick = {
-                            val info = editorInstance.activeInfo
-                            val pkg = info.packageName
-                            // An empty field is the prompt mode (4.11.2026): the instruction says
-                            // what message to write. With text, it reshapes the text, as before.
-                            val empty = editorInstance.activeContent.text.isBlank() &&
-                                editorInstance.activeContent.selectedText.isBlank()
-                            if (pkg == null) {
-                                MaMessage.show("Reprompt: no field to write into")
-                            } else {
-                                MaReprompt.open(context, pkg, info.base.fieldId, write = empty)
-                            }
-                        },
+                        // A long press opens the engine switch (Marko, 10.11.2026): Anthropic or Groq, the active one marked,
+                        // a pick closes it. "Type the instruction" keeps the old typing window one tap away.
+                        onLongClick = { reMenu = true },
                     ) { fg ->
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Text(text = "re", color = fg, fontSize = 17.sp, fontWeight = FontWeight.Bold)
+                            Text(text = if (reEngine == "groq") "G" else "A", color = fg, fontSize = 10.sp, modifier = Modifier.offset(x = 1.dp, y = 4.dp))
                             Icon(
                                 imageVector = Icons.Default.AutoAwesome,
                                 contentDescription = MaReprompt.NAME,
@@ -1650,8 +1645,28 @@ fun MaFeatureRow(
                             )
                         }
                     }
+                    androidx.compose.material3.DropdownMenu(expanded = reMenu, onDismissRequest = { reMenu = false }) {
+                        fun item(label: String, on: Boolean, pick: () -> Unit) = androidx.compose.material3.DropdownMenuItem(
+                            text = { Text((if (on) "\u2713 " else "    ") + label) },
+                            onClick = { reMenu = false; pick() },
+                        )
+                        item("Anthropic", reEngine != "groq") { scope.launch { prefs.dictate.maReEngine.set("anthropic") } }
+                        item("Groq \u00b7 gpt-oss-20b", reEngine == "groq" && reGroqModel != "openai/gpt-oss-120b") {
+                            scope.launch { prefs.dictate.maReEngine.set("groq"); prefs.dictate.maReGroqModel.set("openai/gpt-oss-20b") }
+                        }
+                        item("Groq \u00b7 gpt-oss-120b", reEngine == "groq" && reGroqModel == "openai/gpt-oss-120b") {
+                            scope.launch { prefs.dictate.maReEngine.set("groq"); prefs.dictate.maReGroqModel.set("openai/gpt-oss-120b") }
+                        }
+                        item("Type the instruction\u2026", false) {
+                            val info = editorInstance.activeInfo
+                            val pkg = info.packageName
+                            val empty = editorInstance.activeContent.text.isBlank() && editorInstance.activeContent.selectedText.isBlank()
+                            if (pkg == null) MaMessage.show("Reprompt: no field to write into")
+                            else MaReprompt.open(context, pkg, info.base.fieldId, write = empty)
+                        }
+                    }
+                    }
                 }
-
                 MaFeatureKey.WHATSAPP -> {
                     // WA (MaWhatsApp, 7.11.2026): like RE, a press records the instruction in English and a
                     // second press sends it, here to Sonnet working WhatsApp. Live ring while recording or

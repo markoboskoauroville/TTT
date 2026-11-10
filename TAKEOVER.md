@@ -27,3 +27,8 @@
 **10.11.2026 (no prediction row without keyboard).** The Smartbar (ENG / word suggestions / AI) is composed only while the letter keys are shown (maZoneKeyboard); folded away, only the feature row stays.
 
 **10.11.2026 (copyright).** The very bottom of the settings home screen carries one quiet centred line "(c) 2026 Mantra Productions" (HomeScreen.kt); part of the app, not of the shipped default UI config.
+
+**10.11.2026 (shipped default UI, RE engine, dead model).**
+- RULE: before every TTT upgrade, export the Nothing's custom UI and refresh the shipped default first: install the current build there, `adb -s <Nothing> shell am broadcast -a dev.ttt.engines.EXPORT_UI -n com.mantraproductions.tttlight/dev.patrickgold.florisboard.dictate.engines.EngineDebugReceiver`, `adb pull /sdcard/Android/data/com.mantraproductions.tttlight/files/ui_config.json`, grep for key shapes, copy to app/src/main/assets/default_config.json and raise "version" (applied once per newer version by MaUiConfig). UI only: rows, widths, colours, spacer, copy row, macro labels, font scale, Smartbar switch. Exported 10.11.2026 (version 1, no secret shapes found).
+- RE engine: Anthropic or Groq (Settings > Feature row and a long press on RE: Anthropic / Groq gpt-oss-20b / Groq gpt-oss-120b / Type the instruction). Groq uses the numbered forward-only KeyRing, 3 s retries on network errors, no fallback to Anthropic; label "re A" or "re G".
+- Groq small model is openai/gpt-oss-20b (llama-3.1-8b-instant was retired 16.8.2026). A dead model id says "model retired". Open: gemini-2.0-flash and gpt-4o-mini in MaSmallModel not checked against live lists (no working key file found for Gemini).

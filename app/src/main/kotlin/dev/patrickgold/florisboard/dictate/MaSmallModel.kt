@@ -58,7 +58,7 @@ object MaSmallModel {
         return when {
             // The newest Haiku, whatever its number. Resolved against Anthropic's model list.
             id.contains("anthropic") || id.contains("claude") -> MaClaudeModels.DEFAULT
-            id.contains("groq") -> "llama-3.1-8b-instant"
+            id.contains("groq") -> "openai/gpt-oss-20b"
             id.contains("gemini") || id.contains("google") -> "gemini-2.0-flash"
             id.contains("openai") -> "gpt-4o-mini"
             else -> null
@@ -68,7 +68,7 @@ object MaSmallModel {
     /** Every small model this app will use. For the test, and for anybody auditing the bill. */
     val ALL = listOf(
         MaClaudeModels.DEFAULT,
-        "llama-3.1-8b-instant",
+        "openai/gpt-oss-20b",
         "gemini-2.0-flash",
         "gpt-4o-mini",
     )

@@ -29,7 +29,7 @@ def small_for(pid):
     if "anthropic" in p or "claude" in p:
         return "claude-haiku-latest"
     if "groq" in p:
-        return "llama-3.1-8b-instant"
+        return "openai/gpt-oss-20b"
     if "gemini" in p or "google" in p:
         return "gemini-2.0-flash"
     if "openai" in p:
