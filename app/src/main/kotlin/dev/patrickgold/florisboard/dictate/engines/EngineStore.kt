@@ -108,7 +108,11 @@ object EngineKeys {
         return when (keyId(engineId)) {
             "cloudflare" -> if (l.size >= 2) "1 account" else null
             "google_chirp" -> if (l.size == 1) "1 account" else "${l.size} accounts"
-            else -> if (l.size == 1) "1 key" else "${l.size} keys"
+            else -> {
+                val base = if (l.size == 1) "1 key" else "${l.size} keys"
+                val a = KeyRing.active[keyId(engineId)]
+                if (l.size > 1 && a != null) "$base, active $a" else base
+            }
         }
     }
 
