@@ -286,6 +286,7 @@ fun MaFeatureRow(
 
     // What C1 to C10 currently hold, in the order they were copied.
     val spacerTenths by prefs.dictate.maSpacerTenths.collectAsState()
+    val keyWidthsRaw by prefs.dictate.maKeyWidths.collectAsState()
     val clipDelaySelect by prefs.dictate.maClipDelaySelect.collectAsState()
     val clipDelayDelete by prefs.dictate.maClipDelayDelete.collectAsState()
     val clipDelayPaste by prefs.dictate.maClipDelayPaste.collectAsState()
@@ -582,7 +583,10 @@ fun MaFeatureRow(
             modifier = Modifier.fillMaxWidth().height(rowHeight),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-        val keyMod = Modifier.weight(1f).fillMaxHeight()
+        val rowShares = dev.patrickgold.florisboard.dictate.MaKeyWidths.shares(
+            rowButtons.map { maFeatureToken(it) }, keyWidthsRaw,
+        )
+        var keyIdx = -1
 
         // THE ARRANGEMENT IS THE USER'S. It was corrected by hand twice, at builds 139 and 146,
         // both times from a screenshot with arrows drawn on it and both times in the direction
@@ -597,6 +601,8 @@ fun MaFeatureRow(
         // record, which is a warning about a real arrangement rather than a rule that makes some
         // arrangements unreachable.
         rowButtons.forEach { button ->
+          keyIdx++
+          val keyMod = Modifier.weight(rowShares.getOrElse(keyIdx) { 1f }).fillMaxHeight()
           // His colour for this key, if he painted one (Settings → Key colours). Provided rather
           // than passed, so every key drawn through ThemedKey takes it without each being changed.
           CompositionLocalProvider(

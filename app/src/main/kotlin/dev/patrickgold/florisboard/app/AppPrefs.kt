@@ -1749,6 +1749,12 @@ abstract class FlorisPreferenceModel : PreferenceModel() {
             default = 10,
         )
 
+        /** Width percent per feature-row button, "TOKEN=40,TOKEN=20"; empty = defaults (H 40, F1 20, E 40). See MaKeyWidths. */
+        val maKeyWidths = string(
+            key = "dictate__ma_key_widths",
+            default = "",
+        )
+
         val maScrollPages = int(
             key = "dictate__ma_scroll_pages",
             default = 4,

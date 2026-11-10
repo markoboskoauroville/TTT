@@ -238,6 +238,36 @@ fun MaRowsScreen() = FlorisScreen {
         }
 
 
+        // Width of H, F1 and E as a percentage of the row (Marko, 10.11.2026).
+        val widthsRaw by prefs.dictate.maKeyWidths.collectAsState()
+        listOf(
+            Triple("H width", dev.patrickgold.florisboard.dictate.MaKeyWidths.H, 40),
+            Triple("F1 width", dev.patrickgold.florisboard.dictate.MaKeyWidths.F1, 20),
+            Triple("E width", dev.patrickgold.florisboard.dictate.MaKeyWidths.E, 40),
+        ).forEach { (name, group, def) ->
+            val pct = dev.patrickgold.florisboard.dictate.MaKeyWidths.percent(widthsRaw, group, def)
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(name, style = MaterialTheme.typography.bodyLarge)
+                    Text(
+                        "Percent of the row. The row is normalised to 100; labels never get cut.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+                TextButton(onClick = { spacerScope.launch {
+                    prefs.dictate.maKeyWidths.set(dev.patrickgold.florisboard.dictate.MaKeyWidths.with(widthsRaw, group, pct - 5))
+                } }, enabled = pct > 10) { Text("\u2212", fontSize = 20.sp) }
+                Text("$pct%", style = MaterialTheme.typography.bodyLarge, modifier = Modifier.width(52.dp), textAlign = TextAlign.Center)
+                TextButton(onClick = { spacerScope.launch {
+                    prefs.dictate.maKeyWidths.set(dev.patrickgold.florisboard.dictate.MaKeyWidths.with(widthsRaw, group, pct + 5))
+                } }, enabled = pct < 70) { Text("+", fontSize = 20.sp) }
+            }
+        }
+
         // The "Row 2 becomes Row 1" buttons are gone. The tabs are dragged instead — see the strip
         // below. Six rows made the button version untenable anyway: it was five buttons per tab,
         // thirty sentences to read, for a thing his finger can say in one movement.
