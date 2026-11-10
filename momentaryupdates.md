@@ -457,3 +457,5 @@ voices. Stopped here: a further build plus a full suite (~1 h) would not finish 
 > "Please in my TTT add option again to use Groq for text-to-text. So, RE button can be used by Groq text-to-text model, so I can prompt for changing in a text." (Marko, 10.11.2026)
 
 **Status:** saved first; task 76. RE gets Groq chat models as a selectable engine (numbered forward-only key ring, no automatic switch, 3 s retry on network errors, next key of the same provider on quota); models from the official live list, default the best free one; low temperature; system prompt: rewrite faithfully, same language, only the text. Existing RE options stay.
+
+> "so in settings and of course as usual long press on a button whatever it brings there is will be a switch one or the other a tropic or a Groq" (Marko, 10.11.2026; "a tropic" = Anthropic): the RE button gets an engine switch with exactly two choices, Anthropic or Groq, in Settings (RE section) and as a long-press panel on the RE button (active one marked, pick closes it); the RE label shows the active one; each has its own numbered key ring; no automatic switching between the two.
