@@ -445,3 +445,9 @@ voices. Stopped here: a further build plus a full suite (~1 h) would not finish 
 > "custom UI, that is it" (Marko, 10.11.2026, clarifying the export: only his custom UI: feature rows, buttons and their order, widths, labels, layout and look; not engine choices, languages, behaviour settings, keys or history)
 
 > "Same for Android emulator. When you test something on the Android emulator, leave its icon living in the desktop, please." (Marko, 10.11.2026): TTT stays installed on the emulator with its icon after any test; never uninstall, never wipe the AVD.
+
+## 10.11.2026 – copyright line at the bottom of settings
+
+> "please also at the bottom of every of my app which is published on the website put copyright Mantra Productions at the bottom of settings" (Marko, 10.11.2026)
+
+**Status:** saved first; task 76. The very bottom of the TTT settings screen: one quiet centred line "© 2026 Mantra Productions", muted, never cut; part of the app, not of the shipped default UI config.
