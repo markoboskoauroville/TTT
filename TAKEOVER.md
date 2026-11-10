@@ -13,3 +13,5 @@
 **Open.** (1) Croatian dictation "no AI call after" not confirmed with Marko's voice. (2) History re-transcribe not tapped by hand. (3) Android on-device recogniser fails (language pack). (4) Soniox paid and skipped (balance exhausted); no ElevenLabs key. (5) Marko tops up Anthropic, Groq, Deepgram, AssemblyAI, Speechmatics himself (billing pages were opened).
 
 **Next.** Marko dictates Croatian once and taps Re-transcribe; then judge the benchmark again after correcting the history texts by hand (removes the Groq circularity).
+
+**10.11.2026 (build 608).** Rotation verified on the Nothing with the test switch: status "E - Gemini-1 out of free use -> Gemini-2", text came back. H/E label shows the active key over the key count ("Groq 2/3") when a provider has several keys; fallback has no switch (the "key 1 fails" test pref is hidden, off); when all keys rest, the next call starts again at key 1. Label text aims at the letter size and shrinks by measurement. Not yet seen on screen: the "n/total" label (keyboard was closed when build 608 was installed).
