@@ -443,3 +443,5 @@ voices. Stopped here: a further build plus a full suite (~1 h) would not finish 
 **Status:** saved first; task 76, before any further change. Export the Nothing's layout/behaviour settings (read-only), strip every secret, ship as assets/default_config.json: a fresh install starts with his layout, an update applies the new UI defaults and keeps his keys and history. Rule: before every TTT upgrade, export the Nothing's config and refresh the shipped default first.
 
 > "custom UI, that is it" (Marko, 10.11.2026, clarifying the export: only his custom UI: feature rows, buttons and their order, widths, labels, layout and look; not engine choices, languages, behaviour settings, keys or history)
+
+> "Same for Android emulator. When you test something on the Android emulator, leave its icon living in the desktop, please." (Marko, 10.11.2026): TTT stays installed on the emulator with its icon after any test; never uninstall, never wipe the AVD.
