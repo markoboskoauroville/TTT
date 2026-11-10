@@ -423,3 +423,9 @@ voices. Stopped here: a further build plus a full suite (~1 h) would not finish 
 > "please any you are testing on Pixel 7 leave its icon on the desktop" (Marko, 10.11.2026)
 
 **Status:** saved first; task 76. Anything installed on the Pixel 7 for a test stays installed with its launcher icon; no uninstall. TTT is a keyboard, so its settings-activity icon stays.
+
+## 10.11.2026 – no word-prediction row when no keyboard is open
+
+> "Also please update the app. TTT, if there is no keyboard open to type things, then also the row for predicting the words is not on the screen, it's hidden." (Marko, 10.11.2026)
+
+**Status:** saved first; task 76. The suggestion strip (ENG / to / the / that / AI) is shown only while the keyboard is open for typing; hidden when only the feature row is on screen; back the moment the keyboard shows.
