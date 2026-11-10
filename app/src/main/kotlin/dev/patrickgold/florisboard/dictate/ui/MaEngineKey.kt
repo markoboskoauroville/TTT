@@ -43,17 +43,31 @@ internal fun MaEngineKeyContent(letter: String, dot: Color, name: String, fallba
         // The dot, letter and gaps take about 48 dp; a glyph is about 0.58 of its size wide; the sub is half size.
         val room = (maxWidth.value - 52f).coerceAtLeast(20f)
         // Marko, 9.11.2026: name and the one word (free/paid) at the SAME size, the build 574 size (0.8 x 26 max); both shrink together if narrow.
-        val units = shown.length * 0.58f + sub.length * 0.58f + (if (sub.isEmpty()) 0f else 0.6f)
-        val size = minOf(26f * 0.8f, room / units).coerceAtLeast(6f)
+        // Never cut (Marko, 10.11.2026): glyph width taken at 0.62 em, one line while it reads at 11 sp or more,
+        // otherwise name over quota in two lines, each sized to its own room; no clipping at any key width.
+        val units = shown.length * 0.64f + sub.length * 0.64f + (if (sub.isEmpty()) 0f else 0.6f)
+        val oneLine = minOf(26f * 0.8f, room / units)
+        // Never cut (Marko): when one line would need type smaller than 11 sp, the quota goes under the name, each line sized to fit its own width.
+        val stacked = sub.isNotEmpty() && oneLine < 11f
+        val size = oneLine.coerceAtLeast(6f)
+        val nameSize = minOf(26f * 0.8f, room / (shown.length * 0.64f)).coerceAtLeast(6f)
+        val subSize = minOf(nameSize, room / (sub.length.coerceAtLeast(1) * 0.64f)).coerceAtLeast(6f)
         Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth().padding(start = 10.dp, end = 6.dp)) {
             androidx.compose.foundation.layout.Box(modifier = Modifier.size(9.dp).clip(CircleShape).background(dot))
             Spacer(Modifier.width(4.dp))
             Text(text = letter, color = fg, fontSize = 17.sp, fontWeight = FontWeight.Bold, maxLines = 1)
             Spacer(Modifier.width(6.dp))
-            Text(text = shown, color = fg, fontSize = size.sp, fontWeight = FontWeight.Normal, maxLines = 1, softWrap = false, overflow = TextOverflow.Clip)
-            if (sub.isNotEmpty()) {
-                Spacer(Modifier.width(4.dp))
-                Text(text = sub, color = fg.copy(alpha = 0.75f), fontSize = size.sp, fontWeight = FontWeight.Normal, maxLines = 1, softWrap = false, overflow = TextOverflow.Clip)
+            if (stacked) {
+                androidx.compose.foundation.layout.Column {
+                    Text(text = shown, color = fg, fontSize = nameSize.sp, fontWeight = FontWeight.Normal, maxLines = 1, softWrap = false, overflow = TextOverflow.Clip)
+                    Text(text = sub, color = fg.copy(alpha = 0.75f), fontSize = subSize.sp, fontWeight = FontWeight.Normal, maxLines = 1, softWrap = false, overflow = TextOverflow.Clip)
+                }
+            } else {
+                Text(text = shown, color = fg, fontSize = size.sp, fontWeight = FontWeight.Normal, maxLines = 1, softWrap = false, overflow = TextOverflow.Clip)
+                if (sub.isNotEmpty()) {
+                    Spacer(Modifier.width(4.dp))
+                    Text(text = sub, color = fg.copy(alpha = 0.75f), fontSize = size.sp, fontWeight = FontWeight.Normal, maxLines = 1, softWrap = false, overflow = TextOverflow.Clip)
+                }
             }
         }
     }

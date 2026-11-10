@@ -9,3 +9,4 @@
 - Never uninstall the keyboard on his phone; always adb install -r.
 - 10.11.2026 Multi-account keys are numbered by file order and shown as number only (Groq-2), never the value; rest until 00:00 UTC for daily quotas so the earlier number returns after reset. A test with an invalid first key proves the switch without spending quota.
 - 10.11.2026 Feature-row buttons carry a width percent (relative weights, normalised, floor share); Marko: bigger H and E, smaller F1. Several pushes in a row queue builds: the Latest release is whichever run finishes last, so check targetCommit and versionCode of the one installed.
+- 10.11.2026 Width percent per feature-row button is relative (normalised to 100) with a floor share; a long label stacks in two lines instead of shrinking to nothing. A switch that simulates a failure (Test: key 1 fails) is how rotation is tested without spending quota.

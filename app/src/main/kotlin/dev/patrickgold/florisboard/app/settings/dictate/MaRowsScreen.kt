@@ -238,6 +238,18 @@ fun MaRowsScreen() = FlorisScreen {
         }
 
 
+        SwitchPreference(
+            prefs.dictate.maTestKey1Fails,
+            title = "Test: key 1 fails",
+            summary = "Diagnostics. The first key of a provider answers a simulated 429, so the switch to key 2 shows in the status line. Off by default.",
+        )
+
+        SwitchPreference(
+            prefs.dictate.maTestKey1Fails,
+            title = "Diagnostics: test key 1 fails",
+            summary = "Key 1 of every provider answers a simulated 429 so you can see the switch to key 2 (\"Groq-1 out of free use \u2192 Groq-2\"). Leave off.",
+        )
+
         // Width of H, F1 and E as a percentage of the row (Marko, 10.11.2026).
         val widthsRaw by prefs.dictate.maKeyWidths.collectAsState()
         listOf(

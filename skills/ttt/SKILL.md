@@ -12,6 +12,7 @@ description: TTT, Talk to Type Advanced Keyboard (repo TTT, folder TTT_MINI): Ma
 7. Vocabulary: "creation" = Croatian, "Vesper" = Whisper.
 8. Multi-account keys: numbered Groq-1, Groq-2, Gemini-1 (KeyRing.kt); on 429/quota/401 switch to the next number, return to earlier ones when their rest (00:00 UTC for daily quota) ends; status shows the number. Test by putting an invalid key first.
 9. Feature-row width: percent per button (maKeyWidths, MaKeyWidths.kt), default H 40 / F1 20 / E 40, normalised, floor 8%; steppers in Settings > Feature row.
+9. Feature-row width: percent per button (MaKeyWidths), H 40 / F1 20 / E 40; labels never cut (stack in two lines). Rotation test: Settings > Feature row > "Test: key 1 fails".
 ## Run log
 - 10.11.2026: width percent per button (build 596).
 - 10.11.2026: numbered keys with automatic switch (build 592).

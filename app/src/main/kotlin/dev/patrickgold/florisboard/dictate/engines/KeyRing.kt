@@ -35,6 +35,16 @@ object KeyRing {
     /** Safe name of one key: "Groq-2". Never the value. */
     fun tag(label: String, number: Int) = "$label-$number"
 
+    private fun testKey1Fails(): Boolean = runCatching {
+        val prefs by dev.patrickgold.florisboard.app.FlorisPreferenceStore
+        prefs.dictate.maTestKey1Fails.get()
+    }.getOrDefault(false)
+
+    private fun testKey1Fails(): Boolean = runCatching {
+        val prefs by dev.patrickgold.florisboard.app.FlorisPreferenceStore
+        prefs.dictate.maTestKey1Fails.get()
+    }.getOrDefault(false)
+
     private fun nextUtcMidnight(now: Long): Long = (now / 86_400_000L + 1) * 86_400_000L
 
     suspend fun <T> run(c: Context, ringId: String, label: String, block: suspend (String) -> T): T {
@@ -49,6 +59,10 @@ object KeyRing {
             val more = i < live.size - 1
             var what = ""
             try {
+                if (n == 1 && live.size > 1 && testKey1Fails()) {
+                    throw EngineFailure(FailKind.QUOTA, "HTTP 429 (test: key 1 fails)")
+                }
+                if (i == 0 && live.size > 1 && testKey1Fails()) throw EngineFailure(FailKind.QUOTA, "HTTP 429 (test: key 1 fails)")
                 val r = block(k)
                 val before = active.put(ringId, n)
                 if (before != null && before != n) statusSink?.invoke("${tag(label, n)} active")

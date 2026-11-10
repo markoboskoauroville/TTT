@@ -99,3 +99,4 @@ tools/glide-dict/dist/
 
 # Kotlin compiler session data, written by local Gradle builds
 .kotlin/
+shots/
