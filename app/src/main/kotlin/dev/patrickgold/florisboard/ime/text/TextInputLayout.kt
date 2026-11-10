@@ -140,7 +140,9 @@ fun TextInputLayout(
             // is below the feature rows, past the edge of where his eye goes, and he reads it by
             // looking for it rather than by noticing it. Habit beat the argument, which is the
             // right way round for something read a hundred times a day.
-            Smartbar()
+            // The word-prediction row belongs to the open keyboard (Marko, 10.11.2026): with the letters folded away it is not composed at all.
+            val maZoneKeyboardForSmartbar by prefs.dictate.maZoneKeyboard.collectAsState()
+            if (maZoneKeyboardForSmartbar) Smartbar()
         }
         // The macro bar is gone. It was the editable strip of user macros — undo, redo, all, copy —
         // and it has been superseded by the M1 to M10 buttons in the feature rows, which do the same
