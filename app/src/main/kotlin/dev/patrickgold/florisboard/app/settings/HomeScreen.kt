@@ -413,6 +413,14 @@ fun HomeScreen() = FlorisScreen {
             }
         }
 
+        // The very bottom of the settings (Marko, 10.11.2026): one quiet centred line, never cut.
+        Text(
+            text = "\u00a9 2026 Mantra Productions",
+            style = androidx.compose.material3.MaterialTheme.typography.bodySmall,
+            color = androidx.compose.material3.MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
+            textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 24.dp),
+        )
     }
 }
 

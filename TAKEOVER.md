@@ -25,3 +25,5 @@
 **10.11.2026 (AssemblyAI retry).** The AssemblyAI legacy path now has the same 3-second retry loop (same key, up to 10, "AssemblyAI - retry n/10 - no internet", audio kept); every engine behaves the same. adb logcat TTT-KEY on the Nothing showed groq keys 1..6 tried in a row at 05:33 (1-5 failed) and the cursor stayed on 6 for the next dictation (forward-only works); only some of Groq's 8 keys are alive.
 
 **10.11.2026 (no prediction row without keyboard).** The Smartbar (ENG / word suggestions / AI) is composed only while the letter keys are shown (maZoneKeyboard); folded away, only the feature row stays.
+
+**10.11.2026 (copyright).** The very bottom of the settings home screen carries one quiet centred line "(c) 2026 Mantra Productions" (HomeScreen.kt); part of the app, not of the shipped default UI config.
