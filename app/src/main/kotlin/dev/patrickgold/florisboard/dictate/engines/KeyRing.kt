@@ -35,14 +35,14 @@ object KeyRing {
     /** Safe name of one key: "Groq-2". Never the value. */
     fun tag(label: String, number: Int) = "$label-$number"
 
-    private fun testKey1Fails(): Boolean = runCatching {
-        val prefs by dev.patrickgold.florisboard.app.FlorisPreferenceStore
-        prefs.dictate.maTestKey1Fails.get()
-    }.getOrDefault(false)
-
     private fun nextUtcMidnight(now: Long): Long = (now / 86_400_000L + 1) * 86_400_000L
 
-    private fun cursorPrefs(c: Context) = c.applicationContext.getSharedPreferences("ttt_key_cursor", Context.MODE_PRIVATE)
+    private fun cursorPrefs(c: Context): android.content.SharedPreferences {
+        val sp = c.applicationContext.getSharedPreferences("ttt_key_cursor", Context.MODE_PRIVATE)
+        // One-time reset of the leftovers of the "key 1 fails" test (cursors, and the hidden test switch is no longer read).
+        if (!sp.getBoolean("reset_v2", false)) { sp.edit().clear().putBoolean("reset_v2", true).apply(); rest.clear() }
+        return sp
+    }
 
     /** The key the ring is on, 0-based; kept across restarts (Marko, 10.11.2026: "never look back"). */
     fun cursor(c: Context, ringId: String): Int = cursorPrefs(c).getInt(ringId, 0)
@@ -71,9 +71,9 @@ object KeyRing {
             val number = idx + 1
             var what = ""
             try {
-                if (idx == 0 && n > 1 && testKey1Fails()) {
-                    throw EngineFailure(FailKind.QUOTA, "HTTP 429 (test: key 1 fails)")
-                }
+                // One source of truth: the label reads the cursor, and the request uses the key the cursor names.
+                active[ringId] = number
+                android.util.Log.i("TTT-KEY", "$ringId key $number/$n used")
                 val r = block(k)
                 setCursor(c, ringId, idx)
                 return r

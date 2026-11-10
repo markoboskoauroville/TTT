@@ -405,3 +405,9 @@ voices. Stopped here: a further build plus a full suite (~1 h) would not finish 
 > "In TTT, I am still missing the percentage of space each button takes inside my feature row. So, all percentage does not need to be defined. It can be fit, to fit in available space, and others can be defined. Please do this update." (Marko, 10.11.2026)
 
 **Status:** saved first; task 76. Every button of every feature row gets a width setting: "Fit" (default, equal share of what is left) or a defined percent; defined ones scale down if they exceed 100, floor share keeps labels whole; the control sits right next to each button in the Feature row editor.
+
+## 10.11.2026 – bug: Gemini uses the first account, the label says second
+
+> "And there is a bug because of the testings. Now, Gemini is using first account and down there it says second account." (Marko, 10.11.2026)
+
+**Status:** saved first; task 76. One source of truth for the active key (the label reads what the request uses), test leftovers reset (test pref ignored, cursors and rest timers cleared once), a log line per request "provider key n/total used" (numbers only).

@@ -287,6 +287,14 @@ fun MaFeatureRow(
     // What C1 to C10 currently hold, in the order they were copied.
     val spacerTenths by prefs.dictate.maSpacerTenths.collectAsState()
     val keyWidthsRaw by prefs.dictate.maKeyWidths.collectAsState()
+    // Once: the row keeps the look it had before the per-button width setting (H 40, F1 20, E 40), now written down so the editor shows it.
+    androidx.compose.runtime.LaunchedEffect(Unit) {
+        val sp = context.applicationContext.getSharedPreferences("ttt_misc", android.content.Context.MODE_PRIVATE)
+        if (!sp.getBoolean("widths_migrated_v1", false)) {
+            if (prefs.dictate.maKeyWidths.get().isBlank()) prefs.dictate.maKeyWidths.set(dev.patrickgold.florisboard.dictate.MaKeyWidths.migrationDefaults())
+            sp.edit().putBoolean("widths_migrated_v1", true).apply()
+        }
+    }
     val clipDelaySelect by prefs.dictate.maClipDelaySelect.collectAsState()
     val clipDelayDelete by prefs.dictate.maClipDelayDelete.collectAsState()
     val clipDelayPaste by prefs.dictate.maClipDelayPaste.collectAsState()

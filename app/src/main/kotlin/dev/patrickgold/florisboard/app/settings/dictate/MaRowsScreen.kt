@@ -204,6 +204,8 @@ fun MaRowsScreen() = FlorisScreen {
         // there and a control you cannot see is a control you cannot press.
         val spacerTenths by prefs.dictate.maSpacerTenths.collectAsState()
         val spacerScope = rememberCoroutineScope()
+        val widthScope = rememberCoroutineScope()
+        val widthsRaw by prefs.dictate.maKeyWidths.collectAsState()
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -239,36 +241,6 @@ fun MaRowsScreen() = FlorisScreen {
 
 
         // The "Test: key 1 fails" switch is no longer shown (Marko, 10.11.2026: fallback has no on/off). The pref stays as a hidden debug flag.
-
-        // Width of H, F1 and E as a percentage of the row (Marko, 10.11.2026).
-        val widthsRaw by prefs.dictate.maKeyWidths.collectAsState()
-        listOf(
-            Triple("H width", dev.patrickgold.florisboard.dictate.MaKeyWidths.H, 40),
-            Triple("F1 width", dev.patrickgold.florisboard.dictate.MaKeyWidths.F1, 20),
-            Triple("E width", dev.patrickgold.florisboard.dictate.MaKeyWidths.E, 40),
-        ).forEach { (name, group, def) ->
-            val pct = dev.patrickgold.florisboard.dictate.MaKeyWidths.percent(widthsRaw, group, def)
-            Row(
-                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(name, style = MaterialTheme.typography.bodyLarge)
-                    Text(
-                        "Percent of the row. The row is normalised to 100; labels never get cut.",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
-                TextButton(onClick = { spacerScope.launch {
-                    prefs.dictate.maKeyWidths.set(dev.patrickgold.florisboard.dictate.MaKeyWidths.with(widthsRaw, group, pct - 5))
-                } }, enabled = pct > 10) { Text("\u2212", fontSize = 20.sp) }
-                Text("$pct%", style = MaterialTheme.typography.bodyLarge, modifier = Modifier.width(52.dp), textAlign = TextAlign.Center)
-                TextButton(onClick = { spacerScope.launch {
-                    prefs.dictate.maKeyWidths.set(dev.patrickgold.florisboard.dictate.MaKeyWidths.with(widthsRaw, group, pct + 5))
-                } }, enabled = pct < 70) { Text("+", fontSize = 20.sp) }
-            }
-        }
 
         // The "Row 2 becomes Row 1" buttons are gone. The tabs are dragged instead — see the strip
         // below. Six rows made the button version untenable anyway: it was five buttons per tab,
@@ -481,6 +453,11 @@ fun MaRowsScreen() = FlorisScreen {
                             },
                         )
                     },
+                    widthLabel = dev.patrickgold.florisboard.dictate.MaKeyWidths.label(widthsRaw, dev.patrickgold.florisboard.dictate.ui.maFeatureToken(entry.button)),
+                    onWidth = { pct ->
+                        val tk = dev.patrickgold.florisboard.dictate.ui.maFeatureToken(entry.button)
+                        widthScope.launch { prefs.dictate.maKeyWidths.set(dev.patrickgold.florisboard.dictate.MaKeyWidths.with(widthsRaw, tk, pct)) }
+                    },
                     onEditMacro = { slot -> editingMacro = slot },
                     onRemove = {
                         commit(
@@ -618,6 +595,9 @@ internal fun MaRowKeyItem(
     onToggle: () -> Unit,
     onEditMacro: (Int) -> Unit,
     onRemove: () -> Unit,
+    /** "Fit" or "40%" for the width field next to the key; null hides it (the copy row has none). */
+    widthLabel: String? = null,
+    onWidth: ((Int?) -> Unit)? = null,
 ) {
     Surface(
         modifier = Modifier
@@ -660,6 +640,22 @@ internal fun MaRowKeyItem(
             )
             if (entry.button is MaRows.Button.Macro) {
                 TextButton(onClick = { onEditMacro(entry.button.slot) }) { Text("Edit") }
+            }
+            if (widthLabel != null && onWidth != null) {
+                var open by remember { mutableStateOf(false) }
+                Box {
+                    OutlinedButton(
+                        onClick = { open = true },
+                        contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 10.dp, vertical = 0.dp),
+                        modifier = Modifier.height(32.dp),
+                    ) { Text(widthLabel, style = MaterialTheme.typography.labelLarge, maxLines = 1) }
+                    androidx.compose.material3.DropdownMenu(expanded = open, onDismissRequest = { open = false }) {
+                        androidx.compose.material3.DropdownMenuItem(text = { Text("Fit (share what is left)") }, onClick = { open = false; onWidth(null) })
+                        listOf(10, 15, 20, 25, 30, 35, 40, 45, 50, 60, 70).forEach { p ->
+                            androidx.compose.material3.DropdownMenuItem(text = { Text("$p% of the row") }, onClick = { open = false; onWidth(p) })
+                        }
+                    }
+                }
             }
             Checkbox(checked = entry.enabled, onCheckedChange = { onToggle() })
             IconButton(onClick = onRemove) {

@@ -14,3 +14,4 @@
 - 10.11.2026 Engine label next to H/E: target the letter's size (17 sp), shrink step by step by real text measurement (TextMeasurer), two lines only below 9 sp, never cut (build 604).
 - 10.11.2026 Never look back: a key ring has a persistent forward-only cursor; an exhausted key moves it on and it stays, wrapping to key 1 only after the last. "Start at the lowest key not resting" retried exhausted keys and was wrong.
 - 10.11.2026 H/E button text is name + n/total + minutes only; percentages live in the panel and model picker.
+- 10.11.2026 A setting nobody finds does not exist: width belongs next to each button in the editor ("Fit" or percent), not in three steppers above the list. One source of truth for the active key: label and request read the same cursor, and a log line "key n/N used" lets adb prove it. Test hooks are removed after the test, not hidden.
