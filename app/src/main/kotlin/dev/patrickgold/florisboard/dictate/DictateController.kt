@@ -1916,6 +1916,24 @@ object DictateController {
                         return outcome.first
                     }
 
+                    // Same engine, same key, again and again (Marko, 10.11.2026): no answer / no internet waits 3 s and tries
+                    // again, up to 10 times; the audio stays safe (the caller keeps it when this finally throws).
+                    suspend fun <T> sameEngineRetry(block: suspend () -> T): T {
+                        var n = 0
+                        while (true) {
+                            try {
+                                return block()
+                            } catch (e: DictateApiException) {
+                                val net = e.kind == DictateApiException.Kind.TIMEOUT || e.kind == DictateApiException.Kind.NETWORK
+                                if (!net || n >= 10) throw e
+                                n++
+                                _maStatus.value = "AssemblyAI \u00b7 retry $n/10 \u00b7 " + (if (e.kind == DictateApiException.Kind.NETWORK) "no internet" else "no answer")
+                                _state.value = UiState.Transcribing(n)
+                                kotlinx.coroutines.delay(3000)
+                            }
+                        }
+                    }
+
                     try {
                         try {
                             if (maFast) {
@@ -1928,7 +1946,7 @@ object DictateController {
                                     maSend(ProviderRegistry.ASSEMBLYAI_SYNC, OpenAiCompatibleClient.SYNC_MODEL, uploadFile, true)
                                 }
                             } else {
-                                maSend(preset, model, uploadFile, false)
+                                sameEngineRetry { maSend(preset, model, uploadFile, false) }
                             }
                         } catch (e: DictateApiException) {
                             // The fast path did not answer. The audio is still here and the slow path is
@@ -1946,7 +1964,7 @@ object DictateController {
                                 maEncoded = true
                                 maFormatTag = MaEncoder.TAG
                             }
-                            maSend(preset, model, uploadFile, false)
+                            sameEngineRetry { maSend(preset, model, uploadFile, false) }
                         }
                     } catch (e: DictateApiException) {
                         // Offline fallback (#104): the cloud call failed because we're offline (after its
