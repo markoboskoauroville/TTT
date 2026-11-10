@@ -1646,7 +1646,7 @@ fun MaFeatureRow(
                         }
                     }
                     androidx.compose.material3.DropdownMenu(expanded = reMenu, onDismissRequest = { reMenu = false }) {
-                        fun item(label: String, on: Boolean, pick: () -> Unit) = androidx.compose.material3.DropdownMenuItem(
+                        @androidx.compose.runtime.Composable fun item(label: String, on: Boolean, pick: () -> Unit) = androidx.compose.material3.DropdownMenuItem(
                             text = { Text((if (on) "\u2713 " else "    ") + label) },
                             onClick = { reMenu = false; pick() },
                         )
