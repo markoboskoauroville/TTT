@@ -399,3 +399,9 @@ voices. Stopped here: a further build plus a full suite (~1 h) would not finish 
 > "Also, for TTT, if the first account is exhausted and I'm on second, you don't retry on the first. You just understand now I'm on second, then I'm going on third. So never look back." (Marko, 10.11.2026)
 
 **Status:** saved first; task 76. KeyRing keeps a persistent cursor per provider: key n exhausted -> cursor n+1 and stays; wraps to key 1 only after the last key; kept across restarts; replaces "every call starts at the lowest key not resting".
+
+## 10.11.2026 – width percent per button, Fit mode, next to each button
+
+> "In TTT, I am still missing the percentage of space each button takes inside my feature row. So, all percentage does not need to be defined. It can be fit, to fit in available space, and others can be defined. Please do this update." (Marko, 10.11.2026)
+
+**Status:** saved first; task 76. Every button of every feature row gets a width setting: "Fit" (default, equal share of what is left) or a defined percent; defined ones scale down if they exceed 100, floor share keeps labels whole; the control sits right next to each button in the Feature row editor.
