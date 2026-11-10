@@ -90,8 +90,8 @@ object KeyRing {
                 what = if (f.kind == FailKind.QUOTA) "out of free use" else "refused"
                 last = f
             } catch (e: IOException) {
-                what = "timed out"
-                last = e
+                // A network error is NOT exhaustion: the ring does not move (Marko, 10.11.2026); the caller retries the same key.
+                throw e
             }
             val nextIdx = ready.getOrNull(pos + 1) ?: ((idx + 1) % n)
             setCursor(c, ringId, nextIdx)

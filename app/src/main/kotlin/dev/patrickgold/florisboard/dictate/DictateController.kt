@@ -1953,27 +1953,14 @@ object DictateController {
                         // retries) — transcribe on-device with the downloaded model instead of erroring.
                         // A real failure of the key's engine: the chain takes over, and says so on the key and the line.
                         val stage = stageWav
-                        val alt = if (engChain && stage != null && engSelected == "assemblyai") {
-                            dev.patrickgold.florisboard.dictate.engines.EngineChain.dictate(
-                                appContext, stage, engLang, first = null, skip = setOf("assemblyai"),
-                                legacyFailed = "AssemblyAI", onStatus = { _maStatus.value = it },
-                            )
-                        } else null
+                        // Never another engine by itself (Marko, 10.11.2026): no chain takes over from AssemblyAI.
+                        val alt: dev.patrickgold.florisboard.dictate.engines.ChainResult? = null
                         if (alt != null) {
                             engineOutcome = alt
                             TranscriptionResult(alt.text)
                         } else {
-                            val fallback = MaProviders.localFallbackProvider(appContext, preset, e) ?: throw e
-                            _state.value = UiState.Transcribing()
-                            LocalTranscriptionProvider.setIdleUnloadMillis(
-                                prefs.dictate.localModelUnloadMinutes.get() * 60_000L,
-                            )
-                            // History says who really transcribed it (live test 8.11.2026: a refused AssemblyAI
-                            // key fell back to Parakeet and the entry still read "AssemblyAI").
-                            usedLocalFallback = true
-                            // The current file, not the one the request was built with: a fast path that
-                            // handed over to the slow one re-encoded and deleted its WAV on the way.
-                            fallback.transcribe(request.copy(audioFile = uploadFile))
+                            // No automatic switch to the on-device engine either (Marko, 10.11.2026): the error goes up, the audio is kept.
+                            throw e
                         }
                     }
                 }

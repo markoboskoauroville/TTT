@@ -15,7 +15,9 @@ description: TTT, Talk to Type Advanced Keyboard (repo TTT, folder TTT_MINI): Ma
 9. Feature-row width: percent per button (MaKeyWidths), H 40 / F1 20 / E 40; labels never cut (stack in two lines). Rotation test: Settings > Feature row > "Test: key 1 fails".
 9. Feature-row widths: percent per button (MaKeyWidths.kt, steppers H/F1/E in Settings > Feature row), defaults H 40 / F1 20 / E 40 for rows of four or fewer.
 10. Key ring is forward-only: persistent cursor per provider, never back to a lower key, wraps to 1 after the last. H/E label: "Gemini 2/25 45" (name, n/total, minutes left); percent only in panel/pickers.
+11. NEVER switch engine/provider/model automatically: same engine, retry every 3 s (10 times), next key of the same provider only on quota/refused, network errors never move the ring; audio kept, Resend from History.
 ## Run log
+- 10.11.2026: no automatic engine switch, 3 s retries.
 - 10.11.2026: forward-only cursor, short H/E label.
 - 10.11.2026: width percent per button (build 596).
 - 10.11.2026: width percent per button (build 596).

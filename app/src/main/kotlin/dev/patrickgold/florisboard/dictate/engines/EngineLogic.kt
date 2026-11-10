@@ -368,3 +368,6 @@ object KeyText {
         else -> firstKeys(text).firstOrNull()
     }
 }
+
+/** The chosen engine could not finish (every key out, not set up, or no answer after the retries). The audio is kept by the caller; no other engine is tried. */
+class EngineGaveUp(message: String) : Exception(message)

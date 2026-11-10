@@ -58,6 +58,8 @@ object EngineChain {
         }
     }
 
+    const val MAX_RETRIES = 10
+
     fun timeoutMs(sec: Double, local: Boolean) = if (local) 40_000L else 8_000L + (sec * 500).toLong()
 
     /**
@@ -79,23 +81,46 @@ object EngineChain {
         val l = if (lang == "en") "en" else "hr"
         val letter = if (l == "en") "E" else "H"
         var ids = usableIds(c, l).filter { it !in skip }
-        if (first != null && first in ids) ids = listOf(first) + ids.filter { it != first }
+        if (first != null && first in ids) ids = listOf(first)
         if (ids.isEmpty()) return null
         val sec = ClipBuffer.seconds(wav)
-        val chain = ids.map { id ->
-            val cand = candidate(c, id, wav, l)
-            Candidate(cand.id, cand.name, cand.quotaLeftSeconds, cand.isLocal) {
-                EngineLive.setActive(l, id)
-                cand.call()
-            }
-        }
-        if (legacyFailed != null) onStatus("$letter \u00b7 $legacyFailed failed \u2192 switching to ${chain.first().name}")
+        // NEVER another engine by itself (Marko, 10.11.2026: "Change models. Automatically never do that."): the engine he chose is
+        // the only one used. No answer / timeout / network error: wait 3 s and try the SAME engine again, up to 10 retries, the
+        // state on the key line. A key that is out of quota or refused moves the ring to the next key of the SAME provider
+        // (KeyRing); when every key of it is out the dictation stops and says so. The audio is kept by the caller.
+        val id = ids.first()
+        val cand = candidate(c, id, wav, l)
         KeyRing.statusSink = { m -> onStatus("$letter \u00b7 $m") }
-        return try {
-            FallbackRunner.run(chain, timeoutMs(sec, false), { s -> onStatus(if (s.contains("\u2192")) "$letter \u00b7 $s" else s) })
-        } catch (e: AllEnginesFailed) {
-            onStatus("$letter \u00b7 all engines failed")
-            null
+        val t0 = System.currentTimeMillis()
+        try {
+            var attempt = 0
+            while (true) {
+                EngineLive.setActive(l, id)
+                onStatus(if (attempt == 0) "Sending to ${cand.name}\u2026" else "$letter \u00b7 ${cand.name} \u00b7 retry $attempt/$MAX_RETRIES")
+                try {
+                    val s = System.currentTimeMillis()
+                    val text = kotlinx.coroutines.withTimeout(timeoutMs(sec, cand.isLocal)) { cand.call() }
+                    val ms = System.currentTimeMillis()
+                    onStatus("done (${cand.name}, ${FallbackRunner.seconds(ms - t0)} s)")
+                    return ChainResult(text, cand.id, cand.name, ms - t0, listOf(Attempt(cand.id, true, null, ms - s)))
+                } catch (t: Throwable) {
+                    if (t is kotlinx.coroutines.CancellationException && t !is kotlinx.coroutines.TimeoutCancellationException) throw t
+                    val k = FallbackRunner.classify(t)
+                    if (k == FailKind.QUOTA || k == FailKind.AUTH) {
+                        onStatus("$letter \u00b7 ${cand.name}: every key is out")
+                        throw EngineGaveUp("${cand.name}: every key is out of free use or refused")
+                    }
+                    if (k == FailKind.NOT_CONFIGURED) throw EngineGaveUp("${cand.name} is not set up")
+                    attempt++
+                    if (attempt > MAX_RETRIES) {
+                        onStatus("$letter \u00b7 ${cand.name} \u00b7 gave up after $MAX_RETRIES tries, audio kept")
+                        throw EngineGaveUp("${cand.name} did not answer after $MAX_RETRIES tries")
+                    }
+                    val why = if (k == FailKind.NETWORK) "no internet" else if (k == FailKind.TIMEOUT) "no answer" else "failed"
+                    onStatus("$letter \u00b7 ${cand.name} \u00b7 retry $attempt/$MAX_RETRIES \u00b7 $why")
+                    kotlinx.coroutines.delay(3000)
+                }
+            }
         } finally {
             KeyRing.statusSink = null
             EngineLive.setActive(l, null)
