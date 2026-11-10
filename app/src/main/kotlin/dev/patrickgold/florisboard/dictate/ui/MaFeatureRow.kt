@@ -1533,8 +1533,7 @@ fun MaFeatureRow(
                                     }
                                     val act = (dev.patrickgold.florisboard.dictate.engines.KeyRing.active[ringId] ?: 1).coerceAtMost(maxOf(total, 1))
                                     dev.patrickgold.florisboard.dictate.engines.EngineCatalog.shortName(it) +
-                                        (if (total > 1) " $act/$total" else "") +
-                                        dev.patrickgold.florisboard.dictate.engines.EngineScores.suffix(context, it, engLang)
+                                        (if (total > 1) " $act/$total" else "")
                                 }
                             }
                             val subId = when (engine) {
@@ -1543,7 +1542,7 @@ fun MaFeatureRow(
                                 else -> answering ?: chosen
                             }
                             MaEngineKeyContent(label, dot, keyName, engine == null && answering != null && answering != chosen, fg,
-                                dev.patrickgold.florisboard.dictate.ui.engineSubLabel(context, subId))
+                                dev.patrickgold.florisboard.dictate.ui.engineMinutesLabel(context, subId))
                         } else
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             // E|H wears no red dot (Marko, 2.11.2026); the red outline says it records.

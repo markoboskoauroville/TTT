@@ -52,7 +52,7 @@ internal fun MaEngineKeyContent(letter: String, dot: Color, name: String, fallba
                 maxLines = 1, softWrap = false,
             ).size.width.toDp().value
         }
-        val target = 17f
+        val target = 18f
         val room = (maxWidth.value - (10f + 6f + 9f + 4f + widthDp(letter, 17f, true) + 6f + 2f)).coerceAtLeast(20f)
         fun fit(parts: List<String>, gap: Float): Float {
             var sz = target
@@ -96,6 +96,21 @@ internal fun engineSubLabel(c: android.content.Context, id: String): String {
                 spec, dev.patrickgold.florisboard.dictate.engines.EngineStore.usage(c, id), System.currentTimeMillis())
             val min = sec / 60
             if (sec <= 0) "paid" else if (min >= 10000) "free ${min / 1000}k" else "free $min"
+        }
+    }
+}
+
+/** Minutes left only, for the H/E buttons (Marko, 10.11.2026: "Gemini 2/25 45"): "478", "38k", "paid" without a number, unlimited free as "∞". */
+internal fun engineMinutesLabel(c: android.content.Context, id: String): String {
+    val spec = dev.patrickgold.florisboard.dictate.engines.EngineCatalog.byId(id) ?: return ""
+    return when {
+        spec.freeSeconds == Long.MAX_VALUE -> "\u221e"
+        spec.paid -> "paid"
+        else -> {
+            val sec = dev.patrickgold.florisboard.dictate.engines.Quota.remainingSeconds(
+                spec, dev.patrickgold.florisboard.dictate.engines.EngineStore.usage(c, id), System.currentTimeMillis())
+            val min = sec / 60
+            if (sec <= 0) "paid" else if (min >= 10000) "${min / 1000}k" else "$min"
         }
     }
 }
