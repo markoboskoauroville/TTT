@@ -61,8 +61,8 @@ readers = [p for p in SRC.rglob("*.kt") if COPY_ROW_PREF.search(code(p))]
 reader_names = sorted(p.name for p in readers)
 check(
     "one reader of maCopyRow in the keyboard",
-    reader_names == ["AppPrefs.kt", "MaCopyRowScreen.kt", "MaFeatureRow.kt"],
-    f"expected AppPrefs (declares), MaCopyRowScreen (arranges), MaFeatureRow (draws); got {reader_names}",
+    reader_names == ["AppPrefs.kt", "MaCopyRowScreen.kt", "MaFeatureRow.kt", "MaUiConfig.kt"],
+    f"expected AppPrefs (declares), MaCopyRowScreen (arranges), MaFeatureRow (draws), MaUiConfig (exports and applies the shipped default UI); got {reader_names}",
 )
 
 # 2. Both views ask the same composable for it, with copyRowOnly.
