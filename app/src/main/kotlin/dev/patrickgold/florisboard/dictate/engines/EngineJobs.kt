@@ -116,6 +116,10 @@ class EngineDebugReceiver : BroadcastReceiver() {
                             DictateController.showEngineStatus("")
                         }
                     }
+                    "dev.ttt.engines.EXPORT_UI" -> {
+                        val f = dev.patrickgold.florisboard.dictate.MaUiConfig.exportTo(app, i.getIntExtra("v", 1))
+                        out("ui exported " + f.length() + " bytes")
+                    }
                     "dev.ttt.engines.PING" -> {
                         val id = i.getStringExtra("e") ?: "groq_turbo"
                         val clip = ClipBuffer.latest(app, "en", 1).firstOrNull() ?: ClipBuffer.latest(app, "hr", 1).firstOrNull()

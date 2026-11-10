@@ -290,6 +290,8 @@ fun MaFeatureRow(
     // Once: the row keeps the look it had before the per-button width setting (H 40, F1 20, E 40), now written down so the editor shows it.
     androidx.compose.runtime.LaunchedEffect(Unit) {
         val sp = context.applicationContext.getSharedPreferences("ttt_misc", android.content.Context.MODE_PRIVATE)
+        // His custom UI ships with the app: a fresh install, and every update with a newer shipped version, applies it.
+        runCatching { dev.patrickgold.florisboard.dictate.MaUiConfig.applyShipped(context) }
         if (!sp.getBoolean("widths_migrated_v1", false)) {
             if (prefs.dictate.maKeyWidths.get().isBlank()) prefs.dictate.maKeyWidths.set(dev.patrickgold.florisboard.dictate.MaKeyWidths.migrationDefaults())
             sp.edit().putBoolean("widths_migrated_v1", true).apply()
