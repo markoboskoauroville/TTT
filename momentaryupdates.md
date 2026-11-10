@@ -387,3 +387,9 @@ voices. Stopped here: a further build plus a full suite (~1 h) would not finish 
 > "sada sam čitajući i sada sam u koncu quota or not, I want to have next to the Gemini or Groq ... minus and then key slash how many keys I have or any other model having multiple keys, Groq 2 slash whatever number is there, and I don't see that label, please give me that label. A simple fallback mechanism for the multiple keys accounts providers should be there automatically. There is no disable enable for this. It just goes on as we know, and then it goes from the beginning again when it comes to the end." (Marko, 10.11.2026)
 
 **Status:** saved first; task 76 continues. Label shows the active key number over the key count ("Groq 2/3") with the same size rule; fallback has no switch, wraps to key 1 at the end; the "key 1 fails" test switch becomes hidden debug or is removed.
+
+## 10.11.2026 – H/E button label: name, key n/total, minutes left
+
+> "and for the keyboard, you can remove three I want to say remove the free text and also percentage text from the button, but percentage text keep when I choose the models and when I see models in any other view, except on the button itself because we want bigger screen. So basically, for example, there will be e- Gemini 2/25 45, which is 45 minutes left. That's it." (Marko, 10.11.2026)
+
+**Status:** saved first; task 76. On the H/E buttons only: "Gemini 2/25 45", no "free", no "(90%)"; accuracy percent stays in the engine panel, model picker and other views; label as big as the letter (17 sp) or larger, auto-shrink as fallback.
