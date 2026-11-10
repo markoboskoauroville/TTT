@@ -369,3 +369,9 @@ voices. Stopped here: a further build plus a full suite (~1 h) would not finish 
 > "And give work to another agent for multiple accounts, for Gemini or for Groq. You need to give them number: Groq -1, Gemini -1, and when this one expires, and then you automatically open the next key with new free space, free usage." Then: "Of course, second task is for TTT keyboard. Test it, install it in my Nothing phone." (Marko, 10.11.2026)
 
 **Status:** saved first; task 76 of MAC_SES9_08-NOV. Slice: each key of a provider numbered (Groq-1, Gemini-1...), active number shown, automatic switch to the next number when quota/429/401, return to earlier keys when quota resets; extend KeyRing.
+
+## 10.11.2026 – width percent per button in the feature row
+
+> "Add the feature to TTT and that is for each button inside the feature row have another parameter how much percentage button is taking from the length of feature row. So if you take for example this configuration, you can see here I would uh give uh greater percentage to H and E and smaller percentage to F1." (Marko, 10.11.2026; screenshot /Users/markobosko/.claude/uploads/c3ae2f6d-b032-46d8-af48-dd5ba976fc2f/2b20d9b6-image.png)
+
+**Status:** saved first; task 76, second feature. Each feature-row button gets a width percent (default H 40 / F1 20 / E 40), normalised when the sum is not 100, minimum so labels never cut.
