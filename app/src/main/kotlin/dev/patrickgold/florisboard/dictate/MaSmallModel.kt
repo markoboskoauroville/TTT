@@ -59,7 +59,7 @@ object MaSmallModel {
             // The newest Haiku, whatever its number. Resolved against Anthropic's model list.
             id.contains("anthropic") || id.contains("claude") -> MaClaudeModels.DEFAULT
             id.contains("groq") -> "openai/gpt-oss-20b"
-            id.contains("gemini") || id.contains("google") -> "gemini-2.0-flash"
+            id.contains("gemini") || id.contains("google") -> "gemini-2.5-flash-lite"
             id.contains("openai") -> "gpt-4o-mini"
             else -> null
         }
@@ -69,7 +69,7 @@ object MaSmallModel {
     val ALL = listOf(
         MaClaudeModels.DEFAULT,
         "openai/gpt-oss-20b",
-        "gemini-2.0-flash",
+        "gemini-2.5-flash-lite",
         "gpt-4o-mini",
     )
 

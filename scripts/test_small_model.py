@@ -31,7 +31,7 @@ def small_for(pid):
     if "groq" in p:
         return "openai/gpt-oss-20b"
     if "gemini" in p or "google" in p:
-        return "gemini-2.0-flash"
+        return "gemini-2.5-flash-lite"
     if "openai" in p:
         return "gpt-4o-mini"
     return None
