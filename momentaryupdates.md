@@ -411,3 +411,9 @@ voices. Stopped here: a further build plus a full suite (~1 h) would not finish 
 > "And there is a bug because of the testings. Now, Gemini is using first account and down there it says second account." (Marko, 10.11.2026)
 
 **Status:** saved first; task 76. One source of truth for the active key (the label reads what the request uses), test leftovers reset (test pref ignored, cursors and rest timers cleared once), a log line per request "provider key n/total used" (numbers only).
+
+## 10.11.2026 – URGENT: never switch engine automatically; retry the same engine every 3 s
+
+> "Now the big disaster happened. It my TTT. Gemini was not responding. And then the whole engine fall back to I don't want that. I want it tries. If it doesn't pass after some time Make a break of three seconds and try again. Tem tres. Tem tres. There is problem with internet connection. If key is exhausted, go in the next key of the same provider. Change models. Automatically never do that." (Marko, 10.11.2026)
+
+**Status:** saved first; task 76. No cross-engine fallback in the dictation path; no response / timeout / network error: wait 3 s, retry the same engine with the same key, up to 10 times, show "Gemini · retry 2/10 · no internet", keep the audio; only quota/401/403 move to the next key of the same provider; if all keys are out, stop and say so.
