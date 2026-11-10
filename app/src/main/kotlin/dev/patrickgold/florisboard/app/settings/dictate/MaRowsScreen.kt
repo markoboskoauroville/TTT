@@ -238,11 +238,7 @@ fun MaRowsScreen() = FlorisScreen {
         }
 
 
-        SwitchPreference(
-            prefs.dictate.maTestKey1Fails,
-            title = "Test: key 1 fails",
-            summary = "Diagnostics. The first key of a provider answers a simulated 429, so the switch to key 2 shows in the status line. Off by default.",
-        )
+        // The "Test: key 1 fails" switch is no longer shown (Marko, 10.11.2026: fallback has no on/off). The pref stays as a hidden debug flag.
 
         // Width of H, F1 and E as a percentage of the row (Marko, 10.11.2026).
         val widthsRaw by prefs.dictate.maKeyWidths.collectAsState()

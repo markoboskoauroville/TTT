@@ -30,7 +30,7 @@ object KeyRing {
     private val rest = ConcurrentHashMap<String, Long>()
 
     /** Number (1-based) of the key that answered last, per ring id; read by the UI ("Groq-2 active"). */
-    val active = ConcurrentHashMap<String, Int>()
+    val active = androidx.compose.runtime.mutableStateMapOf<String, Int>()
 
     /** Safe name of one key: "Groq-2". Never the value. */
     fun tag(label: String, number: Int) = "$label-$number"

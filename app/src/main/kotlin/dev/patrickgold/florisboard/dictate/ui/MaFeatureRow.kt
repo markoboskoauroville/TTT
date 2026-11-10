@@ -1525,7 +1525,17 @@ fun MaFeatureRow(
                             val keyName = when (engine) {
                                 MaProviders.ENGINE_ASSEMBLYAI -> "AssemblyAI"
                                 MaProviders.ENGINE_LOCAL -> "Parakeet"
-                                else -> (answering ?: chosen).let { dev.patrickgold.florisboard.dictate.engines.EngineCatalog.shortName(it) + dev.patrickgold.florisboard.dictate.engines.EngineScores.suffix(context, it, engLang) }
+                                else -> (answering ?: chosen).let {
+                                    // Marko, 10.11.2026: "Groq 2/3" = active key number over the number of keys, when a provider has several.
+                                    val ringId = dev.patrickgold.florisboard.dictate.engines.EngineStore.keyId(it)
+                                    val total = androidx.compose.runtime.remember(ringId, context) {
+                                        runCatching { dev.patrickgold.florisboard.dictate.engines.EngineKeys.lines(context, ringId).size }.getOrDefault(0)
+                                    }
+                                    val act = (dev.patrickgold.florisboard.dictate.engines.KeyRing.active[ringId] ?: 1).coerceAtMost(maxOf(total, 1))
+                                    dev.patrickgold.florisboard.dictate.engines.EngineCatalog.shortName(it) +
+                                        (if (total > 1) " $act/$total" else "") +
+                                        dev.patrickgold.florisboard.dictate.engines.EngineScores.suffix(context, it, engLang)
+                                }
                             }
                             val subId = when (engine) {
                                 MaProviders.ENGINE_ASSEMBLYAI -> "assemblyai"
