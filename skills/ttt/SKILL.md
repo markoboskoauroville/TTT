@@ -10,5 +10,7 @@ description: TTT, Talk to Type Advanced Keyboard (repo TTT, folder TTT_MINI): Ma
 5. Accuracy percent per model comes from docs/benchmark-2026-11-09.md method (last 5 HR + 5 EN dictations); state the circularity caveat.
 6. Mistakes already made: key fields for manual paste; a picker with OK button; trusting a benchmark against its own references.
 7. Vocabulary: "creation" = Croatian, "Vesper" = Whisper.
+8. Multi-account keys: numbered Groq-1, Groq-2, Gemini-1 (KeyRing.kt); on 429/quota/401 switch to the next number, return to earlier ones when their rest (00:00 UTC for daily quota) ends; status shows the number. Test by putting an invalid key first.
 ## Run log
+- 10.11.2026: numbered keys with automatic switch (build 592).
 - 10.11.2026: builds 577 to 590 (labels, key picker, engine panel, benchmark percent); open: Croatian voice check, history re-transcribe by hand.
