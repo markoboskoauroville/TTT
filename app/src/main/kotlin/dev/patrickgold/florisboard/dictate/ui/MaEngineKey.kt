@@ -41,17 +41,29 @@ internal fun MaEngineKeyContent(letter: String, dot: Color, name: String, fallba
         val shown = if (fallback) "$name ↺" else name
         // Marko, 9.11.2026: name left, right after the letter, a bit smaller; the quota at half the name's size on the same line.
         // The dot, letter and gaps take about 48 dp; a glyph is about 0.58 of its size wide; the sub is half size.
-        val room = (maxWidth.value - 52f).coerceAtLeast(20f)
-        // Marko, 9.11.2026: name and the one word (free/paid) at the SAME size, the build 574 size (0.8 x 26 max); both shrink together if narrow.
-        // Never cut (Marko, 10.11.2026): glyph width taken at 0.62 em, one line while it reads at 11 sp or more,
-        // otherwise name over quota in two lines, each sized to its own room; no clipping at any key width.
-        val units = shown.length * 0.64f + sub.length * 0.64f + (if (sub.isEmpty()) 0f else 0.6f)
-        val oneLine = minOf(26f * 0.8f, room / units)
-        // Never cut (Marko): when one line would need type smaller than 11 sp, the quota goes under the name, each line sized to fit its own width.
-        val stacked = sub.isNotEmpty() && oneLine < 11f
-        val size = oneLine.coerceAtLeast(6f)
-        val nameSize = minOf(26f * 0.8f, room / (shown.length * 0.64f)).coerceAtLeast(6f)
-        val subSize = minOf(nameSize, room / (sub.length.coerceAtLeast(1) * 0.64f)).coerceAtLeast(6f)
+        // Marko, 10.11.2026: the text next to H/E aims at the size of the letter (17 sp); if the key is too narrow it
+        // shrinks step by step on one line, measured with the real font, and only below 9 sp goes in two lines. Never cut.
+        val measurer = androidx.compose.ui.text.rememberTextMeasurer()
+        val density = androidx.compose.ui.platform.LocalDensity.current
+        fun widthDp(t: String, sp: Float, bold: Boolean = false): Float = with(density) {
+            measurer.measure(
+                t,
+                androidx.compose.ui.text.TextStyle(fontSize = sp.sp, fontWeight = if (bold) FontWeight.Bold else FontWeight.Normal),
+                maxLines = 1, softWrap = false,
+            ).size.width.toDp().value
+        }
+        val target = 17f
+        val room = (maxWidth.value - (10f + 6f + 9f + 4f + widthDp(letter, 17f, true) + 6f + 2f)).coerceAtLeast(20f)
+        fun fit(parts: List<String>, gap: Float): Float {
+            var sz = target
+            while (sz > 6f && parts.sumOf { widthDp(it, sz).toDouble() }.toFloat() + gap * (parts.size - 1) > room) sz -= 0.5f
+            return sz
+        }
+        val oneLine = fit(if (sub.isEmpty()) listOf(shown) else listOf(shown, sub), 4f)
+        val stacked = sub.isNotEmpty() && oneLine < 9f
+        val size = oneLine
+        val nameSize = fit(listOf(shown), 0f)
+        val subSize = minOf(nameSize, fit(listOf(sub.ifEmpty { " " }), 0f))
         Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth().padding(start = 10.dp, end = 6.dp)) {
             androidx.compose.foundation.layout.Box(modifier = Modifier.size(9.dp).clip(CircleShape).background(dot))
             Spacer(Modifier.width(4.dp))
