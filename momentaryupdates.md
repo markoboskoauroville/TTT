@@ -563,3 +563,9 @@ voices. Stopped here: a further build plus a full suite (~1 h) would not finish 
 > "please don't transcribe Croatian, only English. That's it. I'm speaking in English only. I'm sending messages to friends in Croatian. That's all. English only everywhere" (Marko, 13.11.2026, passed on by MAC_SES3_13-NOV)
 
 **Status:** done: in the RE chat with a Claude Code session his voice is transcribed with language en (his E engine) whatever the badge; the keyboard's Croatian dictation for friends is unchanged.
+
+## 13.11.2026 – WhatsApp on the Mac, driven from the RE chat
+
+> "When we have tail scale and we have Mac online and we are all here, another thing is possible to do, and I will ask you to do this through my Re, I can ask it send me latest screenshot from my WhatsApp messages, and then it will open in the Firefox, my WhatsApp and send me the screenshot. And then I can ask please through Firefox, reply to this message in this and that way, and then it will reply and then when I see reply, I can also change it and send it. Basically, remotely controlling my WhatsApp on my Mac OS also with this interface of Re and any questions you have, you can ask local cloud how to manage with Firefox browser." (Marko, 13.11.2026)
+
+**Status:** saved first.
