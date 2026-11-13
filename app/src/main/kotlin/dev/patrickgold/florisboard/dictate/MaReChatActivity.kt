@@ -51,6 +51,8 @@ import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.DeleteSweep
+import androidx.compose.material.icons.filled.History
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Keyboard
 import androidx.compose.material.icons.filled.Mic
 import androidx.compose.material.icons.filled.Stop
@@ -171,7 +173,10 @@ class MaReChatActivity : ComponentActivity() {
             MaReChat.fieldId = fieldId
             MaReprompt.noteField(pkg, fieldId)
             MaReChat.screen = null
+            MaReChat.person = null
             MaReChat.scope.launch {
+                // Who he is talking to: the chat title at the top of the screen behind (13.11.2026).
+                if (MaReChat.pkg != null) MaReChat.person = runCatching { MaSkills.chatTitle() }.getOrNull()?.trim()?.takeIf { it.length in 2..60 }
                 if (MaScreenRead.on()) MaReChat.screen = withTimeoutOrNull(3_000L) { MaScreenRead.read() }
                 withContext(Dispatchers.Main) { open(context) }
             }
@@ -294,6 +299,12 @@ private fun ChatScreen(
         }
     }
 
+    var showPeople by remember { mutableStateOf(false) }
+    if (showPeople) {
+        PeopleScreen(onBack = { showPeople = false })
+        return
+    }
+
     Column(modifier = Modifier.fillMaxSize().safeDrawingPadding().imePadding()) {
         // ---- header, Messenger style
         Row(
@@ -309,6 +320,16 @@ private fun ChatScreen(
                     else -> "Active now · " + MaReEngine.label()
                 }
                 Text(sub, color = if (thinking) MaReChatActivity.ME else MaReChatActivity.DIM, fontSize = 13.sp, maxLines = 2)
+                MaReChat.person?.let { Text("Talking to $it", color = MaReChatActivity.DIM, fontSize = 12.sp, maxLines = 1) }
+            }
+            // The people RE knows: summaries and flow of every conversation (13.11.2026).
+            Row(
+                modifier = Modifier.heightIn(min = 40.dp).background(Color(0xFF242526), RoundedCornerShape(20.dp))
+                    .clickable { showPeople = true }.padding(horizontal = 12.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Icon(Icons.Default.History, null, tint = Color.White, modifier = Modifier.size(20.dp))
+                Text("History", color = Color.White, fontSize = 15.sp, modifier = Modifier.padding(start = 6.dp))
             }
         }
         // ---- the three options
@@ -438,7 +459,7 @@ private fun ChatScreen(
         AlertDialog(
             onDismissRequest = { confirmClear = false },
             title = { Text("Clear the chat?") },
-            text = { Text("RE first writes what it learned into its takeover, lessons and skills files. Then the chat is deleted; only those files stay.", fontSize = 16.sp) },
+            text = { Text("RE first writes what it learned into its takeover, lessons and skills files and the file of the person you are talking to. Then the chat is deleted; those files stay (see History).", fontSize = 16.sp) },
             confirmButton = {
                 TextButton(onClick = {
                     confirmClear = false
@@ -606,5 +627,100 @@ private fun Segment(icon: ImageVector, label: String, on: Boolean, modifier: Mod
     ) {
         Icon(icon, null, tint = if (on) Color.White else MaReChatActivity.DIM, modifier = Modifier.size(18.dp))
         Text(label, color = if (on) Color.White else MaReChatActivity.DIM, fontSize = 14.sp, modifier = Modifier.padding(start = 6.dp))
+    }
+}
+
+/**
+ * The People screen (History button in the RE chat, Marko 13.11.2026): every person RE has met, with the summaries of
+ * their conversations and the flow, from re/people/<name>.md. These files survive Clear in the chat; only this screen
+ * deletes them, one person or all, after a confirmation.
+ */
+@Composable
+private fun PeopleScreen(onBack: () -> Unit) {
+    var people by remember { mutableStateOf(MaReChat.people()) }
+    var open by remember { mutableStateOf<MaReChat.Person?>(null) }
+    var confirm by remember { mutableStateOf<String?>(null) } // slug, or "*" for everyone
+    androidx.activity.compose.BackHandler { if (open != null) open = null else onBack() }
+
+    Column(modifier = Modifier.fillMaxSize().safeDrawingPadding()) {
+        Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+            androidx.compose.material3.IconButton(onClick = { if (open != null) open = null else onBack() }) {
+                Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back", tint = Color.White)
+            }
+            Column(modifier = Modifier.weight(1f)) {
+                Text(open?.name ?: "People", color = Color.White, fontSize = 22.sp, fontWeight = FontWeight.Bold)
+                Text(
+                    if (open != null) "Summaries and flow of your conversations" else "${people.size} people \u00b7 what RE remembers",
+                    color = MaReChatActivity.DIM, fontSize = 13.sp,
+                )
+            }
+            val o = open
+            TextButton(onClick = { confirm = o?.slug ?: "*" }, enabled = o != null || people.isNotEmpty()) {
+                Text(if (o != null) "Clear" else "Clear all", color = Color(0xFFFF6B6B), fontSize = 16.sp)
+            }
+        }
+        val o = open
+        if (o != null) {
+            androidx.compose.foundation.lazy.LazyColumn(modifier = Modifier.fillMaxSize(), contentPadding = PaddingValues(16.dp)) {
+                item {
+                    for (line in o.text.lines()) {
+                        when {
+                            line.startsWith("# ") -> {}
+                            line.startsWith("## ") -> Text(
+                                line.removePrefix("## "), color = MaReChatActivity.ME, fontSize = 17.sp, fontWeight = FontWeight.Bold,
+                                modifier = Modifier.padding(top = 14.dp, bottom = 4.dp),
+                            )
+                            line.isBlank() -> Spacer(Modifier.size(4.dp))
+                            else -> Text(line, color = Color.White, fontSize = 16.sp, lineHeight = 22.sp)
+                        }
+                    }
+                }
+            }
+        } else if (people.isEmpty()) {
+            Box(Modifier.fillMaxSize().padding(24.dp), contentAlignment = Alignment.Center) {
+                Text("No one yet. Open RE from a chat with someone; after Accept or Clear RE writes what it learned about them.", color = MaReChatActivity.DIM, fontSize = 16.sp)
+            }
+        } else {
+            LazyColumn(modifier = Modifier.fillMaxSize(), contentPadding = PaddingValues(12.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                itemsIndexed(people, key = { _, p -> p.slug }) { _, p ->
+                    Row(
+                        modifier = Modifier.fillMaxWidth().background(Color(0xFF1C1E22), RoundedCornerShape(16.dp))
+                            .clickable { open = p }.padding(14.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Box(
+                            modifier = Modifier.size(48.dp).background(MaReChatActivity.THEM, CircleShape),
+                            contentAlignment = Alignment.Center,
+                        ) { Text(p.name.take(1).uppercase(), color = Color.White, fontSize = 20.sp, fontWeight = FontWeight.Bold) }
+                        Column(modifier = Modifier.weight(1f).padding(start = 12.dp)) {
+                            Text(p.name, color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.SemiBold, maxLines = 1)
+                            val last = p.text.lines().lastOrNull { it.trim().startsWith("-") || (it.isNotBlank() && !it.startsWith("#")) }.orEmpty()
+                            Text(last.trim().removePrefix("-").trim(), color = MaReChatActivity.DIM, fontSize = 14.sp, maxLines = 2)
+                            Text(
+                                android.text.format.DateUtils.getRelativeTimeSpanString(p.updated).toString(),
+                                color = MaReChatActivity.DIM, fontSize = 12.sp,
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    confirm?.let { which ->
+        AlertDialog(
+            onDismissRequest = { confirm = null },
+            title = { Text(if (which == "*") "Clear every person?" else "Clear ${open?.name ?: "this person"}?") },
+            text = { Text("The summaries, the flow and the style notes are deleted. This cannot be undone.", fontSize = 16.sp) },
+            confirmButton = {
+                TextButton(onClick = {
+                    if (which == "*") MaReChat.deleteAllPeople() else MaReChat.deletePerson(which)
+                    confirm = null
+                    open = null
+                    people = MaReChat.people()
+                }) { Text("Delete", color = Color(0xFFFF6B6B), fontWeight = FontWeight.Bold) }
+            },
+            dismissButton = { TextButton(onClick = { confirm = null }) { Text("Keep") } },
+        )
     }
 }

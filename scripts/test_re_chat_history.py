@@ -87,7 +87,16 @@ check("subtitles when the Reader shows subtitles", "display == \"subtitle\"" in 
 check("voice uses his H/E engine only", "EngineStore.selected(app, lang)" in cact)
 check("3 s retries, 10 times", "delay(3_000L)" in cact and "attempt > 10" in cact)
 
-# 6. manifest
+# 6. people (13.11.2026, second request)
+check("person from the chat title", "MaReChat.person = " in cact and "MaSkills.chatTitle()" in cact)
+check("person file in every prompt", "<person name=" in chat)
+check("learn rewrites the person file", "people/${MaSkills.slug(who)}.md" in chat and "## Conversations" in chat and "## Flow" in chat)
+check("people files only under re/people", "name.startsWith(\"people/\")" in chat)
+check("History button opens People", "showPeople = true" in cact and "PeopleScreen(" in cact)
+check("clear one person and all", "deletePerson(which)" in cact and "deleteAllPeople()" in cact)
+check("chat Clear keeps people", "peopleDir" not in chat[chat.find("fun clearChat()"):chat.find("fun ", chat.find("fun clearChat()") + 5)])
+
+# 7. manifest
 check("both windows declared", "MaHistoryActivity" in man and "MaReChatActivity" in man)
 
 for f in failures:

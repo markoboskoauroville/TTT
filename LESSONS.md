@@ -20,3 +20,4 @@
 - 10.11.2026 Hiding one thing must not hide its neighbour: the recorder shares the Smartbar strip with the suggestions; gate the strip on "keys open OR dictation busy", and test collapsed + record before calling it done.
 - 13.11.2026 A cancel is not a delete: a cancelled dictation keeps its audio in the history as "audio only" until he clears the history. Only an explicit Clear or a per-entry delete removes audio.
 - 13.11.2026 RE's memory lives in files the AI writes itself (TAKEOVER, LESSONS, SKILLS in Documents/TTTmini/re/); clearing the chat keeps them and a new chat reads only them.
+- 13.11.2026 Per-person memory survives clearing the chat; only the People screen deletes a person.

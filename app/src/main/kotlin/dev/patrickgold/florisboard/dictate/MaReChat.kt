@@ -64,6 +64,41 @@ object MaReChat {
     @Volatile var pkg: String? = null
     @Volatile var fieldId: Int = 0
     @Volatile var screen: MaScreenRead.Screen? = null
+    /** Who he is talking to, from the chat title on the screen behind (null when it could not be told). */
+    @Volatile var person: String? = null
+
+    // ------------------------------------------------------------------ people (Marko, 13.11.2026)
+    //
+    // "it understands with who I am talking to ... history of the communication is kept, person especially."
+    // Every person gets re/people/<slug>.md: how Marko writes to them, dated summaries of their conversations and the
+    // flow of the conversation. RE rewrites it on Clear and Accept; clearing the RE chat never touches it; only the
+    // People screen (History button in the chat) clears one person or all of them.
+
+    data class Person(val slug: String, val name: String, val text: String, val updated: Long)
+
+    fun peopleDir(): File = File(dir(), "people")
+    fun personFile(name: String): File = File(peopleDir(), MaSkills.slug(name) + ".md")
+
+    fun people(): List<Person> = runCatching {
+        peopleDir().listFiles()?.filter { it.isFile && it.extension == "md" }?.map { f ->
+            val t = f.readText()
+            val name = t.lineSequence().firstOrNull { it.startsWith("# ") }?.removePrefix("# ")?.trim()?.ifBlank { null } ?: f.nameWithoutExtension
+            Person(f.nameWithoutExtension, name, t, f.lastModified())
+        }?.sortedByDescending { it.updated }.orEmpty()
+    }.getOrDefault(emptyList())
+
+    fun deletePerson(slug: String) { runCatching { File(peopleDir(), "$slug.md").delete() } }
+    fun deleteAllPeople() { runCatching { peopleDir().deleteRecursively() } }
+
+    /** The file for the person on screen, created with its heading the first time RE meets them. */
+    private fun ensurePerson(name: String) {
+        val f = personFile(name)
+        if (f.exists() && f.length() > 0L) return
+        runCatching {
+            f.parentFile?.mkdirs()
+            f.writeText("# $name\n\n## Style with $name\n\n## Conversations (summaries, newest last)\n\n## Flow\n")
+        }
+    }
 
     fun dir(): File = File(MaVault.dir(), "re").apply { mkdirs() }
     private fun file(name: String) = File(dir(), name)
@@ -118,6 +153,10 @@ object MaReChat {
         append("<lessons>\n").append(read(LESSONS).take(FILE_MAX)).append("\n</lessons>\n")
         append("<skills>\n").append(read(SKILLS).take(FILE_MAX)).append("\n</skills>\n")
         for ((n, t) in notes()) append("<note name=\"").append(n).append("\">\n").append(t).append("\n</note>\n")
+        person?.let { n ->
+            val t = runCatching { personFile(n).readText() }.getOrDefault("")
+            if (t.isNotBlank()) append("<person name=\"").append(n).append("\">\n").append(t.take(FILE_MAX)).append("\n</person>\n")
+        }
         val older = runCatching { MaSkills.contextBlock() }.getOrDefault("")
         if (older.isNotBlank()) append(older)
     }
@@ -137,6 +176,7 @@ object MaReChat {
         append("Your memory, kept on his phone:\n").append(memoryBlock()).append("\n")
         val app = pkg
         if (app != null) append("He opened you from the app ").append(app).append(".\n")
+        person?.let { append("He is talking to ").append(it).append("; the <person> file is what you know about them and how he writes to them.\n") }
         screen?.let {
             append("The screen behind, read just now (").append(it.how).append("). [left] is the other person, [right] is Marko, newest last:\n")
             append("<screen>\n").append(it.text.take(6000)).append("\n</screen>\n")
@@ -167,6 +207,14 @@ object MaReChat {
     suspend fun learn(context: Context, msgs: List<Msg>, why: String): Int {
         if (msgs.isEmpty()) return 0
         ensureMemory()
+        val who = person
+        if (who != null) ensurePerson(who)
+        val personPart = if (who == null) "" else
+            " Marko is talking to $who. Also rewrite the file people/${MaSkills.slug(who)}.md, starting with '# $who', with three " +
+                "sections: '## Style with $who' (how Marko writes to this person: tone, language, length, nicknames), " +
+                "'## Conversations' (one dated line per conversation, newest last, keep the old lines: what was talked about and " +
+                "decided) and '## Flow' (how the conversation is going now, open questions, what comes next). Use the screen."
+        val seen = screen?.text?.take(5000)?.let { "\n<screen_with_the_person>\n$it\n</screen_with_the_person>" }.orEmpty()
         val chat = msgs.takeLast(80).joinToString("\n") { (if (it.me) "Marko: " else "RE: ") + it.text.trim() }
         val p = "You keep the memory of RE, Marko's writing assistant. Below are RE's memory files and a chat that is about to be " +
             "$why. Rewrite the files so the next chat, which will NOT see this one, knows what matters: TAKEOVER.md (where things " +
@@ -174,8 +222,9 @@ object MaReChat {
             "rules), SKILLS.md (how Marko writes: tone, length, greetings, sign-offs, languages, typical phrases, per person). " +
             "Keep everything still true from the old files, add what is new, drop nothing important, stay under 6000 characters " +
             "each. You may also keep extra notes files about his writing habits under notes/ (lowercase name, .md). Answer ONLY " +
-            "with the files, each starting with a line '=== NAME ===' (for example === TAKEOVER.md === or === notes/people.md ===).\n\n" +
-            memoryBlock() + "\n<chat>\n" + chat + "\n</chat>"
+            "with the files, each starting with a line '=== NAME ===' (for example === TAKEOVER.md === or === notes/habits.md ===)." +
+            personPart + " Today is " + SimpleDateFormat("d.M.yyyy", Locale.ROOT).format(Date()) + ".\n\n" +
+            memoryBlock() + seen + "\n<chat>\n" + chat + "\n</chat>"
         val answer = runCatching {
             if (MaReEngine.engine() == MaReEngine.GROQ) MaReEngine.groqAsk(context, "You maintain memory files. Output only the files.", p) { }
             else DictateController.reChatAnthropic(context, p)
@@ -200,6 +249,8 @@ object MaReChat {
                 name.equals(SKILLS, true) -> file(SKILLS)
                 name.startsWith("notes/") && name.removePrefix("notes/").matches(Regex("[a-z0-9_-]{1,40}\\.md")) ->
                     File(notesDir().apply { mkdirs() }, name.removePrefix("notes/"))
+                name.startsWith("people/") && name.removePrefix("people/").matches(Regex("[a-z0-9-]{1,48}\\.md")) ->
+                    File(peopleDir().apply { mkdirs() }, name.removePrefix("people/"))
                 else -> null
             } ?: return@forEachIndexed
             if (runCatching { target.writeText(body.take(FILE_MAX) + "\n") }.isSuccess) wrote++
