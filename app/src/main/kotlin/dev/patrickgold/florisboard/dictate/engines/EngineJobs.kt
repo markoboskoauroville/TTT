@@ -20,6 +20,7 @@ import android.content.Context
 import android.content.Intent
 import dev.patrickgold.florisboard.dictate.DictateController
 import java.io.File
+import org.json.JSONObject
 import java.util.concurrent.TimeUnit
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -74,6 +75,12 @@ class EngineBenchmarkJob : JobService() {
  *   engines_report          print state (counts, quota left, key present yes/no)
  * Output goes to files/engines_log.txt (never a key).
  */
+/** The remote API's answer for one command: files/remote/<id>.json (id from the extra "id", else "last"). */
+internal fun remoteOut(app: Context, i: Intent, o: JSONObject) {
+    val dir = File(app.getExternalFilesDir(null), "remote").apply { mkdirs() }
+    runCatching { File(dir, (i.getStringExtra("id") ?: "last").replace(Regex("[^A-Za-z0-9_-]"), "_") + ".json").writeText(o.put("at", System.currentTimeMillis()).toString(1)) }
+}
+
 class EngineDebugReceiver : BroadcastReceiver() {
     override fun onReceive(c: Context, i: Intent) {
         val app = c.applicationContext
@@ -123,6 +130,53 @@ class EngineDebugReceiver : BroadcastReceiver() {
                     "dev.ttt.engines.SIMNET" -> {
                         KeyRing.simulateNetFailures = i.getIntExtra("n", 3)
                         out("simulating " + KeyRing.simulateNetFailures + " network failures")
+                    }
+                    // ---- The remote API (Marko, 13.11.2026: "make Python API so you can do anything from the distance").
+                    // Only adb can send these (the receiver needs android.permission.DUMP). Answers go to
+                    // files/remote/<id>.json, which tools/ttt_remote.py pulls. Never a key value.
+                    "dev.ttt.remote.TYPE" -> {
+                        val t = i.getStringExtra("t").orEmpty()
+                        kotlinx.coroutines.withContext(Dispatchers.Main) { DictateController.insertHistoryText(app, t) }
+                        remoteOut(app, i, JSONObject().put("ok", true).put("typed", t.length))
+                    }
+                    "dev.ttt.remote.STATUS" -> {
+                        val prefs by dev.patrickgold.florisboard.app.FlorisPreferenceStore
+                        val v = runCatching { app.packageManager.getPackageInfo(app.packageName, 0).longVersionCode }.getOrDefault(0L)
+                        val rings = JSONObject()
+                        for (r in listOf("groq", "gemini", "google_v1", "deepgram", "assemblyai", "speechmatics", "soniox", "elevenlabs",
+                            "speechify", "anthropic", "cloudflare", "google_chirp", dev.patrickgold.florisboard.dictate.MaReEngine.RING,
+                            dev.patrickgold.florisboard.dictate.MaReGithub.RING)) rings.put(r, EngineKeys.ownLines(app, r).size)
+                        remoteOut(app, i, JSONObject().put("versionCode", v)
+                            .put("reEngine", dev.patrickgold.florisboard.dictate.MaReEngine.engine())
+                            .put("reChat", dev.patrickgold.florisboard.dictate.MaReChat.chatOn(app))
+                            .put("readerVoice", prefs.dictate.maReaderVoice.get())
+                            .put("language", dev.patrickgold.florisboard.dictate.MaLanguage.active())
+                            .put("state", DictateController.state.value.javaClass.simpleName)
+                            .put("keysPerRing", rings)
+                            .put("githubDb", dev.patrickgold.florisboard.dictate.MaRemoteDb.hasToken())
+                            .put("hH", EngineStore.selected(app, "hr")).put("hE", EngineStore.selected(app, "en")))
+                    }
+                    "dev.ttt.remote.RE_ENGINE" -> {
+                        val e = i.getStringExtra("e").orEmpty()
+                        val ok = e in listOf("anthropic_auto", "opus", "sonnet", "qwen")
+                        if (ok) { val prefs by dev.patrickgold.florisboard.app.FlorisPreferenceStore; prefs.dictate.maReEngine.set(e) }
+                        remoteOut(app, i, JSONObject().put("ok", ok).put("reEngine", dev.patrickgold.florisboard.dictate.MaReEngine.engine()))
+                    }
+                    "dev.ttt.remote.RE_ASK" -> {
+                        // One RE answer with the live context (the app and screen RE last saw), engine = his choice or e=...
+                        val t = i.getStringExtra("t").orEmpty()
+                        val e = i.getStringExtra("e")
+                        dev.patrickgold.florisboard.dictate.MaReChat.scope.launch {
+                            if (e != null) dev.patrickgold.florisboard.dictate.MaReEngine.override = e
+                            val t0 = System.currentTimeMillis()
+                            val r = runCatching {
+                                dev.patrickgold.florisboard.dictate.MaReChat.ask(app, listOf(dev.patrickgold.florisboard.dictate.MaReChat.Msg(true, t))) { out("re status: " + it) }
+                            }
+                            dev.patrickgold.florisboard.dictate.MaReEngine.override = null
+                            remoteOut(app, i, JSONObject().put("ok", r.isSuccess).put("answer", r.getOrNull().orEmpty())
+                                .put("error", r.exceptionOrNull()?.message.orEmpty()).put("ms", System.currentTimeMillis() - t0)
+                                .put("model", dev.patrickgold.florisboard.dictate.MaReEngine.lastChoice))
+                        }
                     }
                     "dev.ttt.engines.SAY" -> {
                         // Debugging with Marko away from the screen (13.11.2026): the Reader voice (Beatrice, Speechify,

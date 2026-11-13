@@ -517,3 +517,9 @@ voices. Stopped here: a further build plus a full suite (~1 h) would not finish 
 > "beatrices ... if there is no batteries living on my phone, please build one ... beatrice ... or better yet, use speechify ... Please use speechify key to talk, speechify API keys" (Marko, 13.11.2026; "batteries" = Beatrice)
 
 **Status:** TTT gets an adb broadcast dev.ttt.engines.SAY: the Reader voice (beatrice_32 on Speechify, his key inside TTT) speaks the text, Voice Engine shows the subtitle. tools/voice/say_on_phone.sh uses it from build 641 on, espeak only before that.
+
+## 13.11.2026 – talk through TTT; a Python API to drive TTT from a distance
+
+> "Yes, I hear the robot, but Beatrice is also building my TTT Mini, so you can talk through my TTT. It's not TTT Mini anymore, sorry. To TTT Advanced Keyboard, Talking Keyboard, you can talk to me, until this builds. Please build for this my application TTT make Python API so you can do anything from the distance. You can even talk through my keyboard if you want to." (Marko, 13.11.2026)
+
+**Status:** tools/ttt_remote.py (connect, say = Beatrice through TTT, vsay = Voice Engine v4, status, type, re, engine, compare, shot, ui, tap, key, text, install, log); TTT receiver gets dev.ttt.remote.TYPE / STATUS / RE_ENGINE / RE_ASK (adb only, answers in files/remote/<id>.json, never a key value). Ships in build 642.
