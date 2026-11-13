@@ -201,7 +201,9 @@ object MaReEngine {
         var attempt = 0
         while (true) {
             try {
-                return KeyRing.run(c, RING, "Qwen") { k -> stripThinking(chat(k, model, system + QWEN_RULES, user)) }
+                // Qwen's skills, written by Opus in training mode (MaReTraining), on every Qwen call.
+                val skills = MaReTraining.skills().let { if (it.isBlank()) "" else "\n\nYour skills (learned from your supervisor, follow them):\n$it" }
+                return KeyRing.run(c, RING, "Qwen") { k -> stripThinking(chat(k, model, system + QWEN_RULES + skills, user)) }
             } catch (t: Throwable) {
                 if (t is kotlinx.coroutines.CancellationException) throw t
                 val kind = FallbackRunner.classify(t)

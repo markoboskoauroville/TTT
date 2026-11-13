@@ -1676,6 +1676,15 @@ fun MaFeatureRow(
                                     dev.patrickgold.florisboard.dictate.MaReChatActivity.open(context)
                                 }
                             }.toTypedArray(),
+                            // Training mode (13.11.2026): Opus supervises Qwen on everything RE does; on by default.
+                            MaPanelItem(
+                                "Training mode",
+                                if (!dev.patrickgold.florisboard.dictate.MaReTraining.on(context)) "off"
+                                else if (dev.patrickgold.florisboard.dictate.MaReEngine.hasQwenKey(context)) "Opus teaches Qwen" else "on · no Qwen key yet",
+                                dev.patrickgold.florisboard.dictate.MaReTraining.on(context),
+                            ) {
+                                dev.patrickgold.florisboard.dictate.MaReTraining.setOn(context, !dev.patrickgold.florisboard.dictate.MaReTraining.on(context))
+                            },
                             MaPanelItem("Tap opens the chat", if (dev.patrickgold.florisboard.dictate.MaReChat.chatOn(context)) "on" else "off", dev.patrickgold.florisboard.dictate.MaReChat.chatOn(context)) {
                                 dev.patrickgold.florisboard.dictate.MaReChat.setChatOn(context, !dev.patrickgold.florisboard.dictate.MaReChat.chatOn(context))
                             },

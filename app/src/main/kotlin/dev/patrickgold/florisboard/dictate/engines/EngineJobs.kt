@@ -149,6 +149,8 @@ class EngineDebugReceiver : BroadcastReceiver() {
                         remoteOut(app, i, JSONObject().put("versionCode", v)
                             .put("reEngine", dev.patrickgold.florisboard.dictate.MaReEngine.engine())
                             .put("reChat", dev.patrickgold.florisboard.dictate.MaReChat.chatOn(app))
+                            .put("reTraining", dev.patrickgold.florisboard.dictate.MaReTraining.active(app))
+                            .put("reTrainingLast", dev.patrickgold.florisboard.dictate.MaReTraining.lastSummary)
                             .put("readerVoice", prefs.dictate.maReaderVoice.get())
                             .put("language", dev.patrickgold.florisboard.dictate.MaLanguage.active())
                             .put("state", DictateController.state.value.javaClass.simpleName)

@@ -2171,7 +2171,7 @@ object DictateController {
             MaReEngine.inRe = true
             try {
                 // The RE engine he chose (13.11.2026): Opus, Sonnet, or Auto's pick; Qwen goes through requestRewordRaw.
-                val reModel = if (MaReEngine.isQwen()) MaFlow.model() else MaReEngine.anthropicModel(appContext, words)
+                val reModel = if (MaReEngine.isQwen() || MaReTraining.active(appContext)) MaFlow.model() else MaReEngine.anthropicModel(appContext, words)
                 applyPrompt(
                     appContext, MaReprompt.prompt(words, write, screen), model = reModel,
                     allowGrowth = true, bare = true,
@@ -4423,9 +4423,13 @@ object DictateController {
         purpose: String = if (cheapest) "Suggestion" else "Rewording",
     ): String {
         // RE with Groq (Marko, 10.11.2026): only the chosen engine; no fallback to Anthropic.
-        if (MaReEngine.inRe && MaReEngine.isQwen()) {
-            MaRewordPrompt.recordSent("qwen (RE)", userContent)
+        // Training mode (MaReTraining, 13.11.2026): Qwen works under Opus; Opus's own calls pass through below.
+        val training = MaReEngine.inRe && !MaReTraining.supervising && maAppContext?.let { MaReTraining.active(it) } == true
+        if (MaReEngine.inRe && !MaReTraining.supervising && (MaReEngine.isQwen() || training)) {
+            MaRewordPrompt.recordSent(if (training) "qwen (RE, training)" else "qwen (RE)", userContent)
             try {
+                if (training) return MaReTraining.run(maAppContext!!, MaReEngine.SYSTEM, userContent) { _maStatus.value = it }
+                    .replace(Regex("</?draft>", RegexOption.IGNORE_CASE), "").trim()
                 return MaReEngine.groq(maAppContext!!, userContent) { _maStatus.value = it }
             } catch (e: dev.patrickgold.florisboard.dictate.engines.EngineFailure) {
                 MaMessage.show(if (e.message == "model retired") "RE: the Qwen model is retired on Groq" else "RE: " + (e.message ?: "Qwen failed"))
