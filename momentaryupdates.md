@@ -533,3 +533,9 @@ voices. Stopped here: a further build plus a full suite (~1 h) would not finish 
 > "after you finish testing, please bring back, make everything tidy, bring back your  Also, when you don't need phone just bring back your chat so I can scroll to it and see what's going on. When you need phone make a lock. Look at my GitHub repositories how I make a lock in my Mac OS. When my Mantra macro recorder is using the keyboard I cannot use my computer at all. It blocks everything. Now you can do the same block here. You just put one badge over the middle of the screen, say Claude is using the phone, and then if I press some button on that badge, I can override it. But basically it says to me, stay away, I am now in action. And when it disappears, I can use it. So we can be in exchange. I don't need to give you a phone for the next five hours if you are not needing it. From time to time when you need it, you block me and I let you use it. That's the thing. please put this in mantra manifest so we always work like this" (Marko, 13.11.2026)
 
 **Status:** Voice Engine v7 (/lock, /unlock, /through); tools/ttt_remote.py lock/unlock/done, taps and shots pass the lock and stop after an override; MANTRA_MANIFEST modules/phone-lock.md.
+
+## 13.11.2026 – settings open where I left them
+
+> "Please add a feature to TTT Mini to remember exact position when I left off when I was in my settings. So if I am in some deep settings and I go to my typing and I click setting again, it doesn't bring me to main menu. It brings me exactly to that settings." (Marko, 13.11.2026)
+
+**Status:** saved first.
