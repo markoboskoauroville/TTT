@@ -470,6 +470,8 @@ class FlorisImeService : LifecycleInputMethodService() {
     override fun onStartInputView(info: EditorInfo?, restarting: Boolean) {
         flogInfo { "restarting=$restarting info=${info?.debugSummarize()}" }
         super.onStartInputView(info, restarting)
+        // Settings from his other phones (MaSettingsSync, off unless he switched it on), at most once a minute.
+        dev.patrickgold.florisboard.dictate.MaSettingsSync.maybePull()
         if (info == null) return
         val editorInfo = FlorisEditorInfo.wrap(info)
         // REPROMPT (MaReprompt): the field the key was pressed in is back from the instruction
@@ -651,6 +653,8 @@ class FlorisImeService : LifecycleInputMethodService() {
         flogInfo { "finishing=$finishingInput" }
         super.onFinishInputView(finishingInput)
         editorInstance.handleFinishInputView()
+        // A key or row changed from the keyboard itself reaches his other phones (MaSettingsSync).
+        dev.patrickgold.florisboard.dictate.MaSettingsSync.syncSoon()
     }
 
     override fun onFinishInput() {

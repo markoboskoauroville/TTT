@@ -158,6 +158,8 @@ class FlorisAppActivity : ComponentActivity() {
 
     override fun onPause() {
         super.onPause()
+        // Settings left: what changed goes to his other phones (MaSettingsSync, off by default).
+        dev.patrickgold.florisboard.dictate.MaSettingsSync.syncSoon()
 
         // App icon visibility control was restricted in Android 10.
         // See https://developer.android.com/reference/android/content/pm/LauncherApps#getActivityList(java.lang.String,%20android.os.UserHandle)

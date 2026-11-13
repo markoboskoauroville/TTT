@@ -189,6 +189,8 @@ class FlorisApplication : Application() {
             DictateLegacyMigrator.restoreKeysFromVaultIfEmpty(this@FlorisApplication)
             DictateLegacyMigrator.reofferRateAndDonateIfNeeded()
             preferenceStoreLoaded.value = true
+            dev.patrickgold.florisboard.dictate.MaSettingsSync.attach(this@FlorisApplication)
+            dev.patrickgold.florisboard.dictate.MaSettingsSync.maybePull()
         }
         extensionManager.value.init()
         clipboardManager.value.initializeForContext(this)

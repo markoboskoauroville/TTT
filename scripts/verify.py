@@ -705,12 +705,18 @@ def check_settings_default(path: Path, text: str) -> None:
         problems.append(f"{path.name}: DEFAULT list not found — this check is not running")
         return
     listed = set(re.findall(r"MaSettingsEntry\.([A-Z_0-9]+)", m.group(1)))
-    missing = entries - listed - {"KEYS"}
+    missing = entries - listed - {"KEYS"} - _hidden_entries(text)
     for name in sorted(missing):
         problems.append(
             f"{path.name}: `{name}` is a settings entry but is not in DEFAULT — it can never be shown"
         )
 
+
+
+def _hidden_entries(text: str) -> set:
+    """Entries `parse` hides on purpose (its `val hidden = setOf(...)`): sections inside other screens."""
+    m = re.search(r"val hidden = setOf\((.*?)\)", text, re.S)
+    return set(re.findall(r"MaSettingsEntry\.([A-Z_0-9]+)", m.group(1))) if m else {"KEYS"}
 
 def check_settings_entry_reachable(path: Path, text: str) -> None:
     """Every settings entry must appear in DEFAULT, or nothing ever shows it.
@@ -736,7 +742,7 @@ def check_settings_entry_reachable(path: Path, text: str) -> None:
         return
     in_default = set(re.findall(r"MaSettingsEntry\.([A-Z_0-9]+)", m.group(1)))
     # KEYS is deliberately excluded by parse: it is a section inside PERMISSIONS now.
-    missing = entries - in_default - {"KEYS"}
+    missing = entries - in_default - {"KEYS"} - _hidden_entries(text)
     for name in sorted(missing):
         problems.append(
             f"{path.name}: settings entry `{name}` is not in DEFAULT — it will never appear for "

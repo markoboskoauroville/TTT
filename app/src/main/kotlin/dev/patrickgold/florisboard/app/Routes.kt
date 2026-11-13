@@ -223,6 +223,10 @@ object Routes {
         object MaProfiles
 
         @Serializable
+        @Deeplink("settings/dictate/settings-sync")
+        object MaSettingsSync
+
+        @Serializable
         @Deeplink("settings/dictate/prompts")
         object MaPrompts
 
@@ -517,6 +521,7 @@ object Routes {
             composableWithDeepLink(Settings.MaNumberRow::class) { MaNumberRowScreen() }
             composableWithDeepLink(Settings.MaCopyRow::class) { MaCopyRowScreen() }
             composableWithDeepLink(Settings.MaProfiles::class) { MaProfilesScreen() }
+            composableWithDeepLink(Settings.MaSettingsSync::class) { dev.patrickgold.florisboard.app.settings.dictate.MaSettingsSyncScreen() }
             composableWithDeepLink(Settings.MaPrompts::class) { MaPromptsScreen() }
             composableWithDeepLink(Settings.MaKeyColors::class) { MaKeyColorsScreen() }
             composableWithDeepLink(Settings.MaPopups::class) { MaPopupsScreen() }

@@ -99,7 +99,13 @@ object KeyImporter {
             if (ok && bestRead == null) bestRead = t
         }
         if (bestRead != null) EngineKeys.setLines(c, dev.patrickgold.florisboard.dictate.MaReGithub.RING, listOf(bestRead))
-        val readLine = "GitHub (RE reads your repositories): " + reads.joinToString(", ") + if (bestRead != null) "; kept" else "; none kept"
+        // Settings sync (13.11.2026): the first token that can write to his settings repository is kept for it too.
+        dev.patrickgold.florisboard.dictate.MaSettingsSync.attach(c)
+        val syncLine = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+            dev.patrickgold.florisboard.dictate.MaSettingsSync.offerTokens(toks)
+        }
+        val readLine = "GitHub (RE reads your repositories): " + reads.joinToString(", ") + (if (bestRead != null) "; kept" else "; none kept") +
+            (syncLine?.let { "\n$it" } ?: "")
         for ((i, t) in toks.withIndex()) {
             onProgress("Testing GitHub token ${i + 1} of ${toks.size}…")
             val ok = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) { dev.patrickgold.florisboard.dictate.MaRemoteDb.tokenWorks(t) }

@@ -58,6 +58,8 @@ enum class MaSettingsEntry(val id: String, val title: String, val summary: Strin
     CLOUD_READER("cloud_reader", "Claude.ai reader", "Chats it read, kept so you can read them again"),
     COPY_ROW("copy_row", "Copy row", "The clipboard row, shown in the transcription view"),
     PROFILES("profiles", "Profiles", "Whole configurations, saved by name and swapped in one tap"),
+    // Marko, 13.11.2026: the same settings on every phone, through a private GitHub repository of his. Off by default.
+    SETTINGS_SYNC("settings_sync", "Sync settings between devices", "Same layout and feature rows on every phone, through your private GitHub repository"),
     /**
      * Gone from the list; it lives inside PERMISSIONS now.
      *
@@ -123,6 +125,7 @@ object MaSettingsOrder {
         MaSettingsEntry.CLOUD_READER,
         MaSettingsEntry.COPY_ROW,
         MaSettingsEntry.PROFILES,
+        MaSettingsEntry.SETTINGS_SYNC,
         MaSettingsEntry.FEATURE_ROW,
         MaSettingsEntry.RECORDING,
         MaSettingsEntry.MAPPINGS,

@@ -19,6 +19,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Tag
 import androidx.compose.material.icons.filled.ColorLens
 import androidx.compose.material.icons.filled.Folder
+import androidx.compose.material.icons.filled.Sync
 import androidx.compose.material.icons.automirrored.filled.VolumeUp
 import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Bolt
@@ -106,6 +107,7 @@ val MaSettingsEntry.icon: ImageVector
         MaSettingsEntry.CLOUD_READER -> Icons.AutoMirrored.Filled.VolumeUp
         MaSettingsEntry.COPY_ROW -> Icons.Default.ContentPasteGo
         MaSettingsEntry.PROFILES -> Icons.Default.Folder
+        MaSettingsEntry.SETTINGS_SYNC -> Icons.Default.Sync
         MaSettingsEntry.KEYS -> Icons.Default.Key
         MaSettingsEntry.VOCABULARY -> Icons.Default.Spellcheck
         MaSettingsEntry.BUCKETS -> Icons.Default.ContentPasteGo
@@ -155,6 +157,7 @@ val MaSettingsEntry.route: Any
         MaSettingsEntry.CLOUD_READER -> Routes.Settings.MaCloudLog
         MaSettingsEntry.COPY_ROW -> Routes.Settings.MaCopyRow
         MaSettingsEntry.PROFILES -> Routes.Settings.MaProfiles
+        MaSettingsEntry.SETTINGS_SYNC -> Routes.Settings.MaSettingsSync
         MaSettingsEntry.KEYS -> Routes.Settings.DictateKeys
         MaSettingsEntry.VOCABULARY -> Routes.Settings.MaVocabulary
         MaSettingsEntry.BUCKETS -> Routes.Settings.MaBuckets
