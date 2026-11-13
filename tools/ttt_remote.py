@@ -17,7 +17,7 @@ ever leaves the phone through this; status shows counts only.
     python3 tools/ttt_remote.py compare [--engines qwen,opus] [--only hr_late,en_fix]   # MaReCompare, prints a table
     python3 tools/ttt_remote.py shot out.png            # screenshot
     python3 tools/ttt_remote.py ui                      # texts on screen with tap centres
-    python3 tools/ttt_remote.py tap X Y | key BACK | text "abc"
+    python3 tools/ttt_remote.py tap X Y | swipe X1 Y1 X2 Y2 [ms] | key BACK | text "abc"   (all pass the lock)
     python3 tools/ttt_remote.py install 642             # release build-642 from GitHub, adb install -r (never uninstall)
     python3 tools/ttt_remote.py log                     # files/engines_log.txt
     python3 tools/ttt_remote.py lock "what I am doing"  # Voice Engine v7: CLAUDE IS USING THE PHONE (LET ME USE IT overrides)
@@ -201,6 +201,10 @@ def main(argv):
     elif cmd == "tap":
         through()
         adb("shell", "input", "tap", pos[0], pos[1])
+    elif cmd == "swipe":
+        # x1 y1 x2 y2 [ms]: through the lock first (a raw adb swipe under the lock can hit LET ME USE IT)
+        through(1500)
+        adb("shell", "input", "swipe", *pos[:4], pos[4] if len(pos) > 4 else "300")
     elif cmd == "key":
         through()
         adb("shell", "input", "keyevent", pos[0])
