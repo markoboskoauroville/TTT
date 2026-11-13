@@ -89,13 +89,14 @@ object MaClaudeLink {
     fun hasToken(c: Context) = EngineKeys.ownLines(c, RING).isNotEmpty()
 
     /** The key file picked right from the chat's message (13.11.2026: "message itself is file picker"). */
-    fun importToken(c: Context, text: String): String {
+    suspend fun importToken(c: Context, text: String): String {
         val tok = text.lines().map { it.trim() }.firstOrNull { Regex("[A-Za-z0-9_-]{16,}").matches(it) }
             ?: return "No key found in that file. Tap here and pick mantra-relay-token.txt."
         EngineKeys.setLines(c, RING, listOf(tok))
         status = ""
+        val t = test(c)
         flush(c)
-        return "Mac relay key stored. Sending what was waiting…"
+        return "Mac relay key stored · tested: $t"
     }
 
     fun slug(name: String): String =
@@ -190,14 +191,15 @@ object MaClaudeLink {
     fun waiting(): Int = readOutbox().length()
 
     /** He pressed SEND: the message is queued (with its id) and sent now; unreachable, it waits and is tried again. */
-    fun send(c: Context, to: String, text: String) {
+    fun send(c: Context, to: String, text: String, msgAt: Long = 0L) {
         val app = c.applicationContext
         remember(app, to)
+        if (msgAt > 0) mark(app, msgAt, "sending")
         scope.launch {
             outboxLock.withLock {
                 val a = readOutbox()
                 a.put(
-                    JSONObject().put("id", UUID.randomUUID().toString()).put("to", to).put("text", text)
+                    JSONObject().put("id", UUID.randomUUID().toString()).put("to", to).put("text", text).put("msg_at", msgAt)
                         .put("at", java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ", java.util.Locale.ROOT).format(java.util.Date())),
                 )
                 writeOutbox(a)
@@ -231,19 +233,74 @@ object MaClaudeLink {
             val o = a.getJSONObject(i)
             val body = JSONObject().put("to", o.getString("to")).put("to_id", "").put("text", o.getString("text"))
                 .put("at", o.optString("at")).put("id", o.getString("id")).put("from", "Marko, TTT chat")
+            val msgAt = o.optLong("msg_at")
             val ok = runCatching {
                 http.newCall(
                     Request.Builder().url(url(c)).apply { if (tok != null) header("X-Mantra-Token", tok) }
                         .post(body.toString().toRequestBody(JSON)).build(),
                 ).execute().use { r ->
                     if (r.code == 401) status = "The Mac relay asks for its key. Tap here and pick mantra-relay-token.txt."
+                    if (r.isSuccessful) {
+                        // phonereply answers {typed, session}: typed = it went into the live session's window;
+                        // not typed = the session is not open on the Mac, the message waits in its file there.
+                        val j = runCatching { JSONObject(r.body.string()) }.getOrNull()
+                        if (msgAt > 0) mark(c, msgAt, if (j?.optBoolean("typed") == true) "typed" else "filed")
+                    } else if (msgAt > 0) mark(c, msgAt, "waiting")
                     r.isSuccessful
                 }
-            }.getOrElse { status = "The Mac is not reachable: " + (it.message ?: it.javaClass.simpleName).take(80); false }
+            }.getOrElse {
+                status = "The Mac is not reachable: " + (it.message ?: it.javaClass.simpleName).take(80)
+                if (msgAt > 0) mark(c, msgAt, "waiting")
+                false
+            }
             if (!ok) keep.put(o)
         }
         writeOutbox(keep)
         if (keep.length() > 0 && status.isBlank()) status = "${keep.length()} message(s) waiting for the Mac"
         return keep.length()
     }
+
+    // ---------------------------------------------------------------- delivery marks and the relay test
+
+    /** What happened to one sent message (by its Msg.at): sending, typed, filed, waiting. */
+    private fun mark(c: Context, at: Long, what: String) {
+        val p = c.applicationContext.getSharedPreferences(PREFS + "_marks", Context.MODE_PRIVATE)
+        p.edit().putString(at.toString(), what).apply()
+        if (p.all.size > 600) p.edit().apply { p.all.keys.sorted().take(200).forEach { remove(it) } }.apply()
+    }
+
+    /** The line under one of his messages in a session thread. */
+    fun deliveryOf(c: Context, at: Long): String = when (
+        c.applicationContext.getSharedPreferences(PREFS + "_marks", Context.MODE_PRIVATE).getString(at.toString(), null)
+    ) {
+        "typed" -> "✓ delivered: typed into the session on the Mac"
+        "filed" -> "✓ reached the Mac, but the session is not open there: it waits in its file"
+        "waiting" -> "… waiting for the Mac (tried again by itself)"
+        "sending" -> "… sending"
+        else -> ""
+    }
+
+    /**
+     * Tests the way to the Mac (13.11.2026: "I want to have some kind of feedback and some kind of testing"): an empty
+     * POST that the relay answers 400 "no text" once it accepted the caller. Saved, shown in the key list and the chat.
+     */
+    suspend fun test(c: Context): String = kotlinx.coroutines.withContext(Dispatchers.IO) {
+        val tok = EngineKeys.ownLines(c, RING).firstOrNull()
+        val res = runCatching {
+            http.newCall(
+                Request.Builder().url(url(c)).apply { if (tok != null) header("X-Mantra-Token", tok) }
+                    .post("{}".toRequestBody(JSON)).build(),
+            ).execute().use { r -> r.code }
+        }
+        val line = when (val code = res.getOrNull()) {
+            null -> "Mac relay not reachable (${res.exceptionOrNull()?.message?.take(60) ?: "no answer"}): is the Mac on and phonereply running?"
+            400, 200 -> "Mac relay works" + (if (tok != null) " (key stored)" else " (no key needed: Tailscale)")
+            401 -> "Mac relay refused " + (if (tok != null) "the stored key: pick the newest mantra-relay-token.txt" else "this phone: it wants a key, pick mantra-relay-token.txt")
+            else -> "Mac relay answered $code"
+        }
+        sp(c).edit().putString("test", line).putLong("test_at", System.currentTimeMillis()).apply()
+        line
+    }
+
+    fun lastTest(c: Context): String = sp(c).getString("test", "").orEmpty()
 }

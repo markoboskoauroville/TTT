@@ -119,6 +119,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
 import java.io.File
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.material.icons.filled.Key
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.compose.ui.graphics.asImageBitmap
@@ -221,6 +222,8 @@ private fun ChatScreen(
     val msgs = remember { mutableStateListOf<MaReChat.Msg>().apply { addAll(loadThread(partner)) } }
     fun persist() { val p = partner; if (p == null) MaReChat.save(msgs.toList()) else MaReChat.save(msgs.toList(), MaClaudeLink.threadName(p)) }
     var partnerMenu by remember { mutableStateOf(false) }
+    // Bumped every 2 s in a session thread so the delivery marks under his messages refresh.
+    var tick by remember { mutableIntStateOf(0) }
     // A recording whose transcription failed: kept, offered again with Resend, never sent by itself.
     var failedWav by remember { mutableStateOf<File?>(null) }
     // A missing key is fixed where it is noticed (Marko, 13.11.2026: "I just click on message, and message itself is
@@ -233,7 +236,8 @@ private fun ChatScreen(
                 ?.use { c -> if (c.moveToFirst()) c.getString(0) else null }
         }.getOrNull().orEmpty()
         if (partner != null && (name.contains("relay", true) || !MaClaudeLink.hasToken(app))) {
-            status = MaClaudeLink.importToken(app, text)
+            status = "Testing the Mac relay…"
+            scope.launch { status = MaClaudeLink.importToken(app, text) }
         } else {
             status = "Testing the keys in $name…"
             scope.launch {
@@ -300,9 +304,11 @@ private fun ChatScreen(
         }
     }
     LaunchedEffect(partner) {
+        if (partner != null && msgs.none { it.me }) status = MaClaudeLink.test(app).let { if (it.startsWith("Mac relay works")) "" else it }
         while (partner != null) {
             val s = MaClaudeLink.status
             if (s.isNotBlank() && !recording && !transcribing && failedWav == null) status = s
+            tick++
             delay(2_000L)
         }
     }
@@ -334,9 +340,10 @@ private fun ChatScreen(
         MaReader.stop()
         // To a Claude Code session: into its thread and out through the Mac relay; no AI, no lessons.
         partner?.let { p ->
-            msgs.add(MaReChat.Msg(true, t))
+            val sent = MaReChat.Msg(true, t)
+            msgs.add(sent)
             persist()
-            MaClaudeLink.send(app, p, t)
+            MaClaudeLink.send(app, p, t, sent.at)
             status = ""
             return
         }
@@ -500,8 +507,17 @@ private fun ChatScreen(
                 }
             }
             itemsIndexed(msgs, key = { _, m -> m.at.toString() + m.me }) { _, m ->
-                if (m.me) {
+                if (m.me) Column {
                     MineBalloon(m)
+                    // In a session thread: what happened to it (13.11.2026: "I don't know what's going on").
+                    if (partner != null) {
+                        val d = remember(tick, m.at) { MaClaudeLink.deliveryOf(app, m.at) }
+                        if (d.isNotBlank()) Text(
+                            d, color = if (d.startsWith("✓ delivered")) MaHost.Gold else MaHost.Muted, fontSize = 12.sp,
+                            textAlign = androidx.compose.ui.text.style.TextAlign.End,
+                            modifier = Modifier.fillMaxWidth().padding(end = 10.dp, top = 2.dp),
+                        )
+                    }
                 } else Column {
                     val editing = editingAt == m.at
                     ReBalloon(

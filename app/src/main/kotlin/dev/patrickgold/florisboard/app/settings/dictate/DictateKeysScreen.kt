@@ -165,6 +165,7 @@ fun DictateKeysScreen() = FlorisScreen {
         // Keyed by "providerId\u0000key" so the same key held by two providers is tracked separately.
         val statuses = remember { mutableStateMapOf<String, KeyStatus>() }
         var note by remember { mutableStateOf("") }
+        var relayLine by remember { mutableStateOf(dev.patrickgold.florisboard.dictate.MaClaudeLink.lastTest(context)) }
         var busy by remember { mutableStateOf(false) }
 
         /** Every provider with a key, plus whichever two are currently active. */
@@ -331,6 +332,20 @@ fun DictateKeysScreen() = FlorisScreen {
                 val text = runCatching {
                     context.contentResolver.openInputStream(uri)?.use { String(it.readBytes()) }
                 }.getOrNull().orEmpty()
+                val fileName = runCatching {
+                    context.contentResolver.query(uri, arrayOf(android.provider.OpenableColumns.DISPLAY_NAME), null, null, null)
+                        ?.use { c -> if (c.moveToFirst()) c.getString(0) else null }
+                }.getOrNull().orEmpty()
+                // The Mac relay key (13.11.2026): not an API key shape, so it said "Nothing new". Now it is stored,
+                // tested, and the result is shown here and in the Mac relay line below.
+                if (fileName.contains("relay", true)) {
+                    note = "Mac relay key: testing…"
+                    scope.launch {
+                        note = "Mac relay key: " + dev.patrickgold.florisboard.dictate.MaClaudeLink.importToken(context, text)
+                        relayLine = dev.patrickgold.florisboard.dictate.MaClaudeLink.lastTest(context)
+                    }
+                    return@rememberLauncherForActivityResult
+                }
                 val result = MaKeyImport.importAll(text, accounts)
                 if (result.added > 0) {
                     // save() mirrors the merged keyring to the backup itself. Writing the raw picked
@@ -599,6 +614,26 @@ fun DictateKeysScreen() = FlorisScreen {
                     )
                 }
             }
+        }
+
+        // The Mac relay: the chat with Claude Code sessions (MaClaudeLink), in the list with its test result.
+        Text(
+            text = "MAC RELAY (CHAT WITH CLAUDE CODE)",
+            style = MaterialTheme.typography.labelMedium,
+            fontWeight = FontWeight.SemiBold,
+            modifier = Modifier.padding(start = 16.dp, top = 12.dp, bottom = 2.dp),
+        )
+        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
+            Text(
+                text = (if (dev.patrickgold.florisboard.dictate.MaClaudeLink.hasToken(context)) "Key stored. " else "No key (Tailscale is enough). ") +
+                    relayLine.ifBlank { "Not tested yet." },
+                style = MaterialTheme.typography.bodySmall,
+                modifier = Modifier.weight(1f),
+            )
+            TextButton(onClick = {
+                relayLine = "Testing…"
+                scope.launch { relayLine = dev.patrickgold.florisboard.dictate.MaClaudeLink.test(context) }
+            }) { Text("test") }
         }
 
         shown.forEach { preset ->

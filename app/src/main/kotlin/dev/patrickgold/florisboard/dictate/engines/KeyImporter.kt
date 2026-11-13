@@ -142,18 +142,15 @@ object KeyImporter {
      * The Mac relay token (MaClaudeLink, 13.11.2026): a file named mantra-relay-token*.txt holds it on one line. Kept
      * encrypted in its own ring; the file is not scanned for engine keys.
      */
-    private fun importRelay(c: Context, files: List<Pair<String, String>>): String? {
-        val f = files.firstOrNull { (n, _) -> n.contains("mantra-relay-token", true) } ?: return null
-        val tok = f.second.lines().map { it.trim() }.firstOrNull { Regex("[A-Za-z0-9_-]{16,}").matches(it) }
-            ?: return "Mac relay token: none found in ${f.first}"
-        EngineKeys.setLines(c, dev.patrickgold.florisboard.dictate.MaClaudeLink.RING, listOf(tok))
-        dev.patrickgold.florisboard.dictate.MaClaudeLink.flush(c)
-        return "Mac relay token (chat with Claude Code): 1 key stored"
+    private suspend fun importRelay(c: Context, files: List<Pair<String, String>>): String? {
+        val f = files.firstOrNull { (n, _) -> n.contains("relay", true) } ?: return null
+        // Stored and tested at once (13.11.2026: "I want to have some kind of feedback and some kind of testing").
+        return "Mac relay key (chat with Claude Code): " + dev.patrickgold.florisboard.dictate.MaClaudeLink.importToken(c, f.second)
     }
 
     suspend fun importTexts(c: Context, all: List<Pair<String, String>>, onProgress: (String) -> Unit): Outcome {
         val relay = importRelay(c, all)
-        val files = all.filterNot { (n, _) -> n.contains("mantra-relay-token", true) }
+        val files = all.filterNot { (n, _) -> n.contains("relay", true) }
         if (files.isEmpty() && relay != null) return Outcome(relay, if (relay.endsWith("stored")) 1 else 0)
         val gh = importGithub(c, files, onProgress)
         val gif = importKlipy(files)
