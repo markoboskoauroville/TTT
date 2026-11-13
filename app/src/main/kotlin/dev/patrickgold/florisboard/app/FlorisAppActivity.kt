@@ -213,6 +213,11 @@ class FlorisAppActivity : ComponentActivity() {
         // would fight the back button. Home stays underneath, so back still leads out rather than
         // trapping him on the screen he was resumed to.
         var resumed by rememberSaveable { mutableStateOf(false) }
+        // READ THE BOOKMARK BEFORE ANYTHING CAN WRITE IT (Marko, 13.11.2026: "if I am in some deep settings and I go to
+        // my typing and I click settings again, it doesn't bring me to main menu. It brings me exactly to that settings.")
+        // The destination listener below is called at once with the start destination (the settings home) and wrote
+        // "settings/home" over the bookmark before this effect read it, so a fresh start always stayed on the home.
+        val bookmark = remember { MaSettingsResume.lastPath(resumeContext) }
         LaunchedEffect(Unit) {
             if (!resumed) {
                 resumed = true
@@ -224,7 +229,7 @@ class FlorisAppActivity : ComponentActivity() {
                     ?.takeIf { it.action == android.content.Intent.ACTION_VIEW }
                     ?.data?.toString()
                     ?.startsWith("ui://florisboard/") == true
-                val last = MaSettingsResume.lastPath(resumeContext)
+                val last = bookmark
                 if (!askedFor && last != MaSettingsResume.DEFAULT_PATH) {
                     runCatching {
                         navController.navigate(
@@ -237,8 +242,12 @@ class FlorisAppActivity : ComponentActivity() {
 
         DisposableEffect(navController) {
             val listener = NavController.OnDestinationChangedListener { _, destination, _ ->
-                MaSettingsResume.pathFor(destination.route)
-                    ?.let { MaSettingsResume.rememberRoute(resumeContext, it) }
+                val path = MaSettingsResume.pathFor(destination.route)
+                // The first home of a fresh start is not where he went: it is where the window begins, and the resume
+                // is about to move him on. Every later destination, home included, is recorded.
+                if (path != null && !(path == MaSettingsResume.DEFAULT_PATH && !resumed)) {
+                    MaSettingsResume.rememberRoute(resumeContext, path)
+                }
             }
             navController.addOnDestinationChangedListener(listener)
             onDispose { navController.removeOnDestinationChangedListener(listener) }
