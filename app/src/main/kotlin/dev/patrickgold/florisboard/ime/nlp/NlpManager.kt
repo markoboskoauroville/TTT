@@ -388,7 +388,8 @@ class NlpManager(context: Context) {
                         } else {
                             addAll(loose)
                         }
-                    }
+                    // One word once: a town from MaPlaces is often also a word of the personal model ("Zagreb" twice).
+                    }.distinctBy { it.text.toString() }
                 }
             }
         }

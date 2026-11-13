@@ -187,7 +187,10 @@ object MaPlaces {
             val head = before.substring(0, startIdx)
             val cue = CUE.containsMatchIn(head)
             val capital = typed.first().isUpperCase() && !opensSentence(head)
-            if (!(isAddressField || cue || (capital && typed.length >= 3))) continue
+            // A field holding only this (a search box, a map, a "to" line): a street is typed there with no sentence
+            // around it. Four letters and one place only, so "Danas" opening a message is not crowded.
+            val bare = head.isBlank() && typed.length >= 4 && typed.first().isUpperCase()
+            if (!(isAddressField || cue || bare || (capital && typed.length >= 3))) continue
             val f = fold(typed)
             val bucket = byLetter[f.first()] ?: continue
             // First the places whose name starts so, then (one word typed, three letters) those with a later word
@@ -196,14 +199,14 @@ object MaPlaces {
                 if (pass == 1 && (n != 1 || f.length < 3)) break
                 for (p in bucket) {
                     if (out.size >= limit) break
-                    if (p.kind == WORLD && !(capital || isAddressField)) continue
+                    if (p.kind == WORLD && !(capital || isAddressField || bare)) continue
                     if (p.folded == f) continue
                     val hit = if (pass == 0) p.folded.startsWith(f)
                         else p.kind != WORLD && !p.folded.startsWith(f) && p.folded.split(' ').drop(1).any { it.startsWith(f) }
                     if (hit) offer(p.name, typed.length)
                 }
             }
-            if (out.isNotEmpty()) return if (isAddressField) out else out.take(2)
+            if (out.isNotEmpty()) return if (isAddressField || cue) out else if (bare && !capital) out.take(1) else out.take(2)
         }
         return out
     }
