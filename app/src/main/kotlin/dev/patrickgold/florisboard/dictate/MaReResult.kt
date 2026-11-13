@@ -121,6 +121,22 @@ object MaReResult {
         if (!MaReSkill.same(r.text, finalText)) MaReSkill.noteCorrection(r.pkg, r.words, r.text, finalText.trim(), "popup-edit")
     }
 
+    /**
+     * The full-screen History's Insert and the RE chat's Accept (13.11.2026): [text] goes into the field the
+     * screen was opened from ([pkg], [fieldId]) when the keyboard is back on it. Nothing is ever sent.
+     */
+    fun acceptFor(text: String, pkg: String?, fieldId: Int, words: String = "", replace: Boolean = false) {
+        shown = null
+        markClosed()
+        if (text.isBlank() || pkg == null) return
+        accepted = Result(text.trim(), false, replace, pkg, fieldId, words)
+    }
+
+    /** One of the full-screen windows closed without inserting: the keyboard comes back. */
+    fun closedWithoutInsert() {
+        markClosed()
+    }
+
     fun cancel() {
         shown = null
         accepted = null

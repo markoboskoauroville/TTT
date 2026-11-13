@@ -141,6 +141,10 @@ interface DictateHistoryDao {
     )
     suspend fun updateText(id: Long, text: String, originalText: String)
 
+    // "Delete text, keep audio" (Marko, 13.11.2026): the row becomes an audio-only entry again.
+    @Query("UPDATE $DICTATE_HISTORY_TABLE SET text = :placeholder, originalText = '', failed = 1 WHERE ${BaseColumns._ID} = :id")
+    suspend fun markAudioOnly(id: Long, placeholder: String)
+
     @Query("UPDATE $DICTATE_HISTORY_TABLE SET pinned = :pinned WHERE ${BaseColumns._ID} = :id")
     suspend fun setPinned(id: Long, pinned: Boolean)
 
@@ -297,6 +301,12 @@ object DictateHistoryStore {
         db(context).dao().updateText(id, text, originalText)
     }
 
+    /** Deletes only the transcript of an entry that has audio: it stays as "audio only", ready to re-transcribe. */
+    suspend fun deleteTextOnly(context: Context, entry: DictateHistoryEntry, placeholder: String) {
+        if (entry.audioPath == null) { delete(context, entry); return }
+        db(context).dao().markAudioOnly(entry.id, placeholder)
+    }
+
     /** Pins or unpins an entry; pinned entries survive pruning and are marked in the UI. */
     suspend fun setPinned(context: Context, id: Long, pinned: Boolean) {
         db(context).dao().setPinned(id, pinned)
@@ -419,7 +429,9 @@ object DictateHistoryStore {
         val survivors = ArrayList<DictateHistoryEntry>(all.size)
         var unpinned = 0
         all.forEach { entry ->
-            if (entry.pinned) {
+            // Audio-only entries (a cancelled or failed dictation) are kept until he clears the history
+            // or deletes them himself (Marko, 13.11.2026): their audio is the only copy of what he said.
+            if (entry.pinned || entry.failed) {
                 survivors.add(entry)
                 return@forEach
             }
@@ -434,7 +446,7 @@ object DictateHistoryStore {
         var used = 0L
         for (entry in survivors) {
             val path = entry.audioPath ?: continue
-            if (entry.pinned || used + entry.audioBytes <= budgetBytes) {
+            if (entry.pinned || entry.failed || used + entry.audioBytes <= budgetBytes) {
                 // Pinned audio is always kept; it still counts toward the running total.
                 used += entry.audioBytes
             } else {

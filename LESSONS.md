@@ -18,3 +18,5 @@
 - 10.11.2026 Never switch engine, provider or model automatically (Marko: "the whole engine fell back, I don't want that"): retry the same engine every 3 s up to 10 times, move only between keys of the same provider, and only on quota/refused, never on network errors. The cross-engine chain was the wrong default.
 - 10.11.2026 Hard-coded model ids die (llama-3.1-8b-instant retired 16.8.2026): check them against the live list at every upgrade and say "model retired" out loud. Before every upgrade export the Nothing UI and refresh default_config.json.
 - 10.11.2026 Hiding one thing must not hide its neighbour: the recorder shares the Smartbar strip with the suggestions; gate the strip on "keys open OR dictation busy", and test collapsed + record before calling it done.
+- 13.11.2026 A cancel is not a delete: a cancelled dictation keeps its audio in the history as "audio only" until he clears the history. Only an explicit Clear or a per-entry delete removes audio.
+- 13.11.2026 RE's memory lives in files the AI writes itself (TAKEOVER, LESSONS, SKILLS in Documents/TTTmini/re/); clearing the chat keeps them and a new chat reads only them.

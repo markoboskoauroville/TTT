@@ -583,6 +583,9 @@ object DictateController {
     /** Cumulative recorded audio (seconds) after which the rate / donate nudges appear (roadmap 9.7/9.8). */
 
     /** How long the discarded mic takes to reach the bin; the bar outlives the recording by this much. */
+    /** The text of an "audio only" history entry: a cancelled dictation whose audio is kept (13.11.2026). */
+    const val MA_AUDIO_ONLY_TEXT = "Audio only \u00b7 cancelled before the text came. Re-transcribe to get it."
+
     const val PUSH_TO_TALK_FLIGHT_MS = 950L
 
     /** How long the key shows a lock after latching, before dissolving into its ordinary icon. */
@@ -1000,6 +1003,16 @@ object DictateController {
         _lockSlideProgress.value = 0f
         startJob?.cancel()
         startJob = null
+        // A cancelled recording is not thrown away any more (Marko, 13.11.2026): "if I by accident cancel my
+        // transcription it exists in the history as audio file". The audio goes to the history as "audio only",
+        // to be re-transcribed there; it is deleted only when he clears the history or deletes that entry.
+        recorder?.let { r ->
+            if (_state.value is UiState.Recording && !segmentedActive) {
+                val secs = recordedSecondsOf(_state.value)
+                val f = runCatching { r.stop() }.getOrNull() ?: r.outputFile
+                if (f != null) maKeepCancelledAudio(f, secs)
+            }
+        }
         recorder?.cancel()
         recorder = null
         // Long-form segmented (#170): abort the background segment transcriptions; the realtime cleanup
@@ -1261,6 +1274,8 @@ object DictateController {
         sendAfterCommit = false
 
         if (_state.value !is UiState.Transcribing) return
+        // Cancelled while it was being transcribed: the audio stays in the history as "audio only" (13.11.2026).
+        inFlight?.let { f -> if (f.replayHistoryId == null) maKeepCancelledAudio(f.audioFile, f.recordedSeconds) }
         transcribeJob?.cancel()
         transcribeJob = null
         _pendingPrompts.value = emptyList()
@@ -3598,6 +3613,44 @@ object DictateController {
         )
     }
 
+    /**
+     * Keeps the audio of a cancelled dictation in the history as an "audio only" entry (Marko, 13.11.2026).
+     * Copied synchronously (the caller deletes the original right after), written in the background. Under one
+     * second, or with the history off, or in a password field, nothing is kept.
+     */
+    private fun maKeepCancelledAudio(file: File, seconds: Long) {
+        val ctx = maAppContext ?: return
+        if (seconds < 1L || !file.exists() || file.length() < 8_000L) return
+        if (!prefs.dictate.historyEnabled.get()) return
+        if (isSensitiveDictationField(ctx)) return
+        val copy = File(ctx.cacheDir, "ma_cancelled_${System.nanoTime()}.wav")
+        if (runCatching { file.copyTo(copy, overwrite = true) }.isFailure) return
+        val account = runCatching { MaProviders.transcriptionAccount() }.getOrNull()
+        val language = MaLanguage.active()
+        val source = if (outputTarget == OutputTarget.OVERLAY) DictateHistorySource.OVERLAY else DictateHistorySource.KEYBOARD
+        scope.launch(Dispatchers.IO) {
+            runCatching {
+                DictateHistoryStore.record(
+                    context = ctx,
+                    prefs = prefs,
+                    text = MA_AUDIO_ONLY_TEXT,
+                    providerId = account?.providerId.orEmpty(),
+                    providerName = account?.displayName.orEmpty(),
+                    model = "",
+                    language = language,
+                    durationSecs = seconds,
+                    source = source,
+                    reworded = false,
+                    audioFile = copy,
+                    failed = true,
+                    forceAudio = true,
+                )
+                MaLog.add("history", "cancelled dictation kept as audio only (${seconds}s)")
+            }
+            runCatching { copy.delete() }
+        }
+    }
+
     /** Exports a history entry's retained audio to Downloads/Dictate (issue #140), toasting the result. */
     fun exportHistoryAudio(context: Context, entry: DictateHistoryEntry) {
         val path = entry.audioPath ?: return
@@ -4331,6 +4384,15 @@ object DictateController {
      * chose first; if that fails, the cheapest the provider has. Null when no key or both fail; never
      * throws, never touches the field.
      */
+    /**
+     * One RE chat turn with Anthropic (13.11.2026): the model he chose for RE, once, no fallback to another model.
+     * Throws on failure so the chat can say what went wrong.
+     */
+    suspend fun reChatAnthropic(context: Context, userContent: String): String {
+        maAppContext = context.applicationContext
+        return requestRewordRaw(userContent, modelOverride = MaFlow.model(), purpose = "RE chat")
+    }
+
     suspend fun askModel(userContent: String, purpose: String, cheap: Boolean = false): String? {
         if (MaProviders.rewordingApiKey().isBlank()) return null
         val chosen = MaFlow.model()

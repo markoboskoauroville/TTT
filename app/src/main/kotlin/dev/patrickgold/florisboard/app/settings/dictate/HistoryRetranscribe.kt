@@ -76,7 +76,12 @@ private fun highlighted(toks: List<WordDiff.Tok>): AnnotatedString = buildAnnota
  * Nothing is written back to the history: it is a comparison.
  */
 @Composable
-internal fun RetranscribeDialog(entry: DictateHistoryEntry, onDismiss: () -> Unit) {
+internal fun RetranscribeDialog(
+    entry: DictateHistoryEntry,
+    // Writes the new text into the entry (full-screen History, 13.11.2026): an audio-only entry becomes a normal one.
+    onKeep: ((String) -> Unit)? = null,
+    onDismiss: () -> Unit,
+) {
     val c = LocalContext.current
     val scope = rememberCoroutineScope()
     var busy by remember { mutableStateOf<String?>(null) }
@@ -171,7 +176,12 @@ internal fun RetranscribeDialog(entry: DictateHistoryEntry, onDismiss: () -> Uni
             }
         },
         confirmButton = {
-            if (result != null && busy == null) TextButton(onClick = { result = null }) { Text("Another engine") }
+            if (result != null && busy == null) Row {
+                TextButton(onClick = { result = null }) { Text("Another engine") }
+                if (onKeep != null && result!!.text.isNotBlank()) {
+                    TextButton(onClick = { onKeep(result!!.text.trim()); onDismiss() }) { Text("Keep this text", fontWeight = FontWeight.Bold) }
+                }
+            }
         },
         dismissButton = { TextButton(enabled = busy == null, onClick = onDismiss) { Text("Close") } },
     )

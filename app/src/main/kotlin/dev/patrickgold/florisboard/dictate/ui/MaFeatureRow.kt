@@ -1153,7 +1153,11 @@ fun MaFeatureRow(
                         contentDescription = stringRes(R.string.ma__feature_history),
                         modifier = keyMod,
                         ) {
-                        keyboardManager.activeState.imeUiMode = ImeUiMode.HISTORY
+                        // Full screen (Marko, 13.11.2026): History is its own app inside the app. Insert goes
+                        // back into this field.
+                        dev.patrickgold.florisboard.dictate.MaHistoryActivity.open(
+                            context, editorInstance.activeInfo.packageName, editorInstance.activeInfo.base.fieldId,
+                        )
                     }
                 }
 
@@ -1620,6 +1624,13 @@ fun MaFeatureRow(
                         modifier = Modifier.fillMaxSize(),
                         ring = if (recordingThis) MaRecordOutlineLive else MaRecordOutline,
                         onClick = {
+                            // RE Magic is a chat now (Marko, 13.11.2026): a tap opens the Messenger-style window over
+                            // the app; its Accept writes into this field. The spoken-instruction RE is in the long press.
+                            if (rec == null && dev.patrickgold.florisboard.dictate.MaReChat.chatOn(context)) {
+                                dev.patrickgold.florisboard.dictate.MaReChatActivity.openFromKey(
+                                    context, editorInstance.activeInfo.packageName, editorInstance.activeInfo.base.fieldId,
+                                )
+                            } else {
                             if (rec == null) {
                                 MaLanguage.set(context, MaLanguage.EN)
                                 // The field the message will be written into, for MaReSkill's comparison.
@@ -1629,6 +1640,7 @@ fun MaFeatureRow(
                             // no fallback (MaProviders.localFallbackProvider returns null for this engine).
                             DictateController.onMicClick(context, reprompt = true, engine = MaProviders.ENGINE_ASSEMBLYAI)
                             MaMessage.show(if (rec == null) "RE: say the instruction (AssemblyAI)" else "RE: sending")
+                            }
                         },
                         // A long press opens the engine switch (Marko, 10.11.2026): Anthropic or Groq, the active one marked,
                         // a pick closes it. "Type the instruction" keeps the old typing window one tap away.
@@ -1656,6 +1668,15 @@ fun MaFeatureRow(
                         }
                         item("Groq \u00b7 gpt-oss-120b", reEngine == "groq" && reGroqModel == "openai/gpt-oss-120b") {
                             scope.launch { prefs.dictate.maReEngine.set("groq"); prefs.dictate.maReGroqModel.set("openai/gpt-oss-120b") }
+                        }
+                        item("Speak an instruction (RE without chat)", false) {
+                            MaLanguage.set(context, MaLanguage.EN)
+                            MaReprompt.noteField(editorInstance.activeInfo.packageName, editorInstance.activeInfo.base.fieldId)
+                            DictateController.onMicClick(context, reprompt = true, engine = MaProviders.ENGINE_ASSEMBLYAI)
+                            MaMessage.show("RE: say the instruction (AssemblyAI)")
+                        }
+                        item("Tap opens the chat", dev.patrickgold.florisboard.dictate.MaReChat.chatOn(context)) {
+                            dev.patrickgold.florisboard.dictate.MaReChat.setChatOn(context, !dev.patrickgold.florisboard.dictate.MaReChat.chatOn(context))
                         }
                         item("Type the instruction\u2026", false) {
                             val info = editorInstance.activeInfo

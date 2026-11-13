@@ -44,12 +44,15 @@ object MaReEngine {
     const val SYSTEM = "Rewrite the user's text exactly as instructed. Stay faithful to the meaning, keep the same language as the input, " +
         "and return only the resulting text, with no comments, quotes or explanations."
 
-    suspend fun groq(c: Context, user: String, status: (String) -> Unit): String {
+    suspend fun groq(c: Context, user: String, status: (String) -> Unit): String = groqAsk(c, SYSTEM, user, status)
+
+    /** One Groq chat call with its own [system] prompt (the RE chat, 13.11.2026); same ring and retry rules. */
+    suspend fun groqAsk(c: Context, system: String, user: String, status: (String) -> Unit): String {
         val model = groqModel()
         var attempt = 0
         while (true) {
             try {
-                return KeyRing.run(c, "groq", "Groq") { k -> EngineAdapters.groqChat(k, model, SYSTEM, user) }
+                return KeyRing.run(c, "groq", "Groq") { k -> EngineAdapters.groqChat(k, model, system, user) }
             } catch (t: Throwable) {
                 if (t is kotlinx.coroutines.CancellationException) throw t
                 val kind = FallbackRunner.classify(t)

@@ -11434,3 +11434,11 @@ Marko: long press the transcription button, a dialog with all the models, pick o
 ### Accuracy percent, history re-transcribe, benchmark on 5+5 (9.11.2026, task 73, build 590)
 
 Benchmark clips 10 to 5 per language, seed clips excluded; `EngineScores` keeps {lang: {engine: pct}} (100 x (1 - WER)) merged across runs and prints " (96%)" after the provider name in the Voice transcription radio cards and preview keys, on the H/E keys (name and percent fit together in `MaEngineKeyContent`) and in the long-press panel. History's detail dialog got "Re-transcribe with..." (`HistoryRetranscribe.kt`): one list of every set-up engine x HR/EN, result beside the used text, `WordDiff` highlights. Results and the circular-reference caveat: docs/benchmark-2026-11-09.md. Not done: the Android on-device engine fails on every clip; a Croatian dictation engine log (needs his voice).
+
+## 13.11.2026 – audio-only history, full-screen History, RE Magic chat
+- DictateController: maKeepCancelledAudio from cancelRecording and cancelTranscription; MA_AUDIO_ONLY_TEXT; reChatAnthropic.
+- DictateHistory: prune keeps failed (audio-only) entries and their audio; markAudioOnly / deleteTextOnly.
+- MaHistoryActivity (new): full-screen History. HistoryRetranscribe: onKeep ("Keep this text").
+- MaReChat + MaReChatActivity (new): Messenger-style RE chat, memory files, learn on Clear/Accept, voice/text/sound switches, Reader highlight and subtitles.
+- MaReEngine.groqAsk (own system prompt); MaReResult.acceptFor / closedWithoutInsert; MaFeatureRow: History and RE keys open the windows.
+- scripts/test_re_chat_history.py: 39 checks.

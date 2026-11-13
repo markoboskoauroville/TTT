@@ -19,6 +19,7 @@ description: TTT, Talk to Type Advanced Keyboard (repo TTT, folder TTT_MINI): Ma
 12. Before EVERY TTT upgrade: export the Nothing UI (broadcast dev.ttt.engines.EXPORT_UI, pull ui_config.json), check for secrets, refresh app/src/main/assets/default_config.json (raise version). UI only. RE engine = Anthropic or Groq (switch in Settings and long press on RE).
 13. The recorder (dictation not idle) is shown in every view; suggestions only with the letter keys open. Test: collapse the keyboard, press record, screenshot.
 ## Run log
+- 13.11.2026: cancelled dictation kept as audio only; full-screen History; RE Magic chat (Close/Accept/Clear, TAKEOVER/LESSONS/SKILLS memory, Text/Voice/Sound, Reader highlight); not built yet.
 - 10.11.2026: shipped default UI, RE Groq switch, Groq small model gpt-oss-20b.
 - 10.11.2026: no automatic engine switch, 3 s retries.
 - 10.11.2026: forward-only cursor, short H/E label.
