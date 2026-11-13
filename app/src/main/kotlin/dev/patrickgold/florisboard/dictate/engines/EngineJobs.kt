@@ -124,6 +124,13 @@ class EngineDebugReceiver : BroadcastReceiver() {
                         KeyRing.simulateNetFailures = i.getIntExtra("n", 3)
                         out("simulating " + KeyRing.simulateNetFailures + " network failures")
                     }
+                    "dev.ttt.engines.SAY" -> {
+                        // Debugging with Marko away from the screen (13.11.2026): the Reader voice (Beatrice, Speechify,
+                        // his key in TTT) speaks the update, and Voice Engine shows it as subtitles.
+                        val t = i.getStringExtra("t").orEmpty()
+                        kotlinx.coroutines.withContext(Dispatchers.Main) { dev.patrickgold.florisboard.dictate.MaVoice.say(app, t, force = true) }
+                        out("say " + t.length + " chars")
+                    }
                     "dev.ttt.engines.RE_COMPARE" -> {
                         // The engine comparison (13.11.2026): invented chats through Opus, Sonnet, Auto and Qwen; results in re_compare.json.
                         val engines = (i.getStringExtra("e") ?: "opus,sonnet,anthropic_auto,qwen").split(',').map { it.trim() }.filter { it.isNotEmpty() }

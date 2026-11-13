@@ -56,9 +56,9 @@ object MaVoice {
     }.getOrDefault(true)
 
     /** Speak [text] with the Reader voice and show it as Voice Engine subtitles. */
-    fun say(context: Context, text: String) {
+    fun say(context: Context, text: String, force: Boolean = false) {
         val t = text.trim()
-        if (t.isEmpty() || !on()) return
+        if (t.isEmpty() || (!force && !on())) return
         stop()
         val app = context.applicationContext
         MaReader.speakText(app, t.take(1500)) { }

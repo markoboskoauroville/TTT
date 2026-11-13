@@ -513,3 +513,7 @@ voices. Stopped here: a further build plus a full suite (~1 h) would not finish 
 > "Please talk to me via my local voice engine for updates, what you are doing, update me where we are. Because now we are in debugging mode, I will give you control of my phone and I cannot read this chat. You need to talk to me." (Marko, 13.11.2026)
 
 **Status:** done. tools/voice/say_on_phone.sh: speech made locally (espeak-ng, nothing sent to an online voice), played by Voice Engine v3 on the Nothing (POST /play over an adb forward of port 8720) with its subtitle. Every step of the debugging is spoken.
+
+> "beatrices ... if there is no batteries living on my phone, please build one ... beatrice ... or better yet, use speechify ... Please use speechify key to talk, speechify API keys" (Marko, 13.11.2026; "batteries" = Beatrice)
+
+**Status:** TTT gets an adb broadcast dev.ttt.engines.SAY: the Reader voice (beatrice_32 on Speechify, his key inside TTT) speaks the text, Voice Engine shows the subtitle. tools/voice/say_on_phone.sh uses it from build 641 on, espeak only before that.
