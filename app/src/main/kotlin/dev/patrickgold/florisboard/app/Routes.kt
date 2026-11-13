@@ -133,7 +133,7 @@ inline fun <reified T : Any> NavGraphBuilder.composableWithDeepLink(
     // The one place that holds the route class and its deep-link path at the same moment, so it is
     // the one place that can record the pairing without a second list to keep in step. MaSettingsResume
     // needs the path to reopen a screen; the nav graph only ever hands back the serial name.
-    MaSettingsResume.register(kClass.qualifiedName, deeplink.path)
+    MaSettingsResume.register(kClass, deeplink.path)
     composable<T>(
         deepLinks = listOf(navDeepLink<T>(basePath = "ui://florisboard/${deeplink.path}")),
         content = content,

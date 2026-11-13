@@ -8,6 +8,9 @@ package dev.patrickgold.florisboard.dictate
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
+import androidx.navigation.NavDestination
+import androidx.navigation.NavDestination.Companion.hasRoute
+import kotlin.reflect.KClass
 
 /**
  * Where the settings were left, so the gear key can put him back there.
@@ -54,17 +57,40 @@ object MaSettingsResume {
      */
     private val pathsByRoute = HashMap<String, String>()
 
+    /** Route class to path (13.11.2026): matched with hasRoute, which does not depend on how the route is named. */
+    private val pathsByClass = LinkedHashMap<KClass<*>, String>()
+
     fun register(routeKey: String?, path: String) {
         if (routeKey != null) pathsByRoute[routeKey] = path
     }
 
+    fun register(kClass: KClass<*>, path: String) {
+        pathsByClass[kClass] = path
+        register(kClass.qualifiedName, path)
+    }
+
     fun pathFor(routeKey: String?): String? = pathsByRoute[routeKey]
+
+    /**
+     * The deep-link path of a destination. By class first (Marko, 13.11.2026: the gear kept opening the settings home;
+     * looking a screen up by its route STRING can miss when the serial name differs from the class name, and then
+     * nothing deeper than the home was ever recorded).
+     */
+    fun pathOf(destination: NavDestination?): String? {
+        if (destination == null) return null
+        for ((k, path) in pathsByClass) {
+            @Suppress("UNCHECKED_CAST")
+            if (runCatching { destination.hasRoute(k as KClass<Any>) }.getOrDefault(false)) return path
+        }
+        return pathFor(destination.route)
+    }
 
     private fun prefs(context: Context) =
         context.getSharedPreferences(FILE, Context.MODE_PRIVATE)
 
     /** Remembers the screen he is looking at. Called as the settings nav graph changes destination. */
     fun rememberRoute(context: Context, path: String) {
+        android.util.Log.i("TTT-SETTINGS", "remember $path")
         prefs(context).edit().putString(K_ROUTE, path).apply()
     }
 
@@ -123,6 +149,7 @@ object MaSettingsResume {
 
     fun open(context: Context) {
         val path = lastPath(context)
+        android.util.Log.i("TTT-SETTINGS", "gear opens $path")
         prefs(context).edit().putBoolean(K_ARMED, true).apply()
         runCatching {
             context.startActivity(

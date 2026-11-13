@@ -242,7 +242,8 @@ class FlorisAppActivity : ComponentActivity() {
 
         DisposableEffect(navController) {
             val listener = NavController.OnDestinationChangedListener { _, destination, _ ->
-                val path = MaSettingsResume.pathFor(destination.route)
+                val path = MaSettingsResume.pathOf(destination)
+                android.util.Log.i("TTT-SETTINGS", "at ${destination.route} -> $path (resumed=$resumed)")
                 // The first home of a fresh start is not where he went: it is where the window begins, and the resume
                 // is about to move him on. Every later destination, home included, is recorded.
                 if (path != null && !(path == MaSettingsResume.DEFAULT_PATH && !resumed)) {

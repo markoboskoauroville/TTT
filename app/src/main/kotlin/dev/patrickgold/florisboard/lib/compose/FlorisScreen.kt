@@ -167,9 +167,7 @@ private class FlorisScreenScopeImpl : FlorisScreenScope {
             // is what anybody expects. A list that never starts where you are looking is worse than
             // one that forgets.
             val maScrollState = rememberScrollState()
-            val maRoutePath = MaSettingsResume.pathFor(
-                LocalNavController.current.currentDestination?.route,
-            )
+            val maRoutePath = MaSettingsResume.pathOf(LocalNavController.current.currentDestination)
             if (scrollable && maRoutePath != null) {
                 LaunchedEffect(maRoutePath) {
                     MaSettingsResume.consumeScroll(context, maRoutePath)?.let {
