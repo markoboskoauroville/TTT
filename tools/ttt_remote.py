@@ -20,7 +20,7 @@ ever leaves the phone through this; status shows counts only.
     python3 tools/ttt_remote.py tap X Y | swipe X1 Y1 X2 Y2 [ms] | key BACK | text "abc"   (all pass the lock)
     python3 tools/ttt_remote.py install 642             # release build-642 from GitHub, adb install -r (never uninstall)
     python3 tools/ttt_remote.py log                     # files/engines_log.txt
-    python3 tools/ttt_remote.py lock "what I am doing"  # Voice Engine v7: CLAUDE IS USING THE PHONE (LET ME USE IT overrides)
+    python3 tools/ttt_remote.py lock "what I am doing" --minutes 5   # top bar with a countdown, TAKE OVER on the right
     python3 tools/ttt_remote.py request "what for"      # v11: the blob asks him; waits until he hands the phone over
     python3 tools/ttt_remote.py unlock
     python3 tools/ttt_remote.py done                    # unlock + bring Marko's Claude chat back to the front
@@ -179,7 +179,9 @@ def main(argv):
         if out:
             json.dump(rows, open(out, "w"), indent=1, ensure_ascii=False)
     elif cmd == "lock":
-        print(ve("/lock", {"text": " ".join(pos) or "Testing. It is yours again when this disappears."}))
+        # --minutes N (or --seconds N): the bar counts the time left down (Marko, 13.11.2026). Always give an estimate.
+        secs = int(float(opt.get("minutes", 0)) * 60) or int(opt.get("seconds", 0)) or 300
+        print(ve("/lock", {"text": " ".join(pos) or "Testing", "seconds": secs}))
     elif cmd == "request":
         print(ve("/request", {"text": " ".join(pos) or "Claude needs the phone for a moment."}))
         while ve("/status").get("lock") == "requested":
