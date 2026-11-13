@@ -599,3 +599,9 @@ voices. Stopped here: a further build plus a full suite (~1 h) would not finish 
 > "I need you to update my TTT. I want that this ReMagic is able to connect to the Groq or Queen to this computer and do the things in WhatsApp, what I'm telling you to do. So that's the special mode in RE Magic. Also, if I'm not in any of the windows, I cannot see that part. So re build this mode of WhatsApp. Meaning I am going to use this chat to ask through my phone and TTT on any device to work with WhatsApp on my computer inside Firefox it will be the second tab in re" (Marko, 13.11.2026)
 
 **Status:** saved first. Plan: a second tab "WhatsApp" in the RE chat; the request goes over Tailscale (door on the Mac, tailnet identity, no codes) to Queen, who turns the words into wa_remote actions (skill queen_skills/whatsapp-remote.md); the answer (screenshot of the page taken by BiDi, so it works with Firefox behind other windows, plus text and the draft read back) comes back into the tab; sending only with the "Send it" button and only the exact approved text.
+
+> "if I'm not in any application, I want to be able to open TTT and when I'm inside the settings I want to have test window, some kind of text box I can click and then continue to work inside to, for example, use RE, since I'm actually not in any window I will use RE to remotely control WhatsApp" (Marko, 13.11.2026, relayed by the master session)
+
+**Status:** saved first. TTT's own settings screen gets a scratch text box at the top (kept between visits); tapping it opens the TTT keyboard, so RE Magic and its WhatsApp tab work with no other app open. Also a launcher shortcut straight to that box and, if simple, a Quick Settings tile "TTT RE".
+
+> "send the band a screenshot of our live stream with the message ..." (Marko, 13.11.2026, first real use of the WhatsApp tab: the Santoshi live-stream picture, with his text as caption, into the band's WhatsApp group as an unsent draft)
