@@ -238,13 +238,31 @@ object MaReChat {
 
     /** Asks the RE engine (Anthropic or Groq, his switch; never the other one). */
     suspend fun ask(context: Context, msgs: List<Msg>, ctx: Ctx = current(), status: (String) -> Unit): String {
-        val p = prompt(msgs, ctx)
-        val answer = if (MaReEngine.isQwen()) {
-            MaReEngine.groqAsk(context, SYSTEM, p, status)
-        } else {
-            DictateController.reChatAnthropic(context, p)
+        // GitHub (13.11.2026): with a reading token RE may look into his repositories, up to MaReGithub.MAX_LOOKS times.
+        val github = MaReGithub.available(context)
+        val base = prompt(msgs, ctx)
+        val looks = StringBuilder()
+        var round = 0
+        while (true) {
+            val p = if (!github) base else {
+                val head = base.removeSuffix("RE:")
+                head + MaReGithub.TOOLS.trim() + "\n" + (if (looks.isEmpty()) "" else "\nWhat you looked up so far:\n$looks\n") +
+                    (if (round >= MaReGithub.MAX_LOOKS) "\nNo more looks: answer him now.\n" else "") + "RE:"
+            }
+            val raw = if (MaReEngine.isQwen()) {
+                MaReEngine.groqAsk(context, SYSTEM + (if (github) MaReGithub.TOOLS else ""), p, status)
+            } else {
+                DictateController.reChatAnthropic(context, p)
+            }
+            val answer = raw.trim().removePrefix("RE:").trim()
+            val req = if (github && round < MaReGithub.MAX_LOOKS) MaReGithub.request(answer) else null
+            if (req == null) return answer
+            round++
+            val (kind, what) = req
+            status("RE \u00b7 GitHub \u00b7 " + (if (kind == "search") "searching \"$what\"" else "reading $what"))
+            val result = if (kind == "search") MaReGithub.search(context, what) else MaReGithub.read(context, what)
+            looks.append("<").append(kind).append(" q=\"").append(what.take(120)).append("\">\n").append(result).append("\n</").append(kind).append(">\n")
         }
-        return answer.trim().removePrefix("RE:").trim()
     }
 
     // ------------------------------------------------------------------ learning: the AI writes its own files

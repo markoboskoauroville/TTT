@@ -109,7 +109,14 @@ check("RE key picker tests every key", "OpenMultipleDocuments" in qk and "testQw
 imp = code(SRC / "dictate/engines/KeyImporter.kt")
 check("main picker says per key", 'key ${i + 1} $m' in imp)
 
-# 8. manifest
+# 8. GitHub (13.11.2026): RE reads his repositories, read only, token from a file
+gh = code(SRC / "dictate/MaReGithub.kt")
+check("GitHub read token from the key picker", "MaReGithub.test(t)" in imp and "MaReGithub.RING" in imp)
+check("search covers private repos of the owner", "search/code" in gh and "search/repositories" in gh and "user:" in gh)
+check("GitHub is read only", ".put(" not in gh and "post(" not in gh.lower() and "delete(" not in gh.lower())
+check("RE loops at most 4 looks", "MAX_LOOKS = 4" in gh and "MaReGithub.request(answer)" in chat)
+
+# 9. manifest
 check("both windows declared", "MaHistoryActivity" in man and "MaReChatActivity" in man)
 
 for f in failures:

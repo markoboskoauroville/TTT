@@ -152,6 +152,13 @@ fun MaReScreen() = FlorisScreen {
                 style = MaterialTheme.typography.bodyMedium,
                 modifier = Modifier.padding(top = 4.dp),
             )
+            Text(
+                text = if (dev.patrickgold.florisboard.dictate.engines.EngineKeys.ownLines(dbContext, dev.patrickgold.florisboard.dictate.MaReGithub.RING).isNotEmpty())
+                    "RE reads your GitHub: yes (all repositories the token can see, read only). Ask RE about a repository or project."
+                else "RE reads your GitHub: not yet. A GitHub token in a key file that can list your repositories turns it on.",
+                style = MaterialTheme.typography.bodyMedium,
+                modifier = Modifier.padding(top = 4.dp),
+            )
             // No paste box (Marko, 13.11.2026): the token comes from a file, through the one picker
             // (Settings, Engines, "Import keys from file"); a github_pat_/ghp_ token there is tested and stored here.
             Text(

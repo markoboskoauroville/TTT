@@ -127,6 +127,9 @@ object MaRemoteDb {
         }
     }.getOrDefault(false)
 
+    /** For RE's GitHub reading (MaReGithub) when no separate read token was imported. Never logged. */
+    fun readToken(): String? = token()
+
     fun hasToken(): Boolean = prefs()?.getString("t", null) != null
 
     private fun token(): String? = runCatching {

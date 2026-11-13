@@ -89,15 +89,26 @@ object KeyImporter {
         val toks = files.flatMap { (_, t) -> GITHUB.findAll(t).map { it.value }.toList() }.distinct()
         if (toks.isEmpty()) return null
         dev.patrickgold.florisboard.dictate.MaRemoteDb.attach(c)
+        // RE reads his repositories with the token that can see the most (13.11.2026): each token is tested for reading.
+        val reads = ArrayList<String>()
+        var bestRead: String? = null
+        for ((i, t) in toks.withIndex()) {
+            onProgress("Testing GitHub token ${i + 1} of ${toks.size} for reading…")
+            val (ok, what) = dev.patrickgold.florisboard.dictate.MaReGithub.test(t)
+            reads += "token ${i + 1} $what"
+            if (ok && bestRead == null) bestRead = t
+        }
+        if (bestRead != null) EngineKeys.setLines(c, dev.patrickgold.florisboard.dictate.MaReGithub.RING, listOf(bestRead))
+        val readLine = "GitHub (RE reads your repositories): " + reads.joinToString(", ") + if (bestRead != null) "; kept" else "; none kept"
         for ((i, t) in toks.withIndex()) {
             onProgress("Testing GitHub token ${i + 1} of ${toks.size}…")
             val ok = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) { dev.patrickgold.florisboard.dictate.MaRemoteDb.tokenWorks(t) }
             if (ok && dev.patrickgold.florisboard.dictate.MaRemoteDb.saveToken(t)) {
                 dev.patrickgold.florisboard.dictate.MaRemoteDb.syncSoon()
-                return "GitHub (RE Magic Database): ${toks.size} token(s), token ${i + 1} can write, stored"
+                return readLine + "\nGitHub (RE Magic Database): ${toks.size} token(s), token ${i + 1} can write, stored"
             }
         }
-        return "GitHub (RE Magic Database): ${toks.size} token(s), none can write to ${dev.patrickgold.florisboard.dictate.MaRemoteDb.REPO}, not stored"
+        return readLine + "\nGitHub (RE Magic Database): ${toks.size} token(s), none can write to ${dev.patrickgold.florisboard.dictate.MaRemoteDb.REPO}, not stored"
     }
 
     /** The KLIPY GIF key (13.11.2026: its paste field is gone): a token on a line, or in a file, labelled klipy. */
