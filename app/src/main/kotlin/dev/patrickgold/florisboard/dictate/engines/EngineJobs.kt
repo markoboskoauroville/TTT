@@ -171,6 +171,15 @@ class EngineDebugReceiver : BroadcastReceiver() {
                             .put("chatOpen", dev.patrickgold.florisboard.dictate.MaClaudeLink.chatOpen)
                             .put("waitingToMac", dev.patrickgold.florisboard.dictate.MaClaudeLink.waiting()))
                     }
+                    "dev.ttt.remote.CLAUDE_FLUSH" -> {
+                        // One send round now (13.11.2026, the Mac's request); logcat tag TTT-CLAUDE has a line per attempt.
+                        val link = dev.patrickgold.florisboard.dictate.MaClaudeLink
+                        val before = link.waiting()
+                        val left = link.flushNow(app)
+                        if (left > 0) link.flush(app)
+                        remoteOut(app, i, JSONObject().put("ok", left == 0).put("before", before).put("waiting", left)
+                            .put("url", link.url(app)).put("status", link.status))
+                    }
                     "dev.ttt.remote.CLAUDE_URL" -> {
                         // The relay's address, when the Mac's Tailscale address changes (default MaClaudeLink.DEFAULT_URL).
                         val u = i.getStringExtra("url").orEmpty()

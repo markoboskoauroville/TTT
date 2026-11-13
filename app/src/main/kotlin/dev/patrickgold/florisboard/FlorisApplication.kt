@@ -191,6 +191,8 @@ class FlorisApplication : Application() {
             preferenceStoreLoaded.value = true
             dev.patrickgold.florisboard.dictate.MaSettingsSync.attach(this@FlorisApplication)
             dev.patrickgold.florisboard.dictate.MaSettingsSync.maybePull()
+            // Messages to Claude Code sessions still waiting from before (an update, a restart) go now.
+            runCatching { dev.patrickgold.florisboard.dictate.MaClaudeLink.flush(this@FlorisApplication) }
         }
         extensionManager.value.init()
         clipboardManager.value.initializeForContext(this)

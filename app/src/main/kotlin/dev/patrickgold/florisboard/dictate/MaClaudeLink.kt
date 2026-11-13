@@ -133,6 +133,7 @@ object MaClaudeLink {
         val name = from.trim().ifBlank { "Claude Code" }
         remember(app, name)
         val m = MaReChat.Msg(false, text.trim(), image = image?.let { keepImage(app, it) })
+        if (waiting() > 0) flush(app)
         val file = threadName(name)
         synchronized(this) { MaReChat.save(MaReChat.load(file) + m, file) }
         if (chatOpen) {
@@ -211,7 +212,10 @@ object MaClaudeLink {
     /** Sends what waits, oldest first; keeps what could not go and tries again later. */
     fun flush(c: Context) {
         val app = c.applicationContext
-        if (flushJob?.isActive == true) return
+        // A new trigger starts at once: it never waits out the back-off of an earlier round (13.11.2026: three
+        // messages sat in the outbox after an update because nothing started a round).
+        flushJob?.cancel()
+        log("flush: ${waiting()} waiting, url ${url(app)}")
         flushJob = scope.launch {
             var wait = 20_000L
             while (true) {
@@ -222,6 +226,11 @@ object MaClaudeLink {
             }
         }
     }
+
+    private fun log(msg: String) { runCatching { android.util.Log.i("TTT-CLAUDE", msg) } }
+
+    /** One round now, for adb (CLAUDE_FLUSH): how many still wait afterwards. */
+    suspend fun flushNow(c: Context): Int = outboxLock.withLock { sendAll(c.applicationContext) }
 
     private fun sendAll(c: Context): Int {
         val a = readOutbox()
@@ -239,6 +248,7 @@ object MaClaudeLink {
                     Request.Builder().url(url(c)).apply { if (tok != null) header("X-Mantra-Token", tok) }
                         .post(body.toString().toRequestBody(JSON)).build(),
                 ).execute().use { r ->
+                    log("send ${o.optString("id").take(8)} to ${o.getString("to")}: HTTP ${r.code}")
                     if (r.code == 401) status = "The Mac relay asks for its key. Tap here and pick mantra-relay-token.txt."
                     if (r.isSuccessful) {
                         // phonereply answers {typed, session}: typed = it went into the live session's window;
@@ -249,6 +259,7 @@ object MaClaudeLink {
                     r.isSuccessful
                 }
             }.getOrElse {
+                log("send ${o.optString("id").take(8)} failed: ${it.javaClass.simpleName} ${it.message?.take(120)}")
                 status = "The Mac is not reachable: " + (it.message ?: it.javaClass.simpleName).take(80)
                 if (msgAt > 0) mark(c, msgAt, "waiting")
                 false

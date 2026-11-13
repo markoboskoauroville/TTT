@@ -86,6 +86,7 @@
                 <action android:name="dev.ttt.engines.PING"/>
                 <action android:name="dev.ttt.remote.CLAUDE_SAY"/>
                 <action android:name="dev.ttt.remote.CLAUDE_URL"/>
+                <action android:name="dev.ttt.remote.CLAUDE_FLUSH"/>
                 <action android:name="dev.ttt.engines.SIMNET"/>
                 <action android:name="dev.ttt.engines.RE"/>
                 <action android:name="dev.ttt.engines.RE_COMPARE"/>

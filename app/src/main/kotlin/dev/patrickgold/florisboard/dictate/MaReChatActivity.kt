@@ -169,7 +169,11 @@ class MaReChatActivity : ComponentActivity() {
         }
     }
 
-    override fun onResume() { super.onResume(); MaClaudeLink.chatOpen = true }
+    override fun onResume() {
+        super.onResume()
+        MaClaudeLink.chatOpen = true
+        if (MaClaudeLink.waiting() > 0) MaClaudeLink.flush(this)
+    }
 
     override fun onPause() { MaClaudeLink.chatOpen = false; super.onPause() }
 
