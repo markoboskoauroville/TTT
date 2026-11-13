@@ -28,3 +28,4 @@
 - 13.11.2026 A key picker says per key whether it works, at the moment of picking; counts alone are not enough. A feature with its own key (RE's Qwen) gets its own ring and its own picker.
 - 13.11.2026 RE's GitHub access is a tool loop in text (<github_search>, <github_read>), so Anthropic and Qwen use it alike; read only, max 4 looks, the answer names its source.
 - 13.11.2026 A debug broadcast that works for minutes must not hold goAsync: it froze TTT (ANR) during the RE comparison. Long jobs run in their own scope.
+- 13.11.2026 A full-screen TTT window must be opaque (FlorisAppTheme) with stateAlwaysHidden, or the keyboard of the app behind stays on top of it.

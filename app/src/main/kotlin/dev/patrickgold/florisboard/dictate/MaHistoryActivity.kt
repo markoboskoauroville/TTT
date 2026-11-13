@@ -175,36 +175,14 @@ private fun HistoryScreen(canInsert: Boolean, onInsert: (String) -> Unit, onClos
     LaunchedEffect(Unit) { withContext(Dispatchers.IO) { runCatching { DictateHistoryStore.repairMissingAudio(context) } } }
 
     Column(modifier = Modifier.fillMaxSize().safeDrawingPadding()) {
-        // Top bar: Close, title with counts, Clear history.
-        Row(
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 6.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            BigIconButton(Icons.Default.Close, "Close", onClick = onClose)
-            Column(modifier = Modifier.weight(1f).padding(start = 6.dp)) {
-                Text("History", fontSize = 24.sp, fontWeight = FontWeight.Bold, color = Color.White)
-                val list = entries.orEmpty()
-                val audio = list.count { it.audioPath != null }
-                val mb = list.sumOf { it.audioBytes } / 1_000_000.0
-                Text(
-                    "${list.size} entries · $audio with audio · ${"%.1f".format(mb)} MB",
-                    fontSize = 13.sp, color = dev.patrickgold.florisboard.dictate.ui.MaHost.Muted,
-                )
-            }
-            TextButton(onClick = { confirmClear = true }, enabled = !entries.isNullOrEmpty()) {
-                Icon(Icons.Default.DeleteForever, null, tint = dev.patrickgold.florisboard.dictate.ui.MaHost.DangerInk)
-                Spacer(Modifier.width(4.dp))
-                Text("Clear history", color = dev.patrickgold.florisboard.dictate.ui.MaHost.DangerInk, fontSize = 16.sp)
-            }
-        }
         val list = entries
         when {
-            list == null -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { Text("Loading…", color = Color.Gray) }
-            list.isEmpty() -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            list == null -> Box(Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) { Text("Loading…", color = Color.Gray) }
+            list.isEmpty() -> Box(Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) {
                 Text("Nothing dictated yet.", color = Color.Gray, fontSize = 18.sp)
             }
             else -> LazyColumn(
-                modifier = Modifier.fillMaxSize(),
+                modifier = Modifier.weight(1f).fillMaxWidth(),
                 contentPadding = androidx.compose.foundation.layout.PaddingValues(12.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
@@ -227,6 +205,20 @@ private fun HistoryScreen(canInsert: Boolean, onInsert: (String) -> Unit, onClos
                     )
                 }
             }
+        }
+        // No title bar (ttt-design): the counts as one quiet line, then the keys, like the feature row.
+        val all = entries.orEmpty()
+        Text(
+            "${all.size} entries · ${all.count { it.audioPath != null }} with audio · ${"%.1f".format(all.sumOf { it.audioBytes } / 1_000_000.0)} MB",
+            fontSize = 13.sp, color = dev.patrickgold.florisboard.dictate.ui.MaHost.Muted,
+            modifier = Modifier.padding(horizontal = 14.dp, vertical = 2.dp),
+        )
+        Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 3.dp).padding(bottom = 4.dp)) {
+            dev.patrickgold.florisboard.dictate.ui.MaHostKey(
+                "Clear history", Modifier.weight(1f), icon = Icons.Default.DeleteForever,
+                ink = dev.patrickgold.florisboard.dictate.ui.MaHost.DangerInk, enabled = all.isNotEmpty(),
+            ) { confirmClear = true }
+            dev.patrickgold.florisboard.dictate.ui.MaHostKey("Close", Modifier.weight(1f), icon = Icons.Default.Close, onClick = onClose)
         }
     }
 

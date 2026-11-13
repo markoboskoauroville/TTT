@@ -279,10 +279,10 @@
         <!-- Full-screen History and the RE Magic chat (13.11.2026): two apps inside the app. -->
         <activity
             android:name="dev.patrickgold.florisboard.dictate.MaHistoryActivity"
-            android:theme="@style/FlorisAppTheme.Transparent"
+            android:theme="@style/FlorisAppTheme"
             android:excludeFromRecents="true"
             android:taskAffinity=""
-            android:windowSoftInputMode="adjustResize|stateHidden"
+            android:windowSoftInputMode="adjustResize|stateAlwaysHidden"
             android:exported="false"/>
         <activity
             android:name="dev.patrickgold.florisboard.dictate.MaReChatActivity"
