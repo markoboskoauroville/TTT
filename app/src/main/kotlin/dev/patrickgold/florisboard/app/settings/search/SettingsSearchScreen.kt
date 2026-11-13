@@ -21,6 +21,7 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.QuestionAnswer
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -82,6 +83,8 @@ fun SettingsSearchScreen() = FlorisScreen {
     val keyboardController = LocalSoftwareKeyboardController.current
 
     var query by rememberSaveable { mutableStateOf("") }
+    var chatOpen by rememberSaveable { mutableStateOf(false) }
+    var chatSeed by rememberSaveable { mutableStateOf<String?>(null) }
     val historyRaw by prefs.internal.settingsSearchHistory.collectAsState()
     val recent = remember(historyRaw) {
         historyRaw.split('\n').map { it.trim() }.filter { it.isNotEmpty() }
@@ -133,6 +136,16 @@ fun SettingsSearchScreen() = FlorisScreen {
             }
         }
 
+        // TTT's own screens, whose words are in the code (MaSearchIndex, generated): "groq" lives only there.
+        val maResults = remember(q) {
+            val indexed = results.map { it.route }.toSet()
+            MaSearchIndex.search(q).filterNot { (s, _) -> s.route in indexed && s.texts.none { it.contains(q, ignoreCase = true) } }
+        }
+
+        if (chatOpen) {
+            MaHelpChatPanel(firstQuestion = chatSeed, onClose = { chatOpen = false; chatSeed = null }, onSeedUsed = { chatSeed = null })
+        } else {
+
         fun open(entry: SettingsSearchEntry) {
             // Retract the soft keyboard before navigating, so the destination screen doesn't briefly
             // show with the keyboard still up.
@@ -173,14 +186,49 @@ fun SettingsSearchScreen() = FlorisScreen {
             SettingsSearchIndex.entries.filter { it.titleRes in POPULAR_TITLES }.forEach { entry ->
                 ResultRow(entry, onClick = { open(entry) })
             }
-        } else if (results.isEmpty()) {
+            // The help chat, also reachable with an empty search.
+            Preference(
+                icon = Icons.Default.QuestionAnswer,
+                title = "Ask Claude about TTT",
+                summary = "A chat that knows the app; every question and answer is kept in your private data repository",
+                onClick = { keyboardController?.hide(); chatSeed = null; chatOpen = true },
+            )
+        } else {
+            // First: ask Claude, with what was typed as the question.
+            Preference(
+                icon = Icons.Default.QuestionAnswer,
+                title = "Ask Claude: \"$q\"",
+                summary = "Answered from the TTT guide, what you taught it and the TTT code",
+                onClick = {
+                    keyboardController?.hide()
+                    scope.launch { SettingsSearchHistory.add(prefs, query) }
+                    chatSeed = q; chatOpen = true
+                },
+            )
+            if (maResults.isNotEmpty()) {
+                SectionHeader("TTT")
+                maResults.forEach { (screen, hit) ->
+                    Preference(
+                        icon = Icons.Default.Search,
+                        title = screen.title,
+                        summary = hit ?: screen.title,
+                        onClick = {
+                            keyboardController?.hide()
+                            scope.launch { SettingsSearchHistory.add(prefs, query) }
+                            SettingsSearchState.requestAnchor(null)
+                            navController.navigate(screen.route)
+                        },
+                    )
+                }
+            }
+          if (results.isEmpty() && maResults.isEmpty()) {
             Text(
                 text = stringRes(R.string.settings__search__no_results),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(24.dp),
             )
-        } else {
+          }
             // Group results under their top-level section (the breadcrumb root).
             var lastGroup: Int? = null
             results.forEach { entry ->
@@ -191,6 +239,7 @@ fun SettingsSearchScreen() = FlorisScreen {
                 }
                 ResultRow(entry, onClick = { open(entry) })
             }
+        }
         }
     }
 }

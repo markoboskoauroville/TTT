@@ -52,6 +52,11 @@ object MaHost {
     /** The gold accent: numbers, highlight, the spoken word. */
     val Gold = Color(0xFFE8B15C)
     val Muted = Color(0xFF8B949E)
+    /**
+     * The model badge's small blue letters (Marko, 13.11.2026: "blue letters, small letters ... Claude · model"). The
+     * one blue in the host look, and it means one thing only: "this is the AI model, tap to switch" ([MaModelBadge]).
+     */
+    val ModelBlue = Color(0xFF6CB6FF)
     /** Rings: red = records voice (dark, light while recording), green = switched on, sand = changes the view. */
     val RingRecord = MaRecordOutline
     val RingRecordLive = MaRecordOutlineLive

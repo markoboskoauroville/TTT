@@ -2,6 +2,22 @@
 
 Every request word for word, saved and pushed before any code (MANTRA_MANIFEST requests-saved-first).
 
+## 13.11.2026: the model badge everywhere, and every error is its own fix
+
+> "Please, everywhere in application when I ask Claude. We have very nice design, blue letters, small letters. And it says Claude.model. I want to be aware anything I'm doing inside my app. Whenever I'm chatting with Claude, I need to be aware which model is it using. And model everywhere in the app is action button. And I can click on action button, model, and just switch to Sonnet. Sonet, Opus, and I can switch anywhere where I see this badge in the app I simply click and I switch if there is error so my idea is and write this in manifest please forever so every app for example I'm in some dialogue and he said that it I cannot do this because API code is missing or API code has error not enough credit or any error coming Please don make me go around the settings deleted all API keys and finding new ones etc It's too much work. Error itself needs to solve the problem. So, for example, let's say we are now in chat. For this help, helping chat we are developing right now. And you said model expired, no credits, whatever. I click on the error and it opens file picker for new API key and I enter new API key and it works. So I was not troubleshooting, you just give me solution immediately. Key doesn't work, the most obvious solution is load the new key. That's it. And it's made right in this message which is popping up. It's becoming actually action button. It's becoming file picker. And please understand my logic and start to implement this in all of my application. And how we do this? By writing manifests and skills and takeovers in the right way. Let's do it." (Marko, 13.11.2026)
+
+**Status:** manifest written (model-badge.md, solution-at-the-nose.md, START_HERE banners); TTT: shared MaFix.kt (MaModelBadge, MaFixMessage, rememberKeyFixPicker) used in the help chat and the RE chat; the rest listed in SKILL rule 24.
+
+
+## 13.11.2026: arrows that work in any terminal, a terminal TAB key, the settings search, a help chat with Claude
+
+> "I need you to fix TTT. So it's its arrows in my feature. I have arrows are actually working in my Oracle Cloud Virtual Machine which is Linux. When I'm in Claude Code in terminal inside Virtual Machine of Oracle, when I'm using my TTT, arrows do not work. Reacting, nothing is done, so adapt the signals so it works in any environment, my arrows. And also add a tap button which is working in terminal to my feature row." (Marko, 13.11.2026; "tap" = TAB. The second part, the mouse in Mantra Remote Viewing, is in that repo.)
+
+> "Also please fix this error in my TTT. Searching the Groq which is mentioned on many different spaces and places doesn't give anything. And also in the search you add the prompt box which is using Atropic Cloud to answer the questions. It's like a chat. I message chat. and you need to create data repository on if it's not already maybe it exists for TTT repository with only data and to keep it private which is logging all my questions and developing skills for getting help this application TTT so I can talk it needs to be database of questions and answers and I will explain how TTT works and if I ask any questions, for example, I want to ask this question. There are two models from Groq in my application, Groq Turbo and another Groq which is not Turbo. Which one gives more precision in transcription? And tell me the history about these models and how they end up in Groq and what is Groq in general? And this is how I get the answer." (Marko, 13.11.2026, with a screenshot: Settings search "groq" -> "No settings found".)
+
+**Status:** coded (arrows one whole press per step, TAB key, MaSearchIndex, help chat); CI builds it on merge to main; not yet tried on the phone.
+
+
 
 
 ## 9.11.2026: RE Magic as an assistant, a GitHub token, the RE Magic Database, the pop-up, the flexibility tests

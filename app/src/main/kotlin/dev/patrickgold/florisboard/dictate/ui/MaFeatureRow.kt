@@ -1116,6 +1116,36 @@ fun MaFeatureRow(
                     },
                 )
 
+                MaFeatureKey.TERMINAL_TAB -> {
+                    // A real Tab key press, for a terminal (Claude Code, a shell). Shift held by hand
+                    // (not the automatic capital at a sentence start) makes it Shift+Tab.
+                    ThemedKey(
+                        code = KeyCode.NOOP,
+                        modifier = keyMod,
+                        onClick = {
+                            val shiftState = keyboardManager.activeState.inputShiftState
+                            val shift = shiftState == InputShiftState.SHIFTED_MANUAL ||
+                                shiftState == InputShiftState.CAPS_LOCK
+                            if (shiftState == InputShiftState.SHIFTED_MANUAL) {
+                                keyboardManager.activeState.inputShiftState = InputShiftState.UNSHIFTED
+                            }
+                            editorInstance.sendDownUpKeyEvent(
+                                android.view.KeyEvent.KEYCODE_TAB,
+                                editorInstance.meta(shift = shift),
+                            )
+                        },
+                    ) { fg ->
+                        Text(
+                            text = "TAB",
+                            color = fg,
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.Bold,
+                            maxLines = 1,
+                            softWrap = false,
+                        )
+                    }
+                }
+
                 MaFeatureKey.APP_SWITCH -> {
                     // Alt+Tab. Dim when nothing has been seen to switch to yet, which is the state
                     // right after the phone starts or the accessibility service is switched off —

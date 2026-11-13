@@ -31,3 +31,5 @@
 - 13.11.2026 A full-screen TTT window must be opaque (FlorisAppTheme) with stateAlwaysHidden, or the keyboard of the app behind stays on top of it.
 - 13.11.2026 A bookmark must be read before anything that can write it: NavController calls a new OnDestinationChangedListener at once with the current (start) destination, which overwrote the settings bookmark with the home on every fresh start.
 - 13.11.2026 Under the lock every input goes through ttt_remote.py (tap/swipe/key/text pass the lock first). A raw adb swipe under the lock released it (or met his tap): the lock went to overridden mid-test.
+- 13.11.2026 A settings search must index the app's own screens too: TTT screens write their texts in the code, not in strings.xml, so the index never saw them ("groq" found nothing). MaSearchIndex is generated from the code; rerun scripts/gen_ma_search_index.py.
+- 13.11.2026 Key presses sent to another app: one whole press (down + up) per step. A burst of downs with rising repeat counts and one up is a hardware autorepeat; terminals and key-forwarding apps drop or merge it.

@@ -736,6 +736,7 @@ internal fun MaButtonGlyph(
                 Icon(Icons.Default.SwapHoriz, contentDescription = null, tint = tint, modifier = size)
             MaFeatureKey.NEXT_FIELD ->
                 Icon(Icons.Default.KeyboardTab, contentDescription = null, tint = tint, modifier = size)
+            MaFeatureKey.TERMINAL_TAB -> letters("TAB")
             MaFeatureKey.SHIFT ->
                 Icon(Icons.Default.KeyboardCapslock, contentDescription = null, tint = tint, modifier = size)
             MaFeatureKey.CHANGE_CASE -> letters("Aa")

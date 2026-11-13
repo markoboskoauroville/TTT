@@ -395,6 +395,16 @@ enum class MaFeatureKey(val id: String, val label: String) {
     ARROW_UP("arrow_up", "Up"),
     ARROW_DOWN("arrow_down", "Down"),
 
+    /**
+     * TAB for terminals: a real Tab key press (Marko, 13.11.2026: "add a tab button which is working
+     * in terminal to my feature row").
+     *
+     * Not [NEXT_FIELD] (which walks text boxes) and not [APP_SWITCH] (which walks apps): this sends
+     * `KEYCODE_TAB` itself, the key a shell completes with and Claude Code reads. With Shift on it
+     * sends Shift+Tab, which is how Claude Code changes its mode.
+     */
+    TERMINAL_TAB("term_tab", "Tab key, for terminals"),
+
     SEND("send", "Send"),
 
     /**
@@ -748,6 +758,7 @@ val MaFeatureKey.group: MaFeatureGroup
         MaFeatureKey.ARROW_RIGHT,
         MaFeatureKey.ARROW_UP,
         MaFeatureKey.ARROW_DOWN,
+        MaFeatureKey.TERMINAL_TAB,
         -> MaFeatureGroup.MOVING
 
         // The shape of the keyboard rather than anything typed with it: which zones show, whether it

@@ -25,6 +25,11 @@ Marko, 13.11.2026: "everything you make recently looks like it came from a diffe
 | ring: changes the view | sand #F2DDB4 at 55 % |
 | destructive | light red ink #E8776C, red ring |
 Colour means STATE, never decoration. No blue, no purple, no gradients, no new reds.
+**The one blue:** `MaHost.ModelBlue` #6CB6FF, small letters (12 sp), only for the model badge `MaModelBadge`
+("Claude Sonnet 5.5 ⇄"): it says which AI model answers and a tap switches it (Marko, 13.11.2026; MANTRA_MANIFEST
+modules/model-badge.md). Every place an AI answers carries the badge.
+**Errors are keys:** an error is drawn with `MaFixMessage` (ui/MaFix.kt): a key problem is a gold-ringed key row that
+opens the key file picker and retries; any other error a retry key. Never a dead line of red text.
 
 ## 3. Layout
 - No title bars, no app names, no avatars in TTT screens. Content first; controls at the bottom as a row of keys, like the feature row.

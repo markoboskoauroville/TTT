@@ -644,10 +644,15 @@ abstract class AbstractEditorInstance(context: Context) {
         if (metaState and KeyEvent.META_SHIFT_ON != 0) {
             ic.sendDownKeyEvent(eventTime, KeyEvent.KEYCODE_SHIFT_LEFT, 0)
         }
+        // One whole press (down AND up) per step, not n downs and one up (Marko, 13.11.2026: arrows did
+        // nothing in a terminal on his Oracle VM). A held-key repeat is something only a hardware
+        // keyboard driver produces; terminals, web terminals and remote viewers that forward keys
+        // count presses, and several of them drop a down whose repeat count is above zero.
         for (n in 0 until count) {
-            ic.sendDownKeyEvent(eventTime, keyEventCode, metaState, n)
+            val pressTime = SystemClock.uptimeMillis()
+            ic.sendDownKeyEvent(pressTime, keyEventCode, metaState, 0)
+            ic.sendUpKeyEvent(pressTime, keyEventCode, metaState)
         }
-        ic.sendUpKeyEvent(eventTime, keyEventCode, metaState)
         if (metaState and KeyEvent.META_SHIFT_ON != 0) {
             ic.sendUpKeyEvent(eventTime, KeyEvent.KEYCODE_SHIFT_LEFT, 0)
         }

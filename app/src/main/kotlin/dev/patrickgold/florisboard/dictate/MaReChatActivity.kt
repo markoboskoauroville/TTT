@@ -100,6 +100,9 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import dev.patrickgold.florisboard.app.FlorisPreferenceStore
+import dev.patrickgold.florisboard.dictate.provider.MaClaudeModels
+import dev.patrickgold.florisboard.dictate.ui.MaFix
+import dev.patrickgold.florisboard.dictate.ui.MaModelBadge
 import dev.patrickgold.florisboard.dictate.audio.MaResample
 import dev.patrickgold.florisboard.dictate.audio.RecordingController
 import dev.patrickgold.florisboard.dictate.engines.EngineAdapters
@@ -253,7 +256,8 @@ private fun ChatScreen(
             }
         }
     }
-    fun needsKey(s: String) = Regex("(?i)(key|token)[^.]*(missing|is out|out of)|no [^.]*(key|token)|not configured|tap here and pick").containsMatchIn(s)
+    // The error is the fix (MaFix): any key problem (missing, refused, out of credit, over the limit) is the key picker.
+    fun needsKey(s: String) = MaFix.needsKey(s)
     var voice by remember { mutableStateOf(MaReChat.voiceMode(app)) }
     var muted by remember { mutableStateOf(MaReChat.muted(app)) }
     var recording by remember { mutableStateOf(false) }
@@ -620,6 +624,23 @@ private fun ChatScreen(
             }
         }
 
+        // ---- which model answers, always in sight; a tap switches Auto -> Opus -> Sonnet -> Qwen (Marko, 13.11.2026)
+        if (partner == null) {
+            val reEngine by prefs.dictate.maReEngine.collectPrefAsState()
+            val eng = MaReEngine.engine().also { reEngine.length }
+            val label = when (eng) {
+                MaReEngine.OPUS -> MaClaudeModels.displayName(MaReEngine.OPUS_MODEL)
+                MaReEngine.SONNET -> MaClaudeModels.displayName(MaReEngine.SONNET_MODEL)
+                MaReEngine.QWEN -> "Groq · Qwen"
+                else -> "Claude Auto" + MaReEngine.lastChoice.takeIf { it.isNotBlank() }?.let { " · last " + MaClaudeModels.displayName(it).removePrefix("Claude ") }.orEmpty()
+            }
+            MaModelBadge(
+                label = label,
+                options = listOf(MaReEngine.AUTO, MaReEngine.OPUS, MaReEngine.SONNET, MaReEngine.QWEN),
+                current = eng,
+                onPick = { next -> scope.launch { prefs.dictate.maReEngine.set(next) } },
+            )
+        }
         // ---- the composer, as the keyboard's strip: language badge, (trash), field or recorder, send
         Row(
             modifier = Modifier.fillMaxWidth().height(64.dp).padding(horizontal = 3.dp),
