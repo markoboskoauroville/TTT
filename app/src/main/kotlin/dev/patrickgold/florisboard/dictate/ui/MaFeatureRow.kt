@@ -1662,13 +1662,20 @@ fun MaFeatureRow(
                         title = "re", accent = MaRecordOutlineLive, anchor = reKeyRect[0], onDismiss = { reMenu = false },
                         items = listOf(
                             // Exactly four (Marko, 13.11.2026): Anthropic Auto (the router), Opus, Sonnet, or Qwen on Groq.
-                            MaPanelItem("Anthropic Auto", "Sonnet or Opus", reEngine == "anthropic_auto" || reEngine == "anthropic" || reEngine.isBlank()) { scope.launch { prefs.dictate.maReEngine.set("anthropic_auto") } },
-                            MaPanelItem("Opus", "Anthropic", reEngine == "opus") { scope.launch { prefs.dictate.maReEngine.set("opus") } },
-                            MaPanelItem("Sonnet", "Anthropic", reEngine == "sonnet") { scope.launch { prefs.dictate.maReEngine.set("sonnet") } },
+                            MaPanelItem("Anthropic Auto", "Sonnet or Opus", reEngine == "anthropic_auto" || reEngine == "anthropic" || reEngine.isBlank()) { dev.patrickgold.florisboard.dictate.MaClaudeLink.setPartner(context, null); scope.launch { prefs.dictate.maReEngine.set("anthropic_auto") } },
+                            MaPanelItem("Opus", "Anthropic", reEngine == "opus") { dev.patrickgold.florisboard.dictate.MaClaudeLink.setPartner(context, null); scope.launch { prefs.dictate.maReEngine.set("opus") } },
+                            MaPanelItem("Sonnet", "Anthropic", reEngine == "sonnet") { dev.patrickgold.florisboard.dictate.MaClaudeLink.setPartner(context, null); scope.launch { prefs.dictate.maReEngine.set("sonnet") } },
                             MaPanelItem(
                                 "Qwen", if (dev.patrickgold.florisboard.dictate.MaReEngine.hasQwenKey(context)) "Groq, own key" else "no key yet",
                                 reEngine == "qwen" || reEngine == "groq",
-                            ) { scope.launch { prefs.dictate.maReEngine.set("qwen") } },
+                            ) { dev.patrickgold.florisboard.dictate.MaClaudeLink.setPartner(context, null); scope.launch { prefs.dictate.maReEngine.set("qwen") } },
+                            // Claude Code sessions on the Mac (MaClaudeLink, 13.11.2026): the same chat, one thread per session.
+                            *dev.patrickgold.florisboard.dictate.MaClaudeLink.sessions(context).map { name ->
+                                MaPanelItem("Claude Code · $name", "chat on the Mac", dev.patrickgold.florisboard.dictate.MaClaudeLink.partner(context) == name) {
+                                    dev.patrickgold.florisboard.dictate.MaClaudeLink.setPartner(context, name)
+                                    dev.patrickgold.florisboard.dictate.MaReChatActivity.open(context)
+                                }
+                            }.toTypedArray(),
                             MaPanelItem("Tap opens the chat", if (dev.patrickgold.florisboard.dictate.MaReChat.chatOn(context)) "on" else "off", dev.patrickgold.florisboard.dictate.MaReChat.chatOn(context)) {
                                 dev.patrickgold.florisboard.dictate.MaReChat.setChatOn(context, !dev.patrickgold.florisboard.dictate.MaReChat.chatOn(context))
                             },

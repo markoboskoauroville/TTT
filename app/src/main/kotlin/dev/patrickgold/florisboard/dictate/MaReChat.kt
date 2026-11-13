@@ -149,17 +149,19 @@ object MaReChat {
 
     // ------------------------------------------------------------------ the chat on the phone
 
-    fun load(): List<Msg> = runCatching {
-        val a = JSONArray(file(CHAT).readText())
+    /** [name]: the RE chat, or a Claude Code thread ("claude/<slug>.json", MaClaudeLink). */
+    fun load(name: String = CHAT): List<Msg> = runCatching {
+        val a = JSONArray(file(name).readText())
         (0 until a.length()).map { i -> a.getJSONObject(i).let { Msg(it.getBoolean("me"), it.getString("t"), it.optLong("at")) } }
     }.getOrDefault(emptyList())
 
-    fun save(msgs: List<Msg>) {
+    fun save(msgs: List<Msg>, name: String = CHAT) {
         runCatching {
             val a = JSONArray()
             msgs.forEach { a.put(JSONObject().put("me", it.me).put("t", it.text).put("at", it.at)) }
-            val f = file(CHAT)
-            val tmp = File(f.parentFile, "$CHAT.tmp")
+            val f = file(name)
+            f.parentFile?.mkdirs()
+            val tmp = File(f.parentFile, f.name + ".tmp")
             tmp.writeText(a.toString())
             if (!tmp.renameTo(f)) { f.writeText(a.toString()); tmp.delete() }
         }

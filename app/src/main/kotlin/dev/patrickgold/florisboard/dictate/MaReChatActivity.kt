@@ -145,6 +145,8 @@ class MaReChatActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         MaRemoteDb.attach(this)
         MaReChat.ensureMemory()
+        // A notification from a Claude Code session opens the chat on that thread (MaClaudeLink).
+        intent?.getStringExtra(MaClaudeLink.EXTRA_PARTNER)?.let { MaClaudeLink.setPartner(this, it) }
         setContent {
             MaterialTheme(colorScheme = darkColorScheme(background = MaHost.Bg, surface = MaHost.Bg)) {
                 Surface(modifier = Modifier.fillMaxSize(), color = MaHost.Bg) {
@@ -162,6 +164,10 @@ class MaReChatActivity : ComponentActivity() {
             }
         }
     }
+
+    override fun onResume() { super.onResume(); MaClaudeLink.chatOpen = true }
+
+    override fun onPause() { MaClaudeLink.chatOpen = false; super.onPause() }
 
     override fun onDestroy() {
         runCatching { recorder?.cancel() }
@@ -206,7 +212,14 @@ private fun ChatScreen(
     val context = LocalContext.current
     val app = context.applicationContext
     val scope = rememberCoroutineScope()
-    val msgs = remember { mutableStateListOf<MaReChat.Msg>().apply { addAll(MaReChat.load()) } }
+    // RE (null) or a Claude Code session (MaClaudeLink, 13.11.2026): one thread each.
+    var partner by remember { mutableStateOf(MaClaudeLink.partner(app)) }
+    fun loadThread(p: String?) = if (p == null) MaReChat.load() else MaReChat.load(MaClaudeLink.threadName(p))
+    val msgs = remember { mutableStateListOf<MaReChat.Msg>().apply { addAll(loadThread(partner)) } }
+    fun persist() { val p = partner; if (p == null) MaReChat.save(msgs.toList()) else MaReChat.save(msgs.toList(), MaClaudeLink.threadName(p)) }
+    var partnerMenu by remember { mutableStateOf(false) }
+    // A recording whose transcription failed: kept, offered again with Resend, never sent by itself.
+    var failedWav by remember { mutableStateOf<File?>(null) }
     var input by remember { mutableStateOf("") }
     var thinking by remember { mutableStateOf(false) }
     var status by remember { mutableStateOf("") }
@@ -257,6 +270,21 @@ private fun ChatScreen(
         MaReader.speakText(app, m.shown) { }
     }
 
+    LaunchedEffect(Unit) {
+        MaClaudeLink.incoming.collect { inc ->
+            if (inc.from == partner) { msgs.add(inc.msg); if (voice) speak(inc.msg) }
+            else status = "New message from Claude Code · ${inc.from}"
+        }
+    }
+    LaunchedEffect(partner) {
+        while (partner != null) {
+            val s = MaClaudeLink.status
+            if (s.isNotBlank() && !recording && !transcribing && failedWav == null) status = s
+            delay(2_000L)
+        }
+    }
+
+
     fun ask() {
         thinking = true
         status = ""
@@ -268,7 +296,7 @@ private fun ChatScreen(
                 status = ""
                 val m = MaReChat.Msg(false, a.ifBlank { "(no answer)" })
                 msgs.add(m)
-                MaReChat.save(msgs.toList())
+                persist()
                 speak(m)
             }.onFailure { e ->
                 if (e is CancellationException) return@onFailure
@@ -281,6 +309,14 @@ private fun ChatScreen(
         val t = text.trim()
         if (t.isEmpty() || thinking) return
         MaReader.stop()
+        // To a Claude Code session: into its thread and out through the Mac relay; no AI, no lessons.
+        partner?.let { p ->
+            msgs.add(MaReChat.Msg(true, t))
+            persist()
+            MaClaudeLink.send(app, p, t)
+            status = ""
+            return
+        }
         // A cue: Wrong was pressed, or this reply corrects RE. It becomes a lesson now, not at Clear.
         val lastRe = msgs.lastOrNull { !it.me }
         val wrongMsg = msgs.firstOrNull { it.at == wrongAt }
@@ -297,7 +333,7 @@ private fun ChatScreen(
         }
         wrongAt = -1L
         msgs.add(MaReChat.Msg(true, t))
-        MaReChat.save(msgs.toList())
+        persist()
         ask()
     }
 
@@ -324,14 +360,9 @@ private fun ChatScreen(
         status = ""
     }
 
-    fun stopListening() {
-        val r = recorderHolder() ?: return
-        setRecorder(null)
-        recording = false
-        val wav = runCatching { r.stop() }.getOrNull()
-        if (wav == null || !wav.exists() || wav.length() < 4_000L) { status = "Nothing heard"; return }
-        val mine = File(app.cacheDir, "re_chat_${System.currentTimeMillis()}.wav")
-        runCatching { wav.copyTo(mine, overwrite = true) }
+    /** Transcribes [mine] with his H/E engine; on failure the recording is kept for Resend (13.11.2026). */
+    fun transcribe(mine: File) {
+        failedWav = null
         transcribing = true
         val l = MaLanguage.active()
         val engine = EngineStore.selected(app, l)
@@ -358,11 +389,28 @@ private fun ChatScreen(
                 }
                 delay(3_000L)
             }
-            runCatching { mine.delete() }
             transcribing = false
             val w = words
-            if (!w.isNullOrBlank()) { status = ""; send(w) } else if (w != null) status = "Nothing heard"
+            if (w == null) {
+                // Kept: he decides. Resend tries again; the trash drops it. Nothing is sent by itself.
+                failedWav = mine
+                status = status + " · recording kept: Resend or delete"
+                return@launch
+            }
+            runCatching { mine.delete() }
+            if (w.isNotBlank()) { status = ""; send(w) } else status = "Nothing heard"
         }
+    }
+
+    fun stopListening() {
+        val r = recorderHolder() ?: return
+        setRecorder(null)
+        recording = false
+        val wav = runCatching { r.stop() }.getOrNull()
+        if (wav == null || !wav.exists() || wav.length() < 4_000L) { status = "Nothing heard"; return }
+        val mine = File(app.filesDir, "re_chat_${System.currentTimeMillis()}.wav")
+        runCatching { wav.copyTo(mine, overwrite = true) }
+        transcribe(mine)
     }
 
     fun accept(m: MaReChat.Msg, text: String) {
@@ -375,7 +423,41 @@ private fun ChatScreen(
     BackHandler { onClose() }
 
     Column(modifier = Modifier.fillMaxSize().safeDrawingPadding().imePadding()) {
-        // ---- the chat: no title bar
+        // ---- who the chat is with. RE keeps no title bar; a Claude Code session shows its name (13.11.2026), and
+        // tapping it shows the other threads as host keys (no Material menu, .claude/skills/ttt-design).
+        fun pick(p: String?) {
+            partnerMenu = false
+            if (p == partner) return
+            if (recording) discardListening()
+            MaReader.stop()
+            MaClaudeLink.setPartner(app, p)
+            partner = p
+            msgs.clear(); msgs.addAll(loadThread(p))
+            status = ""
+        }
+        partner?.let { name ->
+            Text(
+                "Claude Code · $name",
+                color = MaHost.Gold, fontSize = 15.sp, fontWeight = FontWeight.Bold, maxLines = 1,
+                modifier = Modifier.fillMaxWidth().clickable { partnerMenu = !partnerMenu }.padding(horizontal = 14.dp, vertical = 8.dp),
+            )
+        }
+        if (partner == null && !partnerMenu) {
+            val n = MaClaudeLink.sessions(app).size
+            if (n > 0) Text(
+                "Claude Code chats: $n ›", color = MaHost.Muted, fontSize = 13.sp,
+                modifier = Modifier.clickable { partnerMenu = true }.padding(horizontal = 14.dp, vertical = 6.dp),
+            )
+        }
+        if (partnerMenu) {
+            Row(modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).padding(horizontal = 3.dp)) {
+                MaHostKey("RE", ring = if (partner == null) MaHost.RingOn else null, fontSize = 13, padH = 8) { pick(null) }
+                MaClaudeLink.sessions(app).forEach { n ->
+                    MaHostKey(n, ring = if (partner == n) MaHost.RingOn else null, fontSize = 13, padH = 8) { pick(n) }
+                }
+            }
+        }
+        // ---- the chat
         LazyColumn(
             state = listState,
             modifier = Modifier.weight(1f).fillMaxWidth(),
@@ -385,7 +467,8 @@ private fun ChatScreen(
             if (msgs.isEmpty() && !thinking) {
                 item {
                     Text(
-                        (MaReChat.person?.let { "With $it. " } ?: "") + "Ask what to write; RE reads the chat behind and its notes.",
+                        partner?.let { "Messages from Claude Code · $it appear here. What you send goes to that session on the Mac, only when you press Send." }
+                            ?: ((MaReChat.person?.let { "With $it. " } ?: "") + "Ask what to write; RE reads the chat behind and its notes."),
                         color = MaHost.Muted, fontSize = 15.sp, modifier = Modifier.fillMaxWidth().padding(24.dp),
                     )
                 }
@@ -404,6 +487,7 @@ private fun ChatScreen(
                         wrong = wrongAt == m.at,
                     )
                     ReActions(
+                        ai = partner == null,
                         canAccept = MaReChat.pkg != null,
                         editing = editing,
                         speaking = speakingAt == m.at && MaReader.state != MaReader.State.IDLE,
@@ -433,7 +517,7 @@ private fun ChatScreen(
                             if (!thinking) {
                                 MaReader.stop()
                                 msgs.remove(m)
-                                MaReChat.save(msgs.toList())
+                                persist()
                                 ask()
                             }
                         },
@@ -453,6 +537,15 @@ private fun ChatScreen(
         }
         if (status.isNotBlank()) {
             Text(status, color = MaHost.Muted, fontSize = 13.sp, maxLines = 2, modifier = Modifier.padding(horizontal = 14.dp, vertical = 2.dp))
+        }
+        failedWav?.let { kept ->
+            Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 3.dp)) {
+                MaHostKey("Resend", Modifier.weight(1f), icon = Icons.AutoMirrored.Filled.Send, ink = MaHost.Gold, ring = MaHost.RingOn, fontSize = 13,
+                    enabled = !transcribing) { transcribe(kept) }
+                MaHostKey("Delete recording", Modifier.weight(1f), icon = Icons.Default.Delete, ink = MaHost.DangerInk, fontSize = 13) {
+                    runCatching { kept.delete() }; failedWav = null; status = ""
+                }
+            }
         }
 
         // ---- the composer, as the keyboard's strip: language badge, (trash), field or recorder, send
@@ -538,11 +631,18 @@ private fun ChatScreen(
     if (confirmClear) {
         HostDialog(
             title = "Clear the chat?",
-            text = "RE first writes what it learned into TAKEOVER, LESSONS, SKILLS and the file of the person you are talking to " +
-                "(synced to GitHub). Then the chat is deleted; those files stay (People).",
+            text = partner?.let { "Deletes this chat with Claude Code · $it on this phone. The session on the Mac keeps its own." }
+                ?: ("RE first writes what it learned into TAKEOVER, LESSONS, SKILLS and the file of the person you are talking to " +
+                "(synced to GitHub). Then the chat is deleted; those files stay (People)."),
             confirmLabel = "Clear",
             onConfirm = {
                 confirmClear = false
+                partner?.let {
+                    MaReader.stop()
+                    msgs.clear(); persist()
+                    status = "Chat with Claude Code · $it cleared"
+                    return@HostDialog
+                }
                 clearing = true
                 status = "Writing takeover, lessons, skills…"
                 MaReader.stop()
@@ -619,6 +719,7 @@ private fun ReBalloon(m: MaReChat.Msg, speaking: Boolean, editing: Boolean, edit
 /** The keys under every RE answer. */
 @Composable
 private fun ReActions(
+    ai: Boolean,
     canAccept: Boolean,
     editing: Boolean,
     speaking: Boolean,
@@ -632,9 +733,10 @@ private fun ReActions(
 ) {
     Row(modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).padding(end = 24.dp)) {
         MaHostKey("Accept", icon = Icons.Default.Check, ring = MaHost.RingOn, enabled = canAccept, fontSize = 13, padH = 8, onClick = onAccept)
-        MaHostKey(if (editing) "Done" else null, icon = Icons.Default.Edit, lit = editing, fontSize = 13, padH = 8, onClick = onEdit)
+        if (ai) MaHostKey(if (editing) "Done" else null, icon = Icons.Default.Edit, lit = editing, fontSize = 13, padH = 8, onClick = onEdit)
         MaHostKey(null, icon = Icons.Default.ContentCopy, padH = 8, onClick = onCopy)
         MaHostKey(null, icon = if (speaking) Icons.AutoMirrored.Filled.VolumeOff else Icons.AutoMirrored.Filled.VolumeUp, lit = speaking, padH = 8, onClick = onSpeak)
+        if (!ai) return@Row
         MaHostKey(null, icon = Icons.Default.Refresh, padH = 8, onClick = onRetry)
         MaHostKey("Wrong", icon = Icons.Default.ThumbDown, ink = MaHost.DangerInk, ring = if (wrong) MaHost.DangerInk else null, fontSize = 13, padH = 8, onClick = onWrong)
     }

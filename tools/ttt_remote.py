@@ -20,6 +20,7 @@ ever leaves the phone through this; status shows counts only.
     python3 tools/ttt_remote.py tap X Y | swipe X1 Y1 X2 Y2 [ms] | key BACK | text "abc"   (all pass the lock)
     python3 tools/ttt_remote.py install 642             # release build-642 from GitHub, adb install -r (never uninstall)
     python3 tools/ttt_remote.py log                     # files/engines_log.txt
+    python3 tools/ttt_remote.py claude "MAC_SES3" "text" # a Claude Code session writes into Marko's RE chat (MaClaudeLink)
     python3 tools/ttt_remote.py lock "what I am doing" --minutes 5   # top bar with a countdown, TAKE OVER on the right
     python3 tools/ttt_remote.py request "what for"      # v11: the blob asks him; waits until he hands the phone over
     python3 tools/ttt_remote.py unlock
@@ -218,6 +219,9 @@ def main(argv):
         apk = f"/tmp/ttt-build-{n}.apk"
         urllib.request.urlretrieve(f"https://github.com/markoboskoauroville/TTT/releases/download/build-{n}/ttt-build-{n}.apk", apk)
         print(subprocess.run(["adb", "-s", DEV, "install", "-r", apk], capture_output=True, text=True).stdout.strip())
+    elif cmd == "claude":
+        # The Mac's way in (13.11.2026): one message from a Claude Code session into that session's thread.
+        print(call("dev.ttt.remote.CLAUDE_SAY", 20, **{"from": pos[0], "text": " ".join(pos[1:])}))
     elif cmd == "log":
         print(adb("shell", "cat", f"{FILES}/engines_log.txt"))
     else:

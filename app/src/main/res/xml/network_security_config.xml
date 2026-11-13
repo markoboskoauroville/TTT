@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The Mac relay for the RE chat with Claude Code sessions (MaClaudeLink, 13.11.2026) speaks plain HTTP inside
+     Tailscale (WireGuard-encrypted). Only these hosts; everything else stays HTTPS-only. -->
+<network-security-config>
+    <domain-config cleartextTrafficPermitted="true">
+        <domain includeSubdomains="false">100.79.251.19</domain>
+        <domain includeSubdomains="false">macbook-pro</domain>
+        <domain includeSubdomains="true">ts.net</domain>
+        <domain includeSubdomains="false">127.0.0.1</domain>
+        <domain includeSubdomains="false">localhost</domain>
+    </domain-config>
+</network-security-config>

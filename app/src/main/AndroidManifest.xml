@@ -57,6 +57,7 @@
         android:name="dev.patrickgold.florisboard.FlorisApplication"
         android:allowBackup="true"
         android:dataExtractionRules="@xml/backup_rules"
+        android:networkSecurityConfig="@xml/network_security_config"
         android:fullBackupContent="@xml/backup_rules"
         android:icon="@mipmap/app_icon"
         android:label="@string/floris_app_name"
@@ -83,6 +84,8 @@
                 <action android:name="dev.ttt.engines.ENABLE"/>
                 <action android:name="dev.ttt.engines.DEMO"/>
                 <action android:name="dev.ttt.engines.PING"/>
+                <action android:name="dev.ttt.remote.CLAUDE_SAY"/>
+                <action android:name="dev.ttt.remote.CLAUDE_URL"/>
                 <action android:name="dev.ttt.engines.SIMNET"/>
                 <action android:name="dev.ttt.engines.RE"/>
                 <action android:name="dev.ttt.engines.RE_COMPARE"/>

@@ -156,6 +156,25 @@ class EngineDebugReceiver : BroadcastReceiver() {
                             .put("githubDb", dev.patrickgold.florisboard.dictate.MaRemoteDb.hasToken())
                             .put("hH", EngineStore.selected(app, "hr")).put("hE", EngineStore.selected(app, "en")))
                     }
+                    "dev.ttt.remote.CLAUDE_SAY" -> {
+                        // A Claude Code session on the Mac writes to Marko (MaClaudeLink, 13.11.2026), by text over adb:
+                        // am broadcast -a dev.ttt.remote.CLAUDE_SAY -n <pkg>/<receiver> --es from "<session>" --es text "<message>"
+                        val from = i.getStringExtra("from").orEmpty()
+                        val text = i.getStringExtra("text").orEmpty()
+                        val ok = text.isNotBlank()
+                        if (ok) kotlinx.coroutines.withContext(Dispatchers.Main) { dev.patrickgold.florisboard.dictate.MaClaudeLink.receive(app, from, text) }
+                        remoteOut(app, i, JSONObject().put("ok", ok).put("from", from).put("chars", text.length)
+                            .put("chatOpen", dev.patrickgold.florisboard.dictate.MaClaudeLink.chatOpen)
+                            .put("waitingToMac", dev.patrickgold.florisboard.dictate.MaClaudeLink.waiting()))
+                    }
+                    "dev.ttt.remote.CLAUDE_URL" -> {
+                        // The relay's address, when the Mac's Tailscale address changes (default MaClaudeLink.DEFAULT_URL).
+                        val u = i.getStringExtra("url").orEmpty()
+                        if (u.startsWith("http")) dev.patrickgold.florisboard.dictate.MaClaudeLink.setUrl(app, u)
+                        dev.patrickgold.florisboard.dictate.MaClaudeLink.flush(app)
+                        remoteOut(app, i, JSONObject().put("ok", true).put("url", dev.patrickgold.florisboard.dictate.MaClaudeLink.url(app))
+                            .put("token", dev.patrickgold.florisboard.dictate.MaClaudeLink.hasToken(app)))
+                    }
                     "dev.ttt.remote.RE_ENGINE" -> {
                         val e = i.getStringExtra("e").orEmpty()
                         val ok = e in listOf("anthropic_auto", "opus", "sonnet", "qwen")

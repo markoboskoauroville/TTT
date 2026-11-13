@@ -1,0 +1,29 @@
+#!/usr/bin/env python3
+"""MaClaudeLink (13.11.2026): the RE chat talks to Claude Code sessions on the Mac; text only; SEND is the only trigger."""
+import os, sys
+R = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+K = os.path.join(R, "app/src/main/kotlin/dev/patrickgold/florisboard")
+def read(p): return open(os.path.join(K, p), encoding="utf-8").read()
+fail = []
+def check(ok, msg):
+    if not ok: fail.append(msg)
+link = read("dictate/MaClaudeLink.kt")
+check('"X-Mantra-Token"' in link and "/reply" in link, "relay POST /reply with X-Mantra-Token")
+check('put("id"' in link, "every message carries its id (delivered once)")
+check("outbox" in link and "delay(wait)" in link, "unreachable Mac: queued and retried")
+check("EngineKeys.ownLines(c, RING)" in link, "token from the key ring (file picker), never typed")
+chat = read("dictate/MaReChatActivity.kt")
+check("MaClaudeLink.send(app, p, t)" in chat, "chat sends to the session")
+check("failedWav = mine" in chat and '"Resend"' in chat, "failed transcription keeps the recording, Resend by hand")
+check("runCatching { mine.delete() }\n            if (w.isNotBlank())" in chat, "recording deleted only after it was transcribed")
+check('"Claude Code · $name"' in chat, "header shows the session name")
+jobs = read("dictate/engines/EngineJobs.kt")
+check('"dev.ttt.remote.CLAUDE_SAY"' in jobs, "adb broadcast in")
+man = open(os.path.join(R, "app/src/main/AndroidManifest.xml")).read()
+check("dev.ttt.remote.CLAUDE_SAY" in man and "network_security_config" in man, "manifest: action and cleartext only for the relay")
+nsc = open(os.path.join(R, "app/src/main/res/xml/network_security_config.xml")).read()
+check("<base-config" not in nsc, "cleartext allowed only for listed hosts")
+check("mantra-relay-token" in read("dictate/engines/KeyImporter.kt"), "relay token through the key file picker")
+if fail:
+    print("\n".join("FAIL " + f for f in fail)); sys.exit(1)
+print("claude link ok")

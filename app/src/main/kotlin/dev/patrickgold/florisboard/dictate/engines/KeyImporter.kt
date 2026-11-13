@@ -138,11 +138,27 @@ object KeyImporter {
         return "KLIPY (GIF search): 1 key stored"
     }
 
-    suspend fun importTexts(c: Context, files: List<Pair<String, String>>, onProgress: (String) -> Unit): Outcome {
+    /**
+     * The Mac relay token (MaClaudeLink, 13.11.2026): a file named mantra-relay-token*.txt holds it on one line. Kept
+     * encrypted in its own ring; the file is not scanned for engine keys.
+     */
+    private fun importRelay(c: Context, files: List<Pair<String, String>>): String? {
+        val f = files.firstOrNull { (n, _) -> n.contains("mantra-relay-token", true) } ?: return null
+        val tok = f.second.lines().map { it.trim() }.firstOrNull { Regex("[A-Za-z0-9_-]{16,}").matches(it) }
+            ?: return "Mac relay token: none found in ${f.first}"
+        EngineKeys.setLines(c, dev.patrickgold.florisboard.dictate.MaClaudeLink.RING, listOf(tok))
+        dev.patrickgold.florisboard.dictate.MaClaudeLink.flush(c)
+        return "Mac relay token (chat with Claude Code): 1 key stored"
+    }
+
+    suspend fun importTexts(c: Context, all: List<Pair<String, String>>, onProgress: (String) -> Unit): Outcome {
+        val relay = importRelay(c, all)
+        val files = all.filterNot { (n, _) -> n.contains("mantra-relay-token", true) }
+        if (files.isEmpty() && relay != null) return Outcome(relay, if (relay.endsWith("stored")) 1 else 0)
         val gh = importGithub(c, files, onProgress)
         val gif = importKlipy(files)
         val o = importEngineKeys(c, files, onProgress)
-        val extra = listOfNotNull(gh, gif)
+        val extra = listOfNotNull(relay, gh, gif)
         val more = extra.count { it.endsWith("stored") && !it.endsWith("not stored") }
         return if (extra.isEmpty()) o else o.copy(summary = (extra + o.summary).joinToString("\n"), stored = o.stored + more)
     }
