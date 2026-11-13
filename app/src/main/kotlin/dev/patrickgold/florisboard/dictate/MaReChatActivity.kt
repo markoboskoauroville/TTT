@@ -119,6 +119,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
 import java.io.File
+import androidx.compose.ui.graphics.asImageBitmap
 import dev.patrickgold.jetpref.datastore.model.collectAsState as collectPrefAsState
 
 /**
@@ -272,7 +273,7 @@ private fun ChatScreen(
 
     LaunchedEffect(Unit) {
         MaClaudeLink.incoming.collect { inc ->
-            if (inc.from == partner) { msgs.add(inc.msg); if (voice) speak(inc.msg) }
+            if (inc.from == partner) { msgs.add(inc.msg); if (voice && inc.msg.shown.isNotBlank()) speak(inc.msg) }
             else status = "New message from Claude Code · ${inc.from}"
         }
     }
@@ -491,11 +492,21 @@ private fun ChatScreen(
                     )
                     ReActions(
                         ai = partner == null,
+                        // A Claude Code session's draft (a WhatsApp reply written on the Mac): edit it, then "Send it"
+                        // approves exactly that text back to the session; only then does the Mac send it (13.11.2026).
+                        sessionDraft = partner != null && m.draft != null,
                         canAccept = MaReChat.pkg != null,
                         editing = editing,
                         speaking = speakingAt == m.at && MaReader.state != MaReader.State.IDLE,
                         wrong = wrongAt == m.at,
                         onAccept = {
+                            val p = partner
+                            if (p != null) {
+                                val final = if (editing) editText.trim() else (m.draft ?: m.shown)
+                                editingAt = -1L
+                                send("APPROVED. Send exactly this reply, nothing else:\n<send>$final</send>")
+                                return@ReActions
+                            }
                             if (editing) {
                                 val original = m.draft ?: m.shown
                                 val edited = editText.trim()
@@ -685,6 +696,8 @@ private fun ReBalloon(m: MaReChat.Msg, speaking: Boolean, editing: Boolean, edit
                 .border(1.dp, if (wrong) MaHost.DangerInk else MaHost.RingSwitch.copy(alpha = 0.35f), BalloonRe)
                 .padding(horizontal = 14.dp, vertical = 9.dp),
         ) {
+            m.image?.let { MsgImage(it) }
+            if (m.text.isBlank() && !editing) return@Column
             when {
                 editing -> BasicTextField(
                     value = editText, onValueChange = onEditText,
@@ -719,10 +732,46 @@ private fun ReBalloon(m: MaReChat.Msg, speaking: Boolean, editing: Boolean, edit
     }
 }
 
+/**
+ * A picture in a balloon (a screenshot from the Mac): fitted to the balloon; a tap shows it on the whole screen, a tap
+ * there closes it.
+ */
+@Composable
+private fun MsgImage(path: String) {
+    val bmp = remember(path) {
+        runCatching {
+            val o = android.graphics.BitmapFactory.Options().apply { inJustDecodeBounds = true }
+            android.graphics.BitmapFactory.decodeFile(path, o)
+            var sample = 1
+            while (o.outWidth / sample > 1600) sample *= 2
+            android.graphics.BitmapFactory.decodeFile(path, android.graphics.BitmapFactory.Options().apply { inSampleSize = sample })?.asImageBitmap()
+        }.getOrNull()
+    }
+    var full by remember { mutableStateOf(false) }
+    if (bmp == null) { Text("(picture missing)", color = MaHost.Muted, fontSize = 14.sp); return }
+    androidx.compose.foundation.Image(
+        bitmap = bmp, contentDescription = "Picture from the Mac",
+        contentScale = androidx.compose.ui.layout.ContentScale.FillWidth,
+        modifier = Modifier.fillMaxWidth().padding(bottom = 6.dp).clip(RoundedCornerShape(10.dp)).clickable { full = true },
+    )
+    if (full) androidx.compose.ui.window.Dialog(
+        onDismissRequest = { full = false },
+        properties = androidx.compose.ui.window.DialogProperties(usePlatformDefaultWidth = false),
+    ) {
+        Box(Modifier.fillMaxSize().background(MaHost.Bg).clickable { full = false }, contentAlignment = Alignment.Center) {
+            androidx.compose.foundation.Image(
+                bitmap = bmp, contentDescription = "Picture from the Mac",
+                contentScale = androidx.compose.ui.layout.ContentScale.Fit, modifier = Modifier.fillMaxSize(),
+            )
+        }
+    }
+}
+
 /** The keys under every RE answer. */
 @Composable
 private fun ReActions(
     ai: Boolean,
+    sessionDraft: Boolean = false,
     canAccept: Boolean,
     editing: Boolean,
     speaking: Boolean,
@@ -735,8 +784,9 @@ private fun ReActions(
     onWrong: () -> Unit,
 ) {
     Row(modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).padding(end = 24.dp)) {
-        MaHostKey("Accept", icon = Icons.Default.Check, ring = MaHost.RingOn, enabled = canAccept, fontSize = 13, padH = 8, onClick = onAccept)
-        if (ai) MaHostKey(if (editing) "Done" else null, icon = Icons.Default.Edit, lit = editing, fontSize = 13, padH = 8, onClick = onEdit)
+        if (sessionDraft) MaHostKey("Send it", icon = Icons.AutoMirrored.Filled.Send, ink = MaHost.Gold, ring = MaHost.RingOn, fontSize = 13, padH = 8, onClick = onAccept)
+        else MaHostKey("Accept", icon = Icons.Default.Check, ring = MaHost.RingOn, enabled = canAccept, fontSize = 13, padH = 8, onClick = onAccept)
+        if (ai || sessionDraft) MaHostKey(if (editing) "Done" else null, icon = Icons.Default.Edit, lit = editing, fontSize = 13, padH = 8, onClick = onEdit)
         MaHostKey(null, icon = Icons.Default.ContentCopy, padH = 8, onClick = onCopy)
         MaHostKey(null, icon = if (speaking) Icons.AutoMirrored.Filled.VolumeOff else Icons.AutoMirrored.Filled.VolumeUp, lit = speaking, padH = 8, onClick = onSpeak)
         if (!ai) return@Row

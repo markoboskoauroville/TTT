@@ -41,7 +41,8 @@ import kotlin.jvm.Volatile
  */
 object MaReChat {
 
-    data class Msg(val me: Boolean, val text: String, val at: Long = System.currentTimeMillis()) {
+    /** [image]: a picture sent by a Claude Code session (a WhatsApp screenshot from the Mac, MaClaudeLink), its path. */
+    data class Msg(val me: Boolean, val text: String, val at: Long = System.currentTimeMillis(), val image: String? = null) {
         /** The sendable part of an RE answer, or null when it is only talk. */
         val draft: String? get() = if (me) null else DRAFT.find(text)?.groupValues?.get(1)?.trim()?.takeIf { it.isNotEmpty() }
         /** What the bubble shows: the draft markers taken out. */
@@ -152,13 +153,13 @@ object MaReChat {
     /** [name]: the RE chat, or a Claude Code thread ("claude/<slug>.json", MaClaudeLink). */
     fun load(name: String = CHAT): List<Msg> = runCatching {
         val a = JSONArray(file(name).readText())
-        (0 until a.length()).map { i -> a.getJSONObject(i).let { Msg(it.getBoolean("me"), it.getString("t"), it.optLong("at")) } }
+        (0 until a.length()).map { i -> a.getJSONObject(i).let { Msg(it.getBoolean("me"), it.getString("t"), it.optLong("at"), it.optString("img").ifBlank { null }) } }
     }.getOrDefault(emptyList())
 
     fun save(msgs: List<Msg>, name: String = CHAT) {
         runCatching {
             val a = JSONArray()
-            msgs.forEach { a.put(JSONObject().put("me", it.me).put("t", it.text).put("at", it.at)) }
+            msgs.forEach { a.put(JSONObject().put("me", it.me).put("t", it.text).put("at", it.at).apply { it.image?.let { p -> put("img", p) } }) }
             val f = file(name)
             f.parentFile?.mkdirs()
             val tmp = File(f.parentFile, f.name + ".tmp")

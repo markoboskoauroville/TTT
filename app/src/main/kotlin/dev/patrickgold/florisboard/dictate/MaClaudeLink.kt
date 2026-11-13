@@ -117,11 +117,11 @@ object MaClaudeLink {
     // ---------------------------------------------------------------- in
 
     /** A message from a Claude Code session (adb broadcast). Joins its thread; shown, spoken or notified. */
-    fun receive(c: Context, from: String, text: String) {
+    fun receive(c: Context, from: String, text: String, image: String? = null) {
         val app = c.applicationContext
         val name = from.trim().ifBlank { "Claude Code" }
         remember(app, name)
-        val m = MaReChat.Msg(false, text.trim())
+        val m = MaReChat.Msg(false, text.trim(), image = image?.let { keepImage(app, it) })
         val file = threadName(name)
         synchronized(this) { MaReChat.save(MaReChat.load(file) + m, file) }
         if (chatOpen) {
@@ -129,11 +129,25 @@ object MaClaudeLink {
             return
         }
         // Closed chat: open it on this thread when he taps; speak now when voice mode is on.
-        notify(app, name, m.text)
-        if (MaReChat.voiceMode(app) && !MaReChat.muted(app)) {
-            scope.launch(Dispatchers.Main) { runCatching { MaReader.speakText(app, m.text) { } } }
+        notify(app, name, m.shown.ifBlank { "Picture" })
+        if (m.shown.isNotBlank() && MaReChat.voiceMode(app) && !MaReChat.muted(app)) {
+            scope.launch(Dispatchers.Main) { runCatching { MaReader.speakText(app, m.shown) { } } }
         }
     }
+
+    /**
+     * A picture the Mac pushed by adb into TTT's own files (Android/data/<pkg>/files/claude_inbox/…, [rel] relative to that
+     * folder): copied into the chat's folder so the thread keeps it. Nothing outside that folder is read.
+     */
+    private fun keepImage(c: Context, rel: String): String? = runCatching {
+        val base = c.getExternalFilesDir(null)!!.canonicalFile
+        val src = File(base, rel.removePrefix("/")).canonicalFile
+        if (!src.path.startsWith(base.path + File.separator) || !src.isFile) return null
+        val out = File(File(dir(), "img").apply { mkdirs() }, "${System.currentTimeMillis()}_${src.name}")
+        src.copyTo(out, overwrite = true)
+        src.delete()
+        out.path
+    }.getOrNull()
 
     private fun notify(c: Context, from: String, text: String) = runCatching {
         val nm = c.getSystemService(NotificationManager::class.java)
