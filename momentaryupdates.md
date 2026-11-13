@@ -495,3 +495,9 @@ voices. Stopped here: a further build plus a full suite (~1 h) would not finish 
 > please using local ADB test this keyboard the way I ask you to do it  Please do at least 30 minutes of typing, correcting, comparing opus, sonnet, queen and also make third options. Tropic Auto, which is going to choose appropriate model. It's like I already built this in my mod. It's a model router. To choose sonnet or opus depends on the complexity of the task." (Marko, 13.11.2026; "Queen"/"QEN" = Qwen, "Atropic"/"Tropic" = Anthropic, "ARI Magic" = RE Magic)
 
 **Status:** saved first. Plan: RE engine = Anthropic Auto (router: Sonnet or Opus by complexity) / Opus / Sonnet / Qwen (Groq, the larger Qwen model from the Flask app's manifest); no other Groq models. RE's Groq key is its own ring, from its own file picker, tested at the moment of picking ("works" / "does not work"). Qwen reads the same MDs (TAKEOVER, LESSONS, SKILLS, people) with a prompt tuned so it matches Anthropic; lessons for Qwen from his repos first. A debug broadcast runs invented chats through all four and writes a comparison; 30+ minutes over adb.
+
+## 13.11.2026 – RE searches all my GitHub repositories
+
+> "one more feature, AI Magic must be aware of my Github token and in that way it can search through my Github repositories, all of them private or not, and search for information if I ask it to do that" (Marko, 13.11.2026; "AI Magic" = RE Magic)
+
+**Status:** saved first. Plan: a GitHub token from a key file (never a paste box) that can read his repos is kept encrypted for RE (ring github_read; the RE database token is used if it is the only one and can read). In the RE chat, when he asks about his repos, projects or code, RE searches (GitHub code and repository search across all his repos, private too) and reads files (README, TAKEOVER, any path), up to 4 looks per answer, then answers; read only, never writes to any repository. Works with Anthropic and Qwen alike.
