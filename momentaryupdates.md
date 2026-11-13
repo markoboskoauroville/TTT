@@ -507,3 +507,9 @@ voices. Stopped here: a further build plus a full suite (~1 h) would not finish 
 > "The key leaves here and also fix one more bug. By the way, next to the left control there is two SY-SY buttons. SY1 is showing one symbol layout, SY2 is showing second symbol layout and that's all what I can do. Nothing else. And where they are in their symbol layout, they instead of SY, the text change to text. So I can quickly switch to my text layout. And no other functions this do. No dot, no comma, nothing." (Marko, 13.11.2026; screenshot: groq-payed-key.txt in Download/Api)
 
 **Status:** key imported over adb through "Import RE key from file": "Key 1: works, kept for RE". SY: letters ctrl | sy1 | sy2; symbols 1 ctrl | text | sy2; symbols 2 ctrl | sy1 | text; no popups on them; the comma key in the symbol rows is gone and the period's hold types the comma there (as on the letters).
+
+## 13.11.2026 – talk to me through my voice engine while debugging
+
+> "Please talk to me via my local voice engine for updates, what you are doing, update me where we are. Because now we are in debugging mode, I will give you control of my phone and I cannot read this chat. You need to talk to me." (Marko, 13.11.2026)
+
+**Status:** done. tools/voice/say_on_phone.sh: speech made locally (espeak-ng, nothing sent to an online voice), played by Voice Engine v3 on the Nothing (POST /play over an adb forward of port 8720) with its subtitle. Every step of the debugging is spoken.
