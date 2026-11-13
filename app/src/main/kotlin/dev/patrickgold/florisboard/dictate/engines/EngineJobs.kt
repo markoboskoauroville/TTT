@@ -128,8 +128,11 @@ class EngineDebugReceiver : BroadcastReceiver() {
                         // The engine comparison (13.11.2026): invented chats through Opus, Sonnet, Auto and Qwen; results in re_compare.json.
                         val engines = (i.getStringExtra("e") ?: "opus,sonnet,anthropic_auto,qwen").split(',').map { it.trim() }.filter { it.isNotEmpty() }
                         val only = i.getStringExtra("only")?.split(',')?.map { it.trim() }?.toSet()
-                        val f = dev.patrickgold.florisboard.dictate.MaReCompare.run(app, engines, only) { out("compare " + it) }
-                        out("compare done: " + f.absolutePath)
+                        // Its own scope: a run takes minutes and must not hold the broadcast (that was an ANR on 13.11.2026).
+                        dev.patrickgold.florisboard.dictate.MaReChat.scope.launch {
+                            val f = dev.patrickgold.florisboard.dictate.MaReCompare.run(app, engines, only) { out("compare " + it) }
+                            out("compare done: " + f.absolutePath)
+                        }
                     }
                     "dev.ttt.engines.RE" -> {
                         // Debug: one RE rewrite with the chosen RE engine, the result's first words logged (a test sentence, no key).

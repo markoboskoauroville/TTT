@@ -40,83 +40,20 @@ def labels_all(mod: str):
     return [k.get("label") for row in rows for k in row]
 
 
-# ---------------------------------------------------------------- one key, one cycle
+# ---------------------------------------------------------------- the ring is gone (13.11.2026)
 #
-# `sy1` and `sy2` are gone, replaced by ONE key that walks the views in a ring:
-#
-#     characters -> symbols -> symbols2 -> characters
-#
-# Two keys meant two orders to remember and one of them skipped a panel. **A ring has no order to
-# learn: press it again and you arrive somewhere new, and pressing it enough always brings you
-# home.** Its label is the view it goes TO, so the key says where the next press lands.
-#
-# The long press keeps all three on the popup, so a deadline does not mean walking the ring.
-# READ FROM THE FILES, not written here. The first version hardcoded this dict and the ring-walk
-# checks below then passed a sabotage that made symbols point back to characters — they were walking
-# the test's idea of the ring, not the keyboard's. **A model is not a witness to the code it models**,
-# and this is the second time that exact sentence has been earned this month.
-CYCLE = {m: bottom(m)[1] for m in ("charactersMod", "symbolsMod", "symbols2Mod")}
-EXPECTED = {"charactersMod": "view_symbols", "symbolsMod": "view_symbols2",
-            "symbols2Mod": "view_characters"}
-for _m, _t in EXPECTED.items():
-    check(f"{_m}: goes to {_t}", CYCLE.get(_m) == _t, f"{CYCLE.get(_m)}")
-for mod in EXPECTED:
-    row = bottom(mod)
-    check(f"{mod}: ctrl is on the far left", row[0] == "ctrl", str(row))
-    check(f"{mod}: the ring key is second", row[1].startswith("view_"), str(row))
-
-# THE RING CLOSES, and every panel is on it. Walked rather than eyeballed: three steps from any
-# starting panel must visit all three and return.
-for start in CYCLE:
-    seen, here = [], start
-    for _ in range(3):
-        here = {"view_characters": "charactersMod", "view_symbols": "symbolsMod",
-                "view_symbols2": "symbols2Mod"}[CYCLE[here]]
-        seen.append(here)
-    check(f"from {start}: the ring visits all three", set(seen) == set(CYCLE), str(seen))
-    check(f"from {start}: three presses come home", seen[-1] == start, str(seen))
-
-# The jump is still there for when he has no time to walk it.
-for mod in CYCLE:
-    rows = json.loads((LAYOUTS / mod / "default.json").read_text())
-    popup = [x.get("label") for x in rows[-1][1].get("popup", {}).get("relevant", [])]
-    check(f"{mod}: the long press offers all three", set(popup) == set(CYCLE.values()), str(popup))
-
-# ---------------------------------------------------------------- the corner
-# ---------------------------------------------------------------- ctrl far left, one switcher
-#
-# He asked for SwiftKey's corner to be set aside here: `ctrl` on the far left, then a SINGLE view
-# switcher. The second `sy` key is gone — two keys that both change the view are two orders to
-# remember, and he had to learn which one skipped what.
+# The one-key ring and the long-press list of views were replaced by Marko's own design: two fixed keys next to
+# ctrl, each going to one place, and nothing on a hold. Checked further down (EXPECT).
+targets = {"view_characters", "view_symbols", "view_symbols2"}
 for mod in ("charactersMod", "symbolsMod", "symbols2Mod"):
     row = bottom(mod)
     check(f"{mod}: ctrl is far left", row[0] == "ctrl", str(row))
-    check(f"{mod}: the switcher is second", row[1].startswith("view_"), str(row))
-
-# THE CYCLE, with no skipping: letters -> symbols -> symbols2 -> letters.
-#
-# Each panel's key goes to the NEXT panel, so pressing it repeatedly walks every view and returns.
-# Before this, two keys each jumped to a fixed panel and neither visited all three in order.
-CYCLE = {"charactersMod": "view_symbols",
-         "symbolsMod": "view_symbols2",
-         "symbols2Mod": "view_characters"}
-for mod, expected in CYCLE.items():
-    check(f"{mod}: goes to {expected}", bottom(mod)[1] == expected, str(bottom(mod)))
-
-# It must be a CYCLE, not a chain: every view reachable, and every view left.
-targets = set(CYCLE.values())
-check("every view is a destination", targets == {"view_characters", "view_symbols", "view_symbols2"},
-      str(targets))
-check("no view points at itself", all(CYCLE[m] != {"charactersMod": "view_characters",
-                                                   "symbolsMod": "view_symbols",
-                                                   "symbols2Mod": "view_symbols2"}[m] for m in CYCLE),
-      "a key that goes where it already is does nothing")
-
-# THE SHORTCUT: a long press offers all three, so he can jump when he has no time to cycle.
+reach = set()
 for mod in ("charactersMod", "symbolsMod", "symbols2Mod"):
-    rows = json.loads((LAYOUTS / mod / "default.json").read_text())
-    popup = [x.get("label") for x in rows[-1][1].get("popup", {}).get("relevant", [])]
-    check(f"{mod}: long press offers every view", set(popup) == targets, str(popup))
+    reach |= {k for k in bottom(mod) if k.startswith("view_")}
+check("every view is reachable", reach == targets, str(reach))
+for mod, own in (("charactersMod", "view_characters"), ("symbolsMod", "view_symbols"), ("symbols2Mod", "view_symbols2")):
+    check(f"{mod}: no key goes where it already is", own not in bottom(mod), str(bottom(mod)))
 
 # ---------------------------------------------------------------- nothing was lost
 #
@@ -131,8 +68,9 @@ for mod, expected in (
     # The switcher on each panel is now the NEXT view, not always "back to letters" — so what must be
     # present is "a switcher", checked above, rather than one particular destination. Letters remain
     # reachable from every panel: by cycling, and immediately from the long-press menu.
-    ("symbolsMod", {"ctrl", "space", ".", ",", "enter", "view_symbols2"}),
-    ("symbols2Mod", {"ctrl", "space", ".", ",", "enter", "view_characters"}),
+    # 13.11.2026: next to ctrl two layout keys and nothing else; the comma is the period's hold here too.
+    ("symbolsMod", {"ctrl", "space", ".", "enter", "view_characters", "view_symbols2"}),
+    ("symbols2Mod", {"ctrl", "space", ".", "enter", "view_symbols", "view_characters"}),
 ):
     got = set(l for l in labels_all(mod) if l)
     missing = expected - got
@@ -150,15 +88,22 @@ for mod, expected in (
 #
 # `ctrl` STAYED, against the screenshot. SwiftKey has no Ctrl+P and no Ctrl+F; he uses both hourly,
 # and copying a layout is not a reason to delete a feature that layout never had.
-for mod in ("symbolsMod", "symbols2Mod"):
+# 13.11.2026, Marko: "next to the left control there are two SY buttons. SY1 shows one symbol layout, SY2 the
+# second, and that's all they do. In their symbol layout the text changes to text, so I can quickly switch to my text
+# layout. No other functions: no dot, no comma, nothing." So: letters sy1 sy2, symbols 1 text sy2, symbols 2 sy1
+# text; no popups on them; the comma is the period's hold on every panel.
+EXPECT = {"charactersMod": ["view_symbols", "view_symbols2"], "symbolsMod": ["view_characters", "view_symbols2"],
+          "symbols2Mod": ["view_symbols", "view_characters"]}
+for mod, pair in EXPECT.items():
     row = bottom(mod)
     check(f"{mod}: six keys", len(row) == 6, str(row))
-    check(f"{mod}: a dedicated comma", "," in row, "the comma is still hidden on a popup")
-    check(f"{mod}: the comma sits left of space", row.index(",") < row.index("space"), str(row))
-    check(f"{mod}: no language switcher", "language_switch" not in row,
-          "a key that switches a mode the record keys already decide")
-    check(f"{mod}: no second view key", sum(1 for k in row if k.startswith("view_")) == 1,
-          "two keys changing the view is two orders to remember")
+    check(f"{mod}: the two layout keys next to ctrl", row[0] == "ctrl" and row[1:3] == pair, str(row))
+    check(f"{mod}: no comma key on the row", "," not in row, str(row))
+    _rows = json.loads((LAYOUTS / mod / "default.json").read_text())
+    check(f"{mod}: the layout keys do nothing else", all("popup" not in k for k in _rows[-1][1:3]), "a hold on sy does something")
+    _p = next(k for k in _rows[-1] if k.get("label") == ".")
+    check(f"{mod}: the period's hold types the comma", (_p.get("popup", {}).get("main") or {}).get("code") == 44, "no comma on this panel")
+    check(f"{mod}: no language switcher", "language_switch" not in row, str(row))
     check(f"{mod}: enter is last", row[-1] == "enter", str(row))
 
 # ---------------------------------------------------------------- Symbols 2 in one press
@@ -174,16 +119,13 @@ check("charactersMod: no comma key on the row", "," not in row, str(row))
 check("charactersMod: no language switcher", "language_switch" not in row, str(row))
 check("charactersMod: enter is last", row[-1] == "enter", str(row))
 _chars = json.loads((LAYOUTS / "charactersMod" / "default.json").read_text())
-_sy2 = [p.get("label") for p in _chars[-1][2].get("popup", {}).get("relevant", [])]
-check("charactersMod: sy2's hold offers every view too", set(_sy2) == targets, str(_sy2))
 _period = next(k for k in _chars[-1] if k.get("label") == ".")
 check("the period's hold types the comma", (_period.get("popup", {}).get("main") or {}).get("code") == 44,
       "the comma would be unreachable from the letters")
 
 # What the removed keys offered must still be reachable, or the tidy-up deleted a panel.
 chars_rows = json.loads((LAYOUTS / "charactersMod" / "default.json").read_text())
-sw_popup = [p.get("label") for p in chars_rows[-1][1].get("popup", {}).get("relevant", [])]
-check("the second symbol panel is still reachable", "view_symbols2" in sw_popup, str(sw_popup))
+check("the second symbol panel is one press away", "view_symbols2" in bottom("charactersMod"), str(bottom("charactersMod")))
 
 # Ctrl survives, and it is the one whose loss he would feel first.
 for mod in ("charactersMod", "symbolsMod", "symbols2Mod"):

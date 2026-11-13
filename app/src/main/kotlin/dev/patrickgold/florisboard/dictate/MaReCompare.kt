@@ -105,6 +105,7 @@ object MaReCompare {
     }
 
     suspend fun run(c: Context, engines: List<String>, only: Set<String>?, out: (String) -> Unit): File {
+        MaReChat.ensureMemory()
         val file = File(c.getExternalFilesDir(null), "re_compare.json")
         val all = JSONArray()
         val scenarios = SCENARIOS.filter { only == null || it.id in only }

@@ -24,50 +24,12 @@
     {
       "code": -202,
       "label": "view_symbols",
-      "type": "system_gui",
-      "popup": {
-        "relevant": [
-          {
-            "code": -201,
-            "label": "view_characters",
-            "type": "system_gui"
-          },
-          {
-            "code": -202,
-            "label": "view_symbols",
-            "type": "system_gui"
-          },
-          {
-            "code": -203,
-            "label": "view_symbols2",
-            "type": "system_gui"
-          }
-        ]
-      }
+      "type": "system_gui"
     },
     {
       "code": -203,
       "label": "view_symbols2",
-      "type": "system_gui",
-      "popup": {
-        "relevant": [
-          {
-            "code": -201,
-            "label": "view_characters",
-            "type": "system_gui"
-          },
-          {
-            "code": -202,
-            "label": "view_symbols",
-            "type": "system_gui"
-          },
-          {
-            "code": -203,
-            "label": "view_symbols2",
-            "type": "system_gui"
-          }
-        ]
-      }
+      "type": "system_gui"
     },
     {
       "code": 32,

@@ -501,3 +501,9 @@ voices. Stopped here: a further build plus a full suite (~1 h) would not finish 
 > "one more feature, AI Magic must be aware of my Github token and in that way it can search through my Github repositories, all of them private or not, and search for information if I ask it to do that" (Marko, 13.11.2026; "AI Magic" = RE Magic)
 
 **Status:** saved first. Plan: a GitHub token from a key file (never a paste box) that can read his repos is kept encrypted for RE (ring github_read; the RE database token is used if it is the only one and can read). In the RE chat, when he asks about his repos, projects or code, RE searches (GitHub code and repository search across all his repos, private too) and reads files (README, TAKEOVER, any path), up to 4 looks per answer, then answers; read only, never writes to any repository. Works with Anthropic and Qwen alike.
+
+## 13.11.2026 – the RE Qwen key file; SY keys only switch layouts
+
+> "The key leaves here and also fix one more bug. By the way, next to the left control there is two SY-SY buttons. SY1 is showing one symbol layout, SY2 is showing second symbol layout and that's all what I can do. Nothing else. And where they are in their symbol layout, they instead of SY, the text change to text. So I can quickly switch to my text layout. And no other functions this do. No dot, no comma, nothing." (Marko, 13.11.2026; screenshot: groq-payed-key.txt in Download/Api)
+
+**Status:** key imported over adb through "Import RE key from file": "Key 1: works, kept for RE". SY: letters ctrl | sy1 | sy2; symbols 1 ctrl | text | sy2; symbols 2 ctrl | sy1 | text; no popups on them; the comma key in the symbol rows is gone and the period's hold types the comma there (as on the letters).
