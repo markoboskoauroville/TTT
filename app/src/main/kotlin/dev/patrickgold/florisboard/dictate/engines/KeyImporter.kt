@@ -46,6 +46,8 @@ object KeyImporter {
     private class G(val kind: String) {
         var keys = 0; var working = 0; var limited = 0; var dead = 0; var noBalance = 0; var unreached = 0
         var gemini = 0; var speech = 0
+        /** One word per key, in file order (Marko, 13.11.2026: the picker says which key works and which does not). */
+        val marks = ArrayList<String>()
         fun line(): String {
             val parts = mutableListOf("$keys ${unit(kind, keys)}", "$keys tested", "$working working")
             if (limited > 0) parts += "$limited rate-limited for now"
@@ -53,7 +55,8 @@ object KeyImporter {
             if (noBalance > 0) parts += "no balance"
             if (unreached > 0) parts += "$unreached not reached"
             val extra = if (kind == "google" && working > 0) " (Gemini $gemini, Speech v1 $speech)" else ""
-            return label(kind) + ": " + parts.joinToString(", ") + extra
+            val each = if (marks.isEmpty()) "" else "\n   " + marks.mapIndexed { i, m -> "key ${i + 1} $m" }.joinToString(", ")
+            return label(kind) + ": " + parts.joinToString(", ") + extra + each
         }
     }
 
@@ -145,10 +148,10 @@ object KeyImporter {
                 if (good(gem)) { g.gemini++; keep.getOrPut("gemini") { mutableListOf() } += cand.value }
                 if (good(sp)) { g.speech++; keep.getOrPut("google_v1") { mutableListOf() } += cand.value }
                 when {
-                    gem == KStatus.WORKING || sp == KStatus.WORKING -> g.working++
-                    good(gem) || good(sp) -> { g.limited++; g.working++ }
-                    gem == KStatus.NETWORK && sp == KStatus.NETWORK -> { g.unreached++; dropped++ }
-                    else -> { g.dead++; dropped++ }
+                    gem == KStatus.WORKING || sp == KStatus.WORKING -> { g.working++; g.marks += "works" }
+                    good(gem) || good(sp) -> { g.limited++; g.working++; g.marks += "works (rate-limited now)" }
+                    gem == KStatus.NETWORK && sp == KStatus.NETWORK -> { g.unreached++; dropped++; g.marks += "not reached" }
+                    else -> { g.dead++; dropped++; g.marks += "does not work" }
                 }
                 continue
             }
@@ -162,6 +165,13 @@ object KeyImporter {
             val kind = adopted ?: first
             val g = groups.getOrPut(kind) { G(kind) }
             g.keys++
+            g.marks += when (status) {
+                KStatus.WORKING -> "works"
+                KStatus.LIMITED -> "works (rate-limited now)"
+                KStatus.NO_BALANCE -> "does not work (no balance)"
+                KStatus.NETWORK -> "not reached"
+                KStatus.DEAD -> "does not work"
+            }
             when (status) {
                 KStatus.WORKING -> { g.working++; keep.getOrPut(ringOf(kind)) { mutableListOf() } += cand.value }
                 KStatus.LIMITED -> { g.working++; g.limited++; keep.getOrPut(ringOf(kind)) { mutableListOf() } += cand.value }

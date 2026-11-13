@@ -126,7 +126,7 @@ check("a press records, in English", "if (rec == null) MaLanguage.set(context, M
 check("the long press opens the typing window", "onLongClick = {" in row[row.find("MaFeatureKey.REPROMPT -> {"):row.find("MaFeatureKey.RECORD -> {")])
 check("set at every start", "repromptRecording = reprompt" in ctrl)
 check("the transcript is an instruction, not typed", "if (repromptRecording && !live) {" in ctrl
-      and "MaReprompt.prompt(words, write, screen), model = MaFlow.model()," in ctrl)
+      and "MaReprompt.prompt(words, write, screen), model = reModel," in ctrl)
 check("empty field writes, text is reshaped", "val write = outSink.fullText().isBlank() && outSink.selectedText().isBlank()" in ctrl)
 check("a streamed preview is taken back", "outSink.clearDictationPreview(realtimeShown.toString())" in ctrl)
 check("kept in Reprompt's list", "MaReprompt.rememberWords(words)" in ctrl)

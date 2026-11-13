@@ -21,7 +21,9 @@ description: TTT, Talk to Type Advanced Keyboard (repo TTT, folder TTT_MINI): Ma
 14. DESIGN: before any UI work load the ttt-design skill; every new screen, panel, recorder or menu reuses the keyboard's modules (MaHostKey, MaKeyPanel, MaRecorderReadout) and MaHost colours. No title bars, no Material default looks.
 15. BEFORE EVERY PUSH, the checklist (the hole Marko found 13.11.2026: rules written but not checked): grep the diff and the touched screens for TextField/OutlinedTextField with key/token/password labels (none allowed), DropdownMenu on the keyboard (none), new hard-coded colours (only MaHost); re-read rules 1-15 against the diff; record the request in momentaryupdates.md, the state in TAKEOVER.md, the mistake in LESSONS.md, the rule here.
 16. RE memory lives in Documents/TTTmini/re/ (TAKEOVER, LESSONS, SKILLS, people/, notes/) and is pushed to the private repo RE_MAGIC_DATABASE after every change (MaRemoteDb, token only from a key file).
+17. RE engine = Anthropic Auto (Haiku judge -> Sonnet/Opus) / Opus / Sonnet / Qwen (Groq, own ring re_qwen, own picker in Settings > RE Magic). No other models. Compare them with the adb broadcast dev.ttt.engines.RE_COMPARE (files/re_compare.json).
 ## Run log
+- 13.11.2026: RE engines Auto/Opus/Sonnet/Qwen, RE Qwen key picker with per-key test, per-key results in the main picker, MaReCompare harness.
 - 13.11.2026: RE chat redesigned in the host look (ttt-design skill, MaHost/MaKeyPanel/MaRecorderReadout), per-answer keys, lessons at once, re/ synced to GitHub, token and KLIPY key only from files, CI test_host_rules.py.
 - 13.11.2026: build 635 (audio-only history, full-screen History, RE Magic chat with memory, per-person People screen); compiled, not yet installed (no adb in the cloud session, Pixel 7 offline).
 - 10.11.2026: shipped default UI, RE Groq switch, Groq small model gpt-oss-20b.

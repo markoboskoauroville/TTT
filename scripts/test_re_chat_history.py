@@ -71,7 +71,7 @@ for f in ["TAKEOVER.md", "LESSONS.md", "SKILLS.md"]:
     check(f"memory file {f}", f in chat)
 check("memory is seeded by default", "fun ensureMemory()" in chat and "ensureMemory()" in cact)
 pr = chat[chat.find("fun prompt("):chat.find("suspend fun ask(")]
-check("every prompt reads the memory", "memoryBlock()" in pr)
+check("every prompt reads the memory", "memoryBlock(ctx)" in pr)
 check("clear learns first, then wipes only the chat", cact.find("MaReChat.learn(app, snapshot, \"cleared\")") < cact.find("MaReChat.clearChat()"))
 _c = chat.find("fun clearChat()")
 cc = chat[_c:chat.find("fun ", _c + 5)]
@@ -97,7 +97,19 @@ check("History button opens People", "showPeople = true" in cact and "PeopleScre
 check("clear one person and all", "deletePerson(which)" in cact and "deleteAllPeople()" in cact)
 check("chat Clear keeps people", "peopleDir" not in chat[chat.find("fun clearChat()"):chat.find("fun ", chat.find("fun clearChat()") + 5)])
 
-# 7. manifest
+# 7. engines (13.11.2026): Auto/Opus/Sonnet/Qwen only, Qwen on its own keys
+eng = code(SRC / "dictate/MaReEngine.kt")
+check("four RE engines", all(x in eng for x in ['AUTO = "anthropic_auto"', 'OPUS = "opus"', 'SONNET = "sonnet"', 'QWEN = "qwen"']))
+check("no OpenAI model for RE", "gpt-oss" not in eng and "gpt-oss" not in row[row.find("MaFeatureKey.REPROMPT ->"):row.find("MaFeatureKey.WHATSAPP ->")])
+check("Qwen has its own ring", 'RING = "re_qwen"' in eng and "KeyRing.run(c, RING" in eng)
+check("Qwen thinking stripped", "fun stripThinking" in eng and "reasoning_format" in eng)
+check("Auto judge with Haiku, unsure = Opus", "JUDGE_MODEL" in eng and "When unsure, pick opus" in eng)
+qk = code(SRC / "app/settings/dictate/MaReQwenKey.kt")
+check("RE key picker tests every key", "OpenMultipleDocuments" in qk and "testQwenKey" in eng and "Key ${i + 1}" in qk)
+imp = code(SRC / "dictate/engines/KeyImporter.kt")
+check("main picker says per key", 'key ${i + 1} $m' in imp)
+
+# 8. manifest
 check("both windows declared", "MaHistoryActivity" in man and "MaReChatActivity" in man)
 
 for f in failures:

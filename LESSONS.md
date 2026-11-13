@@ -24,3 +24,5 @@
 - 13.11.2026 A rule only in a skill file is forgotten; a rule in CI is kept. Key/token fields, Material defaults and own colours in new screens now fail scripts/test_host_rules.py. A test that enforced a paste box (test_remote_db) was itself wrong and was turned around.
 - 13.11.2026 New screens copy the host, not another app: no title bar, no blue/purple/gradients, the keyboard's own key, panel and recorder (ttt-design skill). Build 635's Messenger-blue RE chat was rejected.
 - 13.11.2026 RE learns at the moment of the cue (Wrong, a correcting reply, an Edit), not only at Clear, and every memory change is pushed to GitHub.
+- 13.11.2026 Read his other repos before building an engine: groq_ai_studio already measured Qwen on Groq (qwen3.8-27b stronger and cheaper than 3.6, no OpenAI models, strip <think>, give an output cap, examples beat rules) and MANTRA_ROUTER already defines Auto (Haiku judges, unsure = the higher model).
+- 13.11.2026 A key picker says per key whether it works, at the moment of picking; counts alone are not enough. A feature with its own key (RE's Qwen) gets its own ring and its own picker.

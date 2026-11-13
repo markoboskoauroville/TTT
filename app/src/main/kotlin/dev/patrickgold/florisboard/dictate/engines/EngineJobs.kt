@@ -124,12 +124,19 @@ class EngineDebugReceiver : BroadcastReceiver() {
                         KeyRing.simulateNetFailures = i.getIntExtra("n", 3)
                         out("simulating " + KeyRing.simulateNetFailures + " network failures")
                     }
+                    "dev.ttt.engines.RE_COMPARE" -> {
+                        // The engine comparison (13.11.2026): invented chats through Opus, Sonnet, Auto and Qwen; results in re_compare.json.
+                        val engines = (i.getStringExtra("e") ?: "opus,sonnet,anthropic_auto,qwen").split(',').map { it.trim() }.filter { it.isNotEmpty() }
+                        val only = i.getStringExtra("only")?.split(',')?.map { it.trim() }?.toSet()
+                        val f = dev.patrickgold.florisboard.dictate.MaReCompare.run(app, engines, only) { out("compare " + it) }
+                        out("compare done: " + f.absolutePath)
+                    }
                     "dev.ttt.engines.RE" -> {
                         // Debug: one RE rewrite with the chosen RE engine, the result's first words logged (a test sentence, no key).
                         val t = i.getStringExtra("t") ?: "Make this shorter: the weather today is very very nice and sunny."
                         val t0 = System.currentTimeMillis()
                         val r = runCatching {
-                            if (dev.patrickgold.florisboard.dictate.MaReEngine.engine() == dev.patrickgold.florisboard.dictate.MaReEngine.GROQ)
+                            if (dev.patrickgold.florisboard.dictate.MaReEngine.isQwen())
                                 dev.patrickgold.florisboard.dictate.MaReEngine.groq(app, t) { out("status: " + it) }
                             else dev.patrickgold.florisboard.dictate.DictateController.askModel(t, "debug RE") ?: "(no answer)"
                         }

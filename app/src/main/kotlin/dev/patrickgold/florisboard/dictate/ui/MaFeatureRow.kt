@@ -1618,7 +1618,6 @@ fun MaFeatureRow(
                     val recordingThis = rec != null && DictateController.isRepromptRecording()
                     var reMenu by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(false) }
                     val reEngine by prefs.dictate.maReEngine.collectAsState()
-                    val reGroqModel by prefs.dictate.maReGroqModel.collectAsState()
                     Box(modifier = keyMod.androidx_onPlaced { reKeyRect[0] = it }) {
                     ThemedKey(
                         code = KeyCode.NOOP,
@@ -1649,7 +1648,7 @@ fun MaFeatureRow(
                     ) { fg ->
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Text(text = "re", color = fg, fontSize = 17.sp, fontWeight = FontWeight.Bold)
-                            Text(text = if (reEngine == "groq") "G" else "A", color = fg, fontSize = 10.sp, modifier = Modifier.offset(x = 1.dp, y = 4.dp))
+                            Text(text = dev.patrickgold.florisboard.dictate.MaReEngine.letter(when (reEngine) { "groq" -> "qwen"; "anthropic", "" -> "anthropic_auto"; else -> reEngine }), color = fg, fontSize = 10.sp, modifier = Modifier.offset(x = 1.dp, y = 4.dp))
                             Icon(
                                 imageVector = Icons.Default.AutoAwesome,
                                 contentDescription = MaReprompt.NAME,
@@ -1662,13 +1661,14 @@ fun MaFeatureRow(
                     if (reMenu) MaKeyPanel(
                         title = "re", accent = MaRecordOutlineLive, anchor = reKeyRect[0], onDismiss = { reMenu = false },
                         items = listOf(
-                            MaPanelItem("Anthropic", "RE engine", reEngine != "groq") { scope.launch { prefs.dictate.maReEngine.set("anthropic") } },
-                            MaPanelItem("Groq \u00b7 gpt-oss-20b", "RE engine", reEngine == "groq" && reGroqModel != "openai/gpt-oss-120b") {
-                                scope.launch { prefs.dictate.maReEngine.set("groq"); prefs.dictate.maReGroqModel.set("openai/gpt-oss-20b") }
-                            },
-                            MaPanelItem("Groq \u00b7 gpt-oss-120b", "RE engine", reEngine == "groq" && reGroqModel == "openai/gpt-oss-120b") {
-                                scope.launch { prefs.dictate.maReEngine.set("groq"); prefs.dictate.maReGroqModel.set("openai/gpt-oss-120b") }
-                            },
+                            // Exactly four (Marko, 13.11.2026): Anthropic Auto (the router), Opus, Sonnet, or Qwen on Groq.
+                            MaPanelItem("Anthropic Auto", "Sonnet or Opus", reEngine == "anthropic_auto" || reEngine == "anthropic" || reEngine.isBlank()) { scope.launch { prefs.dictate.maReEngine.set("anthropic_auto") } },
+                            MaPanelItem("Opus", "Anthropic", reEngine == "opus") { scope.launch { prefs.dictate.maReEngine.set("opus") } },
+                            MaPanelItem("Sonnet", "Anthropic", reEngine == "sonnet") { scope.launch { prefs.dictate.maReEngine.set("sonnet") } },
+                            MaPanelItem(
+                                "Qwen", if (dev.patrickgold.florisboard.dictate.MaReEngine.hasQwenKey(context)) "Groq, own key" else "no key yet",
+                                reEngine == "qwen" || reEngine == "groq",
+                            ) { scope.launch { prefs.dictate.maReEngine.set("qwen") } },
                             MaPanelItem("Tap opens the chat", if (dev.patrickgold.florisboard.dictate.MaReChat.chatOn(context)) "on" else "off", dev.patrickgold.florisboard.dictate.MaReChat.chatOn(context)) {
                                 dev.patrickgold.florisboard.dictate.MaReChat.setChatOn(context, !dev.patrickgold.florisboard.dictate.MaReChat.chatOn(context))
                             },

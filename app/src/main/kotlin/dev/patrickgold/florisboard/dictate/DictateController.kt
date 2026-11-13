@@ -2170,8 +2170,10 @@ object DictateController {
             }
             MaReEngine.inRe = true
             try {
+                // The RE engine he chose (13.11.2026): Opus, Sonnet, or Auto's pick; Qwen goes through requestRewordRaw.
+                val reModel = if (MaReEngine.isQwen()) MaFlow.model() else MaReEngine.anthropicModel(appContext, words)
                 applyPrompt(
-                    appContext, MaReprompt.prompt(words, write, screen), model = MaFlow.model(),
+                    appContext, MaReprompt.prompt(words, write, screen), model = reModel,
                     allowGrowth = true, bare = true,
                 )
             } finally {
@@ -4388,9 +4390,16 @@ object DictateController {
      * One RE chat turn with Anthropic (13.11.2026): the model he chose for RE, once, no fallback to another model.
      * Throws on failure so the chat can say what went wrong.
      */
-    suspend fun reChatAnthropic(context: Context, userContent: String): String {
+    suspend fun reChatAnthropic(context: Context, userContent: String, memoryWork: Boolean = false): String {
         maAppContext = context.applicationContext
-        return requestRewordRaw(userContent, modelOverride = MaFlow.model(), purpose = "RE chat")
+        val model = MaReEngine.anthropicModel(context, userContent, memoryWork)
+        return reChatRaw(context, userContent, model)
+    }
+
+    /** One Anthropic call on exactly [model] (RE: Opus, Sonnet, or the Haiku judge of Auto). */
+    suspend fun reChatRaw(context: Context, userContent: String, model: String): String {
+        maAppContext = context.applicationContext
+        return requestRewordRaw(userContent, modelOverride = model, purpose = "RE " + model.removePrefix("claude-"))
     }
 
     suspend fun askModel(userContent: String, purpose: String, cheap: Boolean = false): String? {
@@ -4414,12 +4423,12 @@ object DictateController {
         purpose: String = if (cheapest) "Suggestion" else "Rewording",
     ): String {
         // RE with Groq (Marko, 10.11.2026): only the chosen engine; no fallback to Anthropic.
-        if (MaReEngine.inRe && MaReEngine.engine() == MaReEngine.GROQ) {
-            MaRewordPrompt.recordSent(MaReEngine.groqModel(), userContent)
+        if (MaReEngine.inRe && MaReEngine.isQwen()) {
+            MaRewordPrompt.recordSent("qwen (RE)", userContent)
             try {
                 return MaReEngine.groq(maAppContext!!, userContent) { _maStatus.value = it }
             } catch (e: dev.patrickgold.florisboard.dictate.engines.EngineFailure) {
-                MaMessage.show(if (e.message == "model retired") "RE: Groq model retired, pick another in Settings" else "RE: " + (e.message ?: "Groq failed"))
+                MaMessage.show(if (e.message == "model retired") "RE: the Qwen model is retired on Groq" else "RE: " + (e.message ?: "Qwen failed"))
                 throw DictateApiException(DictateApiException.Kind.UNKNOWN, e.message)
             }
         }

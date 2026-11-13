@@ -57,6 +57,7 @@ fun MaReScreen() = FlorisScreen {
         val (changed, kept) = remember(rev) { MaReSkill.counts() }
         val recent = remember(rev) { MaReSkill.recent(8) }
 
+        MaReQwenKeySection()
         SwitchPreference(
             prefs.dictate.maReLearn,
             title = "Learn from my corrections",

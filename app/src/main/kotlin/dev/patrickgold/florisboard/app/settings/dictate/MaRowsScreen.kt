@@ -242,21 +242,20 @@ fun MaRowsScreen() = FlorisScreen {
 
         // The "Test: key 1 fails" switch is no longer shown (Marko, 10.11.2026: fallback has no on/off). The pref stays as a hidden debug flag.
 
-        // RE engine: exactly two choices (Marko, 10.11.2026), never switched automatically.
+        // RE engine: exactly four choices (Marko, 13.11.2026), never switched automatically.
         val reEngine by prefs.dictate.maReEngine.collectAsState()
-        val reGroqModel by prefs.dictate.maReGroqModel.collectAsState()
         Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)) {
             Text("RE engine", style = MaterialTheme.typography.bodyLarge)
-            Text("Which model rewrites with RE. Long press the RE key for the same switch.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text("Which model RE uses. Long press the RE key for the same switch. Qwen uses its own Groq key (Settings, RE Magic).", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             listOf(
-                Triple("Anthropic", "anthropic", ""),
-                Triple("Groq \u00b7 gpt-oss-20b", "groq", "openai/gpt-oss-20b"),
-                Triple("Groq \u00b7 gpt-oss-120b", "groq", "openai/gpt-oss-120b"),
-            ).forEach { (name, eng, model) ->
-                val on = if (eng == "anthropic") reEngine != "groq" else reEngine == "groq" && (if (model == "openai/gpt-oss-120b") reGroqModel == model else reGroqModel != "openai/gpt-oss-120b")
-                TextButton(onClick = { spacerScope.launch {
-                    prefs.dictate.maReEngine.set(eng); if (model.isNotEmpty()) prefs.dictate.maReGroqModel.set(model)
-                } }) { Text((if (on) "\u2713 " else "    ") + name) }
+                "Anthropic Auto (Sonnet or Opus by the task)" to "anthropic_auto",
+                "Opus" to "opus",
+                "Sonnet" to "sonnet",
+                "Qwen (Groq)" to "qwen",
+            ).forEach { (name, eng) ->
+                val cur = when (reEngine) { "groq" -> "qwen"; "anthropic", "" -> "anthropic_auto"; else -> reEngine }
+                val on = cur == eng
+                TextButton(onClick = { spacerScope.launch { prefs.dictate.maReEngine.set(eng) } }) { Text((if (on) "\u2713 " else "    ") + name) }
             }
         }
 

@@ -52,3 +52,12 @@
 - Keys: the RE Magic Database token paste box (from build ~549) and the KLIPY GIF key field are gone. "Import keys from file" now tests a github_pat_/ghp_ token against RE_MAGIC_DATABASE (push permission) and stores it; a line labelled KLIPY stores the GIF key.
 - CI: scripts/test_host_rules.py fails the build on any key/token/password text field, on Material default buttons, title bars, own colours or DropdownMenu in the new screens, and if the RE long press is not the key panel.
 - Not yet installed (no adb in the cloud session); the Nothing UI export before install still to do.
+
+**13.11.2026 (RE engines: Anthropic Auto / Opus / Sonnet / Qwen; RE's own Qwen key; comparison harness).**
+- MaReEngine: exactly four engines, his choice only: anthropic_auto (Haiku judge claude-haiku-5-5 picks claude-sonnet-5-5 or claude-opus-5-5 by complexity, unsure = Opus, memory work = Opus; the MANTRA_ROUTER rule), opus, sonnet, qwen. Older prefs "anthropic" -> Auto, "groq" -> Qwen. The gpt-oss options are gone (Marko's Flask rule: no OpenAI models).
+- Qwen: Groq, the larger Qwen from the live list (pickQwen: most parameters, then newest; fallback qwen/qwen3.8-27b, the Flask router's "stronger and cheaper" one), reasoning_format hidden + <think> stripped, max_completion_tokens 6000, QWEN_RULES with worked examples (groq_ai_studio LESSONS: an example beats rules; name the exact mistakes). Same memory files as Anthropic.
+- RE's Qwen key ring `re_qwen`: only from Settings, RE Magic, "Import RE key from file"; each key tested at once and reported "Key 1: works" / "Key 2: does not work (refused)"; Re-test, Delete. Never used by the rest of TTT, and RE never uses TTT's other Groq keys.
+- The main "Import keys from file" now lists every key: "key 1 works, key 2 does not work".
+- Long press on RE: Anthropic Auto, Opus, Sonnet, Qwen, then chat on/off, speak, type. RE key letter A/O/S/Q.
+- MaReCompare + adb broadcast dev.ttt.engines.RE_COMPARE (extras e=engines, only=scenario ids): 13 invented scenarios (Ana Kovač HR, Tom Becker EN: reply, fix, formal, shorter, casual, translate, dictation slips, no-invention, question, apology) through each engine with the chat's exact prompt; files/re_compare.json. Reads the real memory, writes nothing.
+- adb from the cloud: `apt-get install adb`, scratchpad fwd.py forwards 127.0.0.1:15555 through the Tailscale SOCKS proxy (127.0.0.1:1055) to the Nothing 100.67.149.40:5555; each new container needs "Allow USB debugging" tapped on the phone.
