@@ -119,6 +119,8 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
 import java.io.File
+import androidx.compose.material.icons.filled.Key
+import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.compose.ui.graphics.asImageBitmap
 import dev.patrickgold.jetpref.datastore.model.collectAsState as collectPrefAsState
 
@@ -221,6 +223,26 @@ private fun ChatScreen(
     var partnerMenu by remember { mutableStateOf(false) }
     // A recording whose transcription failed: kept, offered again with Resend, never sent by itself.
     var failedWav by remember { mutableStateOf<File?>(null) }
+    // A missing key is fixed where it is noticed (Marko, 13.11.2026: "I just click on message, and message itself is
+    // file picker. And I pick file and we continue"): the status message opens the file picker in Download/Api.
+    val keyPicker = rememberLauncherForActivityResult(PickInDownloadApi()) { uri ->
+        if (uri == null) return@rememberLauncherForActivityResult
+        val text = runCatching { context.contentResolver.openInputStream(uri)?.use { String(it.readBytes()) } }.getOrNull().orEmpty()
+        val name = runCatching {
+            context.contentResolver.query(uri, arrayOf(android.provider.OpenableColumns.DISPLAY_NAME), null, null, null)
+                ?.use { c -> if (c.moveToFirst()) c.getString(0) else null }
+        }.getOrNull().orEmpty()
+        if (partner != null && (name.contains("relay", true) || !MaClaudeLink.hasToken(app))) {
+            status = MaClaudeLink.importToken(app, text)
+        } else {
+            status = "Testing the keys in $name…"
+            scope.launch {
+                val r = runCatching { dev.patrickgold.florisboard.dictate.engines.KeyImporter.importTexts(app, listOf(name to text)) { s -> status = s } }
+                status = r.getOrNull()?.summary?.lines()?.firstOrNull { it.isNotBlank() } ?: ("Import failed: " + (r.exceptionOrNull()?.message ?: ""))
+            }
+        }
+    }
+    fun needsKey(s: String) = Regex("(?i)(key|token)[^.]*(missing|is out|out of)|no [^.]*(key|token)|not configured|tap here and pick").containsMatchIn(s)
     var input by remember { mutableStateOf("") }
     var thinking by remember { mutableStateOf(false) }
     var status by remember { mutableStateOf("") }
@@ -550,7 +572,23 @@ private fun ChatScreen(
             Box(modifier = Modifier.fillMaxWidth().padding(horizontal = 6.dp)) { MaSubtitleRow() }
         }
         if (status.isNotBlank()) {
-            Text(status, color = MaHost.Muted, fontSize = 13.sp, maxLines = 2, modifier = Modifier.padding(horizontal = 14.dp, vertical = 2.dp))
+            if (needsKey(status)) {
+                // The message IS the picker: gold, a key icon, one tap.
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 6.dp, vertical = 2.dp)
+                        .clip(MaHost.KeyShape).background(MaHost.Key).border(1.5.dp, MaHost.Gold, MaHost.KeyShape)
+                        .clickable { keyPicker.launch(arrayOf(ANY_FILE)) }.padding(horizontal = 12.dp, vertical = 10.dp),
+                ) {
+                    Icon(Icons.Default.Key, contentDescription = null, tint = MaHost.Gold, modifier = Modifier.size(20.dp))
+                    Text(
+                        if (status.contains("tap here", true)) status else "$status Tap here and pick the key file.",
+                        color = MaHost.Ink, fontSize = 14.sp, maxLines = 3, modifier = Modifier.padding(start = 10.dp),
+                    )
+                }
+            } else {
+                Text(status, color = MaHost.Muted, fontSize = 13.sp, maxLines = 2, modifier = Modifier.padding(horizontal = 14.dp, vertical = 2.dp))
+            }
         }
         failedWav?.let { kept ->
             Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 3.dp)) {
@@ -769,6 +807,18 @@ private fun MsgImage(path: String) {
             )
         }
     }
+}
+
+/** Any file type ("*" "/" "*", written so it never reads as a comment). */
+private const val ANY_FILE = "*" + "/" + "*"
+
+/** The system file picker, opened in Download/Api where his key files live. */
+private class PickInDownloadApi : androidx.activity.result.contract.ActivityResultContracts.OpenDocument() {
+    override fun createIntent(context: Context, input: Array<String>): Intent =
+        super.createIntent(context, input).putExtra(
+            android.provider.DocumentsContract.EXTRA_INITIAL_URI,
+            android.net.Uri.parse("content://com.android.externalstorage.documents/document/primary%3ADownload%2FApi"),
+        )
 }
 
 /** The keys under every RE answer. */

@@ -21,6 +21,8 @@ check("if (partner != null) MaLanguage.EN" in chat, "voice to a Claude Code sess
 check("MsgImage(" in chat and "keepImage" in read("dictate/MaClaudeLink.kt"), "pictures from the Mac shown in the thread")
 check('"Send it"' in chat and "<send>$final</send>" in chat, "a session's draft is sent only after Marko presses Send it (edited or not)")
 check("base.path + File.separator" in read("dictate/MaClaudeLink.kt"), "pictures only from TTT's own files folder")
+check("keyPicker.launch(" in chat and "needsKey(status)" in chat, "a missing-key message is itself the file picker")
+check("Tap here and pick mantra-relay-token.txt" in read("dictate/MaClaudeLink.kt"), "no detour to Settings in a missing-key message")
 jobs = read("dictate/engines/EngineJobs.kt")
 check('"dev.ttt.remote.CLAUDE_SAY"' in jobs, "adb broadcast in")
 man = open(os.path.join(R, "app/src/main/AndroidManifest.xml")).read()

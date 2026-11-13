@@ -196,7 +196,7 @@ object MaReEngine {
 
     /** One Qwen chat call with RE's own key ring: the same key rules as everywhere (next key on quota, 3 s retries x10). */
     suspend fun groqAsk(c: Context, system: String, user: String, status: (String) -> Unit): String {
-        if (!hasQwenKey(c)) throw EngineFailure(FailKind.NOT_CONFIGURED, "no RE Qwen key: import one in Settings, RE Magic")
+        if (!hasQwenKey(c)) throw EngineFailure(FailKind.NOT_CONFIGURED, "no RE Qwen key yet")
         val model = qwenModel(c)
         var attempt = 0
         while (true) {

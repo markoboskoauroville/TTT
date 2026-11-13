@@ -88,6 +88,16 @@ object MaClaudeLink {
 
     fun hasToken(c: Context) = EngineKeys.ownLines(c, RING).isNotEmpty()
 
+    /** The key file picked right from the chat's message (13.11.2026: "message itself is file picker"). */
+    fun importToken(c: Context, text: String): String {
+        val tok = text.lines().map { it.trim() }.firstOrNull { Regex("[A-Za-z0-9_-]{16,}").matches(it) }
+            ?: return "No key found in that file. Tap here and pick mantra-relay-token.txt."
+        EngineKeys.setLines(c, RING, listOf(tok))
+        status = ""
+        flush(c)
+        return "Mac relay key stored. Sending what was waiting…"
+    }
+
     fun slug(name: String): String =
         name.lowercase().map { if (it.isLetterOrDigit()) it else '-' }.joinToString("").trim('-').replace(Regex("-+"), "-").take(60).ifBlank { "session" }
 
@@ -214,11 +224,8 @@ object MaClaudeLink {
     private fun sendAll(c: Context): Int {
         val a = readOutbox()
         if (a.length() == 0) return 0
+        // The relay trusts his tailnet (tailscale whois, 13.11.2026: "use the tail scale"); a token is sent only if one exists.
         val tok = EngineKeys.ownLines(c, RING).firstOrNull()
-        if (tok == null) {
-            status = "Not sent: no relay token. Import Download/Api/mantra-relay-token.txt with Import keys from file."
-            return a.length()
-        }
         val keep = JSONArray()
         for (i in 0 until a.length()) {
             val o = a.getJSONObject(i)
@@ -226,10 +233,10 @@ object MaClaudeLink {
                 .put("at", o.optString("at")).put("id", o.getString("id")).put("from", "Marko, TTT chat")
             val ok = runCatching {
                 http.newCall(
-                    Request.Builder().url(url(c)).header("X-Mantra-Token", tok)
+                    Request.Builder().url(url(c)).apply { if (tok != null) header("X-Mantra-Token", tok) }
                         .post(body.toString().toRequestBody(JSON)).build(),
                 ).execute().use { r ->
-                    if (r.code == 401) status = "The Mac refused the relay token (401)."
+                    if (r.code == 401) status = "The Mac relay asks for its key. Tap here and pick mantra-relay-token.txt."
                     r.isSuccessful
                 }
             }.getOrElse { status = "The Mac is not reachable: " + (it.message ?: it.javaClass.simpleName).take(80); false }

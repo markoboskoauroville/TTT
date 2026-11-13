@@ -26,6 +26,7 @@ description: TTT, Talk to Type Advanced Keyboard (repo TTT, folder TTT_MINI): Ma
 19. REMOTE: tools/ttt_remote.py drives TTT over adb (say, status, type, re, engine, compare, shot, ui, tap, install). Add a command there and in EngineJobs.kt together; answers in files/remote/<id>.json; never a key value.
 20. AUTO-ROTATE STAYS OFF on his phone (13.11.2026): never accelerometer_rotation 1 or user-rotation free; rotate by hand with `cmd window user-rotation lock N` only for a test, then lock 0. Voice: only text travels (MANTRA_MANIFEST modules/voice-text-only.md).
 21. SHARING THE PHONE (MANTRA_MANIFEST phone-lock.md): `ttt_remote.py lock "what"` before touching the screen, `done` (unlock + his Claude chat in front) as soon as it is not needed, tidy first; after LET ME USE IT never touch it until he says so.
+22. THE SOLUTION AT THE NOSE (13.11.2026, MANTRA_MANIFEST solution-at-the-nose.md): a message about a missing key/permission/failed step IS the fix (file picker in Download/Api, the permission request, Retry/Resend). Never send him to Settings. First ask whether the gate is needed at all.
 ## Run log
 - 13.11.2026: RE engines Auto/Opus/Sonnet/Qwen, RE Qwen key picker with per-key test, per-key results in the main picker, MaReCompare harness.
 - 13.11.2026: RE chat redesigned in the host look (ttt-design skill, MaHost/MaKeyPanel/MaRecorderReadout), per-answer keys, lessons at once, re/ synced to GitHub, token and KLIPY key only from files, CI test_host_rules.py.
