@@ -88,3 +88,8 @@ The monochrome outlines come from two collections, both freely licensed:
 
 Soniox publish no vector mark, so theirs was traced from their own app icon and fitted to the same
 size as the rest.
+
+Place book (assets/dictate/places.tsv, MaPlaces): street names of Croatia from OpenStreetMap,
+(c) OpenStreetMap contributors, available under the Open Database License (ODbL),
+https://www.openstreetmap.org/copyright. Towns, post codes and world cities from GeoNames
+(https://www.geonames.org), licensed under Creative Commons Attribution 4.0.

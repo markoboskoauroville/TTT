@@ -309,7 +309,9 @@ class EditorInstance(context: Context) : AbstractEditorInstance(context) {
         val content = activeContent
         // The picked word replaces the half-typed one in the sentence the personal model is collecting
         // (the letters typed so far reached it through commitChar). Addresses and numbers stay out of it.
-        if (!dev.patrickgold.florisboard.dictate.nlp.MaAddressBook.isSaved(text)) {
+        if (!dev.patrickgold.florisboard.dictate.nlp.MaAddressBook.isSaved(text) &&
+            !dev.patrickgold.florisboard.dictate.nlp.MaPlaces.isOffered(text)
+        ) {
             val typedSoFar = if (content.composing.isValid) content.composingText.toString()
                 else content.textBeforeSelection.takeLastWhile { it.isLetterOrDigit() || it == '\'' || it == '-' }.toString()
             MaNgram.onReplaceWord(typedSoFar, text, keyboardManager.activeState.isIncognitoMode)
@@ -355,9 +357,12 @@ class EditorInstance(context: Context) : AbstractEditorInstance(context) {
         // typed ("marko.bo", "091 23"), not only its last word ("bo"), which would leave
         // "marko.marko.bosko@gmail.com".
         val book = dev.patrickgold.florisboard.dictate.nlp.MaAddressBook
-        if (book.isSaved(text) && content.selection.isCursorMode) {
+        val place = dev.patrickgold.florisboard.dictate.nlp.MaPlaces
+        val isPlace = !book.isSaved(text) && place.isOffered(text)
+        if ((book.isSaved(text) || isPlace) && content.selection.isCursorMode) {
             val ic = dev.patrickgold.florisboard.FlorisImeService.currentInputConnection() ?: return false
-            val headLength = book.spanToReplace(content.textBeforeSelection, text)
+            // A street or town replaces the words typed of it ("Ulica gr"); "10000 Zagreb" after "Ilica 5, " adds.
+            val headLength = if (isPlace) place.spanToReplace(text) else book.spanToReplace(content.textBeforeSelection, text)
             val tail = if (text.contains('@')) content.textAfterSelection.takeWhile {
                 it.isLetterOrDigit() || it in book.ADDRESS_CHARS
             } else content.textAfterSelection.takeWhile { it.isLetterOrDigit() }

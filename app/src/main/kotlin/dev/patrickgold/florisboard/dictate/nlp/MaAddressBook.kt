@@ -198,7 +198,9 @@ object MaAddressBook {
     /** How many characters before the cursor a picked [candidate] replaces (0: not an address or number). */
     fun spanToReplace(textBefore: CharSequence, candidate: String): Int = when (kindOf(candidate)) {
         EMAIL_KIND -> trailingToken(textBefore).length
-        PHONE_KIND -> trailingPhone(textBefore).length
+        // A contact's number offered for the name being typed ("Marko") replaces the name.
+        PHONE_KIND -> trailingPhone(textBefore).length.takeIf { it > 0 }
+            ?: trailingToken(textBefore).takeIf { it.isNotEmpty() && it.all { c -> c.isLetter() } }?.length ?: 0
         URL_KIND -> trailingUrl(textBefore).length
         IBAN_KIND -> trailingIban(textBefore).length
         else -> 0
@@ -350,7 +352,7 @@ object MaAddressBook {
         val token = trailingToken(before)
         if (token.isEmpty()) return if (isEmailField) top(EMAIL_KIND) else emptyList()
         if (token.length < 2 && !isEmailField) return emptyList()
-        return all.asSequence()
+        val typed = all.asSequence()
             .filter { it.third == EMAIL_KIND }
             .filter { (a, _, _) ->
                 a.startsWith(token, ignoreCase = true) && !a.equals(token, ignoreCase = true) ||
@@ -359,6 +361,27 @@ object MaAddressBook {
                         a.substringBefore('@').split('.', '_', '-').any { p -> p.startsWith(token, ignoreCase = true) })
             }
             .sortedByDescending { it.second }.map { it.first }.take(limit).toList()
+        return (typed + ofContact(token, isEmailField)).distinct().take(limit)
+    }
+
+    /**
+     * The emails (and numbers) of the contacts a name being typed belongs to: "Mark" or "Marko" offers
+     * marko.bosko@…, "Bošk" too. Outside an email field only for a name written with a capital, at least three
+     * letters, so ordinary words never bring addresses. Emails first, then numbers, the most used first.
+     */
+    private fun ofContact(token: String, isEmailField: Boolean): List<String> {
+        if (token.length < 3 || !token.all { it.isLetter() }) return emptyList()
+        if (!isEmailField && !token.first().isUpperCase()) return emptyList()
+        val f = MaPlaces.fold(token)
+        val values = synchronized(lock) {
+            contactValues.filterKeys { n -> n.split(' ', '-').any { MaPlaces.fold(it).startsWith(f) } }
+                .values.flatten().distinct()
+                .map { v -> v to (entries[keyOf(v, if (v.contains('@')) EMAIL_KIND else PHONE_KIND)]?.count ?: 0) }
+        }
+        return values.sortedWith(compareBy<Pair<String, Int>> { if (it.first.contains('@')) 0 else 1 }.thenByDescending { it.second })
+            .map { it.first }
+            .filter { isEmailField.not() || it.contains('@') }
+            .take(2)
     }
 
     // --- The phone's contacts (opt-in) ---------------------------------------------------------------
@@ -367,6 +390,10 @@ object MaAddressBook {
 
     /** Contact names, kept apart from the typed values: never written to the file, re-read at each start. */
     private val contactNames = HashSet<String>()
+
+    /** Contact name → that contact's email addresses and numbers (13.11.2026: "when I start to type Marko, it offers
+     *  email address"). Kept in memory only, like [contactNames]. */
+    private val contactValues = HashMap<String, LinkedHashSet<String>>()
 
     /**
      * Reads names, emails and numbers from the phone's contacts, only if Contacts was allowed for TTT in
@@ -395,7 +422,10 @@ object MaAddressBook {
                             val key = keyOf(value, kind)
                             if (key.isNotEmpty() && entries[key] == null) entries[key] = Entry(value, 1, kind)
                         }
-                        if (name.length >= 2 && name.any { it.isLetter() }) contactNames.add(name)
+                        if (name.length >= 2 && name.any { it.isLetter() }) {
+                            contactNames.add(name)
+                            if (value.isNotEmpty()) contactValues.getOrPut(name) { LinkedHashSet() }.add(value)
+                        }
                     }
                 }
             }

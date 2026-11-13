@@ -329,7 +329,15 @@ class NlpManager(context: Context) {
                 ).plus(
                     // Contact names for a capitalised word ("Mar" → "Marko Boško"), opt-in (MaAddressBook).
                     dev.patrickgold.florisboard.dictate.nlp.MaAddressBook.names(content.textBeforeSelection),
-                ).map { address ->
+                ).plus(
+                    // Streets, towns, post codes (MaPlaces, Marko 13.11.2026: "if I start to type street, then it just
+                    // search in the database of all the streets"). Offline, nothing typed leaves the phone.
+                    dev.patrickgold.florisboard.dictate.nlp.MaPlaces.suggest(
+                        content.textBeforeSelection,
+                        isAddressField = editorInstance.activeInfo.inputAttributes.variation ==
+                            dev.patrickgold.florisboard.ime.editor.InputAttributes.Variation.POSTAL_ADDRESS,
+                    ),
+                ).distinct().map { address ->
                     WordSuggestionCandidate(
                         text = address, secondaryText = null, confidence = 1.0,
                         isEligibleForAutoCommit = false, sourceProvider = null,
