@@ -17,7 +17,7 @@ check("MaClaudeLink.send(app, p, t, sent.at)" in chat, "chat sends to the sessio
 check("failedWav = mine" in chat and '"Resend"' in chat, "failed transcription keeps the recording, Resend by hand")
 check("runCatching { mine.delete() }\n            if (w.isNotBlank())" in chat, "recording deleted only after it was transcribed")
 check('"Claude Code · $name"' in chat, "header shows the session name")
-check("if (partner != null) MaLanguage.EN" in chat, "voice to a Claude Code session is transcribed in English only")
+check("if (partner != null && !isWa) MaLanguage.EN" in chat, "voice to a Claude Code session is transcribed in English only (the WhatsApp tab uses the active language)")
 check("MsgImage(" in chat and "keepImage" in read("dictate/MaClaudeLink.kt"), "pictures from the Mac shown in the thread")
 check('"Send it"' in chat and "<send>$final</send>" in chat, "a session's draft is sent only after Marko presses Send it (edited or not)")
 check("base.path + File.separator" in read("dictate/MaClaudeLink.kt"), "pictures only from TTT's own files folder")
