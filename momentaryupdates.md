@@ -538,10 +538,10 @@ voices. Stopped here: a further build plus a full suite (~1 h) would not finish 
 
 > "Please add a feature to TTT Mini to remember exact position when I left off when I was in my settings. So if I am in some deep settings and I go to my typing and I click setting again, it doesn't bring me to main menu. It brings me exactly to that settings." (Marko, 13.11.2026)
 
-**Status:** saved first.
+**Status:** done, build 648, tested on the Nothing: deep screen (Voice buttons > Advanced), Home, TTT removed from recents, reopened with the keyboard's flags → it opened on "Advanced: fallback and benchmark" (logcat TTT-SETTINGS).
 
 ## 13.11.2026 – suggestions for special data: email, phone, streets, cities
 
 > "Please update this application if not already that it understands special kinds of data. Phone numbers, email addresses, also addresses and what else can be specific. Find a way, whatever else. So it just offers, when I start to type Marko, it offers email address. Or if I start to type street, then it just search in the database of all the streets and find which streets I want to type. If I type the name of the city, it understands. You find the logic behind it. The examples are email addresses and phone numbers." (Marko, 13.11.2026)
 
-**Status:** saved first.
+**Status:** built (build 649), MaPlaces.kt + MaAddressBook.kt. Already there before: typed emails, numbers, web addresses and IBANs saved and offered whole. New: (1) an offline place book (assets/dictate/places.tsv, tools/places/build_places.py): 26 762 Croatian streets with their towns (OpenStreetMap), 6 931 Croatian towns and villages with post codes, 34 215 world cities (GeoNames); nothing typed leaves the phone. Offered for a capitalised word inside a sentence ("u Zag" → Zagreb, "Savs" → Savska cesta, "Ulica gr" → Ulica grada Vukovara), any word after "ulica/adresa/živim u/address", every word in an address field; "Ilica 5, " → "10000 Zagreb"; "100" after a comma → "10000 Zagreb"; diacritics ignored. (2) A contact's name ("Mark", "Marko") offers that contact's email, then number, replacing the name. Needs Contacts allowed for TTT in Android settings (now off on the Nothing).
