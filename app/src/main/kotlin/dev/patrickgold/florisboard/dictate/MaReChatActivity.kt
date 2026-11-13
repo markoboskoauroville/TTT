@@ -513,11 +513,11 @@ private fun ChatScreen(
 
         // ---- one row of keys, like the feature row
         Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 3.dp).padding(bottom = 4.dp)) {
-            MaHostKey("Text", Modifier.weight(1f), icon = Icons.Default.Keyboard, ring = if (!voice) MaHost.RingOn else null, fontSize = 13) {
+            MaHostKey("Text", Modifier.weight(1f), icon = Icons.Default.Keyboard, ring = if (!voice) MaHost.RingOn else null, fontSize = 13, padH = 4) {
                 if (recording) discardListening()
                 voice = false; MaReChat.setVoiceMode(app, false)
             }
-            MaHostKey("Voice", Modifier.weight(1f), icon = Icons.Default.Mic, ring = if (voice) MaHost.RingOn else MaHost.RingRecord, fontSize = 13) {
+            MaHostKey("Voice", Modifier.weight(1.1f), icon = Icons.Default.Mic, ring = if (voice) MaHost.RingOn else MaHost.RingRecord, fontSize = 13, padH = 4) {
                 voice = true; MaReChat.setVoiceMode(app, true)
             }
             MaHostKey(
@@ -591,20 +591,25 @@ private fun ReBalloon(m: MaReChat.Msg, speaking: Boolean, editing: Boolean, edit
                 )
                 speaking -> SpokenText()
                 else -> {
-                    val draft = m.draft
-                    val talk = if (draft != null) m.text.replace(Regex("<draft>[\\s\\S]*?</draft>", RegexOption.IGNORE_CASE), "").trim() else m.shown
-                    if (talk.isNotBlank()) Text(talk, color = MaHost.Ink, fontSize = 17.sp, lineHeight = 23.sp)
-                    if (draft != null) {
+                    // In order (13.11.2026: the draft was pulled to the end and left a hole where it stood): the talk before
+                    // the draft, the draft card, the talk after it. Blank runs collapse; markdown stars are dropped.
+                    val m0 = Regex("<draft>([\\s\\S]*?)</draft>", RegexOption.IGNORE_CASE).find(m.text)
+                    fun clean(t: String) = t.replace("**", "").replace(Regex("\\n{3,}"), "\n\n").trim()
+                    val before = clean(if (m0 != null) m.text.substring(0, m0.range.first) else m.shown)
+                    val after = clean(if (m0 != null) m.text.substring(m0.range.last + 1) else "")
+                    if (before.isNotBlank()) Text(before, color = MaHost.Ink, fontSize = 17.sp, lineHeight = 23.sp)
+                    if (m0 != null) {
                         Column(
-                            modifier = Modifier.padding(top = if (talk.isNotBlank()) 8.dp else 0.dp).fillMaxWidth()
+                            modifier = Modifier.padding(vertical = if (before.isNotBlank() || after.isNotBlank()) 8.dp else 0.dp).fillMaxWidth()
                                 .clip(RoundedCornerShape(12.dp)).background(MaHost.Bg)
                                 .border(1.dp, MaHost.Gold.copy(alpha = 0.55f), RoundedCornerShape(12.dp))
                                 .padding(10.dp),
                         ) {
                             Text("DRAFT", color = MaHost.Gold, fontSize = 11.sp, fontWeight = FontWeight.Bold)
-                            Text(draft, color = MaHost.Ink, fontSize = 17.sp, lineHeight = 23.sp, modifier = Modifier.padding(top = 3.dp))
+                            Text(m0.groupValues[1].trim(), color = MaHost.Ink, fontSize = 17.sp, lineHeight = 23.sp, modifier = Modifier.padding(top = 3.dp))
                         }
                     }
+                    if (after.isNotBlank()) Text(after, color = MaHost.Ink, fontSize = 17.sp, lineHeight = 23.sp)
                 }
             }
         }
@@ -626,12 +631,12 @@ private fun ReActions(
     onWrong: () -> Unit,
 ) {
     Row(modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).padding(end = 24.dp)) {
-        MaHostKey("Accept", icon = Icons.Default.Check, ring = MaHost.RingOn, enabled = canAccept, fontSize = 13, onClick = onAccept)
-        MaHostKey(if (editing) "Done" else "Edit", icon = Icons.Default.Edit, lit = editing, fontSize = 13, onClick = onEdit)
-        MaHostKey(null, icon = Icons.Default.ContentCopy, onClick = onCopy)
-        MaHostKey(null, icon = if (speaking) Icons.AutoMirrored.Filled.VolumeOff else Icons.AutoMirrored.Filled.VolumeUp, lit = speaking, onClick = onSpeak)
-        MaHostKey(null, icon = Icons.Default.Refresh, onClick = onRetry)
-        MaHostKey("Wrong", icon = Icons.Default.ThumbDown, ink = MaHost.DangerInk, ring = if (wrong) MaHost.DangerInk else null, fontSize = 13, onClick = onWrong)
+        MaHostKey("Accept", icon = Icons.Default.Check, ring = MaHost.RingOn, enabled = canAccept, fontSize = 13, padH = 8, onClick = onAccept)
+        MaHostKey(if (editing) "Done" else null, icon = Icons.Default.Edit, lit = editing, fontSize = 13, padH = 8, onClick = onEdit)
+        MaHostKey(null, icon = Icons.Default.ContentCopy, padH = 8, onClick = onCopy)
+        MaHostKey(null, icon = if (speaking) Icons.AutoMirrored.Filled.VolumeOff else Icons.AutoMirrored.Filled.VolumeUp, lit = speaking, padH = 8, onClick = onSpeak)
+        MaHostKey(null, icon = Icons.Default.Refresh, padH = 8, onClick = onRetry)
+        MaHostKey("Wrong", icon = Icons.Default.ThumbDown, ink = MaHost.DangerInk, ring = if (wrong) MaHost.DangerInk else null, fontSize = 13, padH = 8, onClick = onWrong)
     }
 }
 

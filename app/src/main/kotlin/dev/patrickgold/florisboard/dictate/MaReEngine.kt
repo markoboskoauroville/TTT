@@ -174,7 +174,10 @@ object MaReEngine {
         "8. His dictation slips: \"creation\" means Croatian, \"Vesper\" means Whisper; write the meant word.\n" +
         "9. Begin the draft with the greeting from the <person> style (\"Bok Ana!\", \"Hi Tom,\") and keep that register.\n" +
         "10. Never answer for him: do not write \"I got it\", a time, or a promise he did not say. Missing fact = ask, no draft.\n" +
-        "11. After the draft you may add one short sentence about anything on the screen still unanswered.\n" +
+        "11. After the draft add one short sentence about what on the screen is still unanswered, if anything is.\n" +
+        "12. Your words to him (\"Evo:\", \"Here it is:\") are in the language of HIS LAST MESSAGE, never the chat's.\n" +
+        "13. When he asks for more formal, shorter or casual, that wins over the person's usual style: formal Croatian = \"Poštovana Ana\" / Vi.\n" +
+        "14. [left] lines are the other person. If Tom asked \"did you get the stems?\", Tom asked it: do not write that question to Tom.\n" +
         "Example. Marko: \"reply to Ana that I'll be ten minutes late, sorry\" -> RE: \"Here it is: <draft>Sorry Ana, " +
         "I'm running about ten minutes late, see you soon.</draft>\"\n" +
         "Example. Marko: \"odgovori Ivanu da sutra može u 10\" -> RE: \"<draft>Bok Ivane! Može sutra u 10, vidimo se!</draft>\"\n" +

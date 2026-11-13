@@ -80,6 +80,8 @@ fun MaHostKey(
     ink: Color = MaHost.Ink,
     enabled: Boolean = true,
     fontSize: Int = 16,
+    /** Inner side padding; small keys in a full row take 6 so a label like "Voice" is never cut. */
+    padH: Int = 12,
     onClick: () -> Unit,
 ) {
     Box(
@@ -91,15 +93,15 @@ fun MaHostKey(
             .then(if (ring != null) Modifier.border(1.5.dp, ring, MaHost.KeyShape) else Modifier)
             .clickable(enabled = enabled, onClick = onClick)
             .alpha(if (enabled) 1f else 0.38f)
-            .padding(horizontal = 12.dp, vertical = 8.dp),
+            .padding(horizontal = padH.dp, vertical = 8.dp),
         contentAlignment = Alignment.Center,
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             if (icon != null) Icon(icon, contentDescription = label, tint = ink, modifier = Modifier.size(20.dp))
             if (!label.isNullOrEmpty()) {
                 Text(
-                    label, color = ink, fontSize = fontSize.sp, fontWeight = FontWeight.Bold, maxLines = 1,
-                    modifier = Modifier.padding(start = if (icon != null) 6.dp else 0.dp),
+                    label, color = ink, fontSize = fontSize.sp, fontWeight = FontWeight.Bold, maxLines = 1, softWrap = false,
+                    modifier = Modifier.padding(start = if (icon != null) 4.dp else 0.dp),
                 )
             }
         }
