@@ -226,6 +226,9 @@ private fun ChatScreen(
     var tick by remember { mutableIntStateOf(0) }
     // A recording whose transcription failed: kept, offered again with Resend, never sent by itself.
     var failedWav by remember { mutableStateOf<File?>(null) }
+    var input by remember { mutableStateOf("") }
+    var thinking by remember { mutableStateOf(false) }
+    var status by remember { mutableStateOf("") }
     // A missing key is fixed where it is noticed (Marko, 13.11.2026: "I just click on message, and message itself is
     // file picker. And I pick file and we continue"): the status message opens the file picker in Download/Api.
     val keyPicker = rememberLauncherForActivityResult(PickInDownloadApi()) { uri ->
@@ -247,9 +250,6 @@ private fun ChatScreen(
         }
     }
     fun needsKey(s: String) = Regex("(?i)(key|token)[^.]*(missing|is out|out of)|no [^.]*(key|token)|not configured|tap here and pick").containsMatchIn(s)
-    var input by remember { mutableStateOf("") }
-    var thinking by remember { mutableStateOf(false) }
-    var status by remember { mutableStateOf("") }
     var voice by remember { mutableStateOf(MaReChat.voiceMode(app)) }
     var muted by remember { mutableStateOf(MaReChat.muted(app)) }
     var recording by remember { mutableStateOf(false) }
