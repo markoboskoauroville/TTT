@@ -557,3 +557,9 @@ voices. Stopped here: a further build plus a full suite (~1 h) would not finish 
 > "again, let's copy what we built in TTT. It's an iMessage chat window, and we chat through that. This is no longer voice. Our chat window is like a voice, but I don't need to reply, and I can reply. You send a message, I send a message. It's an iMessage copy, with the tweaks of TTT, and it's already built." / "TTT also exists. Maybe it can drive this conversation it exists in every form" / "It existed in every telephone." / earlier: "I will send when I press Send. If there is an error (like in TTT), then it's sent, not automatically." (Marko, 13.11.2026, passed on by MAC_SES3_13-NOV)
 
 **Status:** built (MaClaudeLink.kt, MaReChatActivity.kt): out POST /reply with X-Mantra-Token (token file mantra-relay-token.txt via Import keys from file), outbox with retry and ids; in `am broadcast -a dev.ttt.remote.CLAUDE_SAY --es from <session> --es text <msg>`; WAV kept on failure with Resend; header with the session name; RE long-press panel lists the sessions. Plan from the Mac session: a chat partner "Claude Code · <session>" beside Auto/Opus/Sonnet/Qwen; out through the Mac relay (phonereply.py) with a token from a key file; in through an adb broadcast; WAV kept on transcription failure with Resend; one thread per session, header with its name.
+
+## 13.11.2026 – English only to Claude Code sessions (relayed by MAC_SES3_13-NOV)
+
+> "please don't transcribe Croatian, only English. That's it. I'm speaking in English only. I'm sending messages to friends in Croatian. That's all. English only everywhere" (Marko, 13.11.2026, passed on by MAC_SES3_13-NOV)
+
+**Status:** done: in the RE chat with a Claude Code session his voice is transcribed with language en (his E engine) whatever the badge; the keyboard's Croatian dictation for friends is unchanged.
