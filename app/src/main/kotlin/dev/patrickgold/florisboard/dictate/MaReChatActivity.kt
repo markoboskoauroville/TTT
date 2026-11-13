@@ -620,12 +620,16 @@ private fun ChatScreen(
 
         // ---- one row of keys, like the feature row
         Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 3.dp).padding(bottom = 4.dp)) {
-            MaHostKey("Text", Modifier.weight(1f), icon = Icons.Default.Keyboard, ring = if (!voice) MaHost.RingOn else null, fontSize = 13, padH = 4) {
-                if (recording) discardListening()
-                voice = false; MaReChat.setVoiceMode(app, false)
-            }
-            MaHostKey("Voice", Modifier.weight(1.1f), icon = Icons.Default.Mic, ring = if (voice) MaHost.RingOn else MaHost.RingRecord, fontSize = 13, padH = 4) {
-                voice = true; MaReChat.setVoiceMode(app, true)
+            // ONE key, on and off (Marko, 13.11.2026: "When I am in voice mode, then I see recorder for recording voice. When
+            // I press again the same button, this means I am in text mode and this recording interface is disappearing").
+            // Lit with the green ring = voice mode, the recorder below; dark = text mode, the message field.
+            MaHostKey("Voice", Modifier.weight(1.6f), icon = Icons.Default.Mic, ring = if (voice) MaHost.RingOn else null, lit = voice, fontSize = 13, padH = 4) {
+                if (voice) {
+                    if (recording) discardListening()
+                    voice = false; MaReChat.setVoiceMode(app, false)
+                } else {
+                    voice = true; MaReChat.setVoiceMode(app, true)
+                }
             }
             MaHostKey(
                 null, Modifier.weight(0.7f),

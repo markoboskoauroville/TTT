@@ -81,7 +81,9 @@ check("Accept only inserts, never sends", "MaReResult.acceptFor(" in cact and "p
 check("chat stored on the phone", "chat.json" in chat)
 
 # 5. voice / text / mute, highlight, subtitles
-check("Text / Voice / Sound switches", all(s in cact for s in ["\"Text\"", "\"Voice\"", "VolumeOff", "setMuted"]))
+# One Voice key, on and off (13.11.2026): lit = voice mode with the recorder, pressed again = text mode.
+check("Voice toggle / Sound switches", all(s in cact for s in ["\"Voice\"", "lit = voice", "MaReChat.setVoiceMode(app, false)", "VolumeOff", "setMuted"]))
+check("no separate Text key", 'MaHostKey("Text"' not in cact)
 check("reply read with the Reader voice", "MaReader.speakText(" in cact)
 check("word highlight from the Reader index", "MaReader.currentIndex" in cact and "MaReader.allWords" in cact)
 check("subtitles when the Reader shows subtitles", "display == \"subtitle\"" in cact and "MaSubtitleRow()" in cact)
