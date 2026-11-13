@@ -539,3 +539,9 @@ voices. Stopped here: a further build plus a full suite (~1 h) would not finish 
 > "Please add a feature to TTT Mini to remember exact position when I left off when I was in my settings. So if I am in some deep settings and I go to my typing and I click setting again, it doesn't bring me to main menu. It brings me exactly to that settings." (Marko, 13.11.2026)
 
 **Status:** saved first.
+
+## 13.11.2026 – suggestions for special data: email, phone, streets, cities
+
+> "Please update this application if not already that it understands special kinds of data. Phone numbers, email addresses, also addresses and what else can be specific. Find a way, whatever else. So it just offers, when I start to type Marko, it offers email address. Or if I start to type street, then it just search in the database of all the streets and find which streets I want to type. If I type the name of the city, it understands. You find the logic behind it. The examples are email addresses and phone numbers." (Marko, 13.11.2026)
+
+**Status:** saved first.
