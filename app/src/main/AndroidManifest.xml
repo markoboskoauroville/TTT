@@ -227,6 +227,7 @@
                 <action android:name="android.intent.action.APPLICATION_PREFERENCES" />
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
+            <meta-data android:name="android.app.shortcuts" android:resource="@xml/shortcuts"/>
         </activity-alias>
 
         <!-- Crash Dialog Activity -->
@@ -265,6 +266,18 @@
         <service
             android:name="dev.patrickgold.florisboard.dictate.MaAssistantTile"
             android:label="RE"
+            android:icon="@drawable/ic_dictate_overlay_mic"
+            android:exported="true"
+            android:permission="android.permission.BIND_QUICK_SETTINGS_TILE">
+            <intent-filter>
+                <action android:name="android.service.quicksettings.action.QS_TILE"/>
+            </intent-filter>
+        </service>
+
+        <!-- The Quick Settings tile "TTT RE" (MaScratchTile): opens TTT on its scratch box with the keyboard up. -->
+        <service
+            android:name="dev.patrickgold.florisboard.dictate.MaScratchTile"
+            android:label="TTT RE"
             android:icon="@drawable/ic_dictate_overlay_mic"
             android:exported="true"
             android:permission="android.permission.BIND_QUICK_SETTINGS_TILE">

@@ -226,6 +226,9 @@ private fun ChatScreen(
     val msgs = remember { mutableStateListOf<MaReChat.Msg>().apply { addAll(loadThread(partner)) } }
     fun persist() { val p = partner; if (p == null) MaReChat.save(msgs.toList()) else MaReChat.save(msgs.toList(), MaClaudeLink.threadName(p)) }
     var partnerMenu by remember { mutableStateOf(false) }
+    // The WhatsApp tab (MaWhatsAppMac): the same thread machinery, answered by the Mac (Queen -> WhatsApp Web in Firefox).
+    val isWa = partner == MaWhatsAppMac.TAB
+    var waChoices by remember { mutableStateOf<List<String>>(emptyList()) }
     // Bumped every 2 s in a session thread so the delivery marks under his messages refresh.
     var tick by remember { mutableIntStateOf(0) }
     // A recording whose transcription failed: kept, offered again with Resend, never sent by itself.
@@ -338,10 +341,33 @@ private fun ChatScreen(
         }
     }
 
+    fun showWa(r: MaWhatsAppMac.Reply) {
+        waChoices = r.choices
+        val body = if (r.draft != null) r.text.replace(Regex("(?s)<draft>.*?</draft>"), "").trim() + "\n<draft>" + r.draft + "</draft>" else r.text
+        val m = MaReChat.Msg(false, (if (r.ok) "" else "Not done: ") + body, image = r.image)
+        msgs.add(m)
+        persist()
+    }
+
     fun send(text: String) {
         val t = text.trim()
         if (t.isEmpty() || thinking) return
         MaReader.stop()
+        // The WhatsApp tab: the words go to Queen on the Mac, the answer (text, screenshot, draft) comes back here.
+        if (isWa) {
+            msgs.add(MaReChat.Msg(true, t))
+            persist()
+            waChoices = emptyList()
+            thinking = true
+            status = "Asking the Mac…"
+            scope.launch {
+                val r = MaWhatsAppMac.ask(app, t)
+                thinking = false
+                status = ""
+                showWa(r)
+            }
+            return
+        }
         // To a Claude Code session: into its thread and out through the Mac relay; no AI, no lessons.
         partner?.let { p ->
             val sent = MaReChat.Msg(true, t)
@@ -401,7 +427,7 @@ private fun ChatScreen(
         // To a Claude Code session he speaks English only (Marko, 13.11.2026: "I'm speaking in English only. I'm sending
         // messages to friends in Croatian ... English only everywhere"): language en and his E engine, whatever the badge.
         // The keyboard's Croatian dictation for friends is untouched.
-        val l = if (partner != null) MaLanguage.EN else MaLanguage.active()
+        val l = if (partner != null && !isWa) MaLanguage.EN else MaLanguage.active()
         val engine = EngineStore.selected(app, l)
         scope.launch {
             // His H/E engine only, never another one; no answer or no internet: 3 s and the same engine again, 10 times.
@@ -472,14 +498,21 @@ private fun ChatScreen(
             msgs.clear(); msgs.addAll(loadThread(p))
             status = ""
         }
-        partner?.let { name ->
+        if (partner == null || isWa) {
+            // The two tabs of RE Magic: RE (the AI that writes) and WhatsApp (the Mac's WhatsApp Web, through Queen).
+            Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 3.dp)) {
+                MaHostKey("RE", Modifier.weight(1f), ring = if (!isWa) MaHost.RingOn else null, lit = !isWa, fontSize = 14, padH = 8) { pick(null) }
+                MaHostKey("WhatsApp", Modifier.weight(1f), ring = if (isWa) MaHost.RingOn else null, lit = isWa, fontSize = 14, padH = 8) { pick(MaWhatsAppMac.TAB) }
+            }
+        }
+        partner?.takeIf { !isWa }?.let { name ->
             Text(
                 "Claude Code · $name",
                 color = MaHost.Gold, fontSize = 15.sp, fontWeight = FontWeight.Bold, maxLines = 1,
                 modifier = Modifier.fillMaxWidth().clickable { partnerMenu = !partnerMenu }.padding(horizontal = 14.dp, vertical = 8.dp),
             )
         }
-        if (partner == null && !partnerMenu) {
+        if ((partner == null || isWa) && !partnerMenu) {
             val n = MaClaudeLink.sessions(app).size
             if (n > 0) Text(
                 "Claude Code chats: $n ›", color = MaHost.Muted, fontSize = 13.sp,
@@ -489,6 +522,7 @@ private fun ChatScreen(
         if (partnerMenu) {
             Row(modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).padding(horizontal = 3.dp)) {
                 MaHostKey("RE", ring = if (partner == null) MaHost.RingOn else null, fontSize = 13, padH = 8) { pick(null) }
+                MaHostKey("WhatsApp", ring = if (isWa) MaHost.RingOn else null, fontSize = 13, padH = 8) { pick(MaWhatsAppMac.TAB) }
                 MaClaudeLink.sessions(app).forEach { n ->
                     MaHostKey(n, ring = if (partner == n) MaHost.RingOn else null, fontSize = 13, padH = 8) { pick(n) }
                 }
@@ -504,6 +538,7 @@ private fun ChatScreen(
             if (msgs.isEmpty() && !thinking) {
                 item {
                     Text(
+                        if (isWa) "WhatsApp on the Mac. Say or type what to do: \"show me my latest messages\", \"open the chat with …\", \"scroll up\", \"draft a reply to … saying …\", \"send the band a screenshot of our live stream with the message …\". Everything stays a draft; only Send it sends." else
                         partner?.let { "Messages from Claude Code · $it appear here. What you send goes to that session on the Mac, only when you press Send." }
                             ?: ((MaReChat.person?.let { "With $it. " } ?: "") + "Ask what to write; RE reads the chat behind and its notes."),
                         color = MaHost.Muted, fontSize = 15.sp, modifier = Modifier.fillMaxWidth().padding(24.dp),
@@ -514,7 +549,7 @@ private fun ChatScreen(
                 if (m.me) Column {
                     MineBalloon(m)
                     // In a session thread: what happened to it (13.11.2026: "I don't know what's going on").
-                    if (partner != null) {
+                    if (partner != null && !isWa) {
                         val d = remember(tick, m.at) { MaClaudeLink.deliveryOf(app, m.at) }
                         if (d.isNotBlank()) Text(
                             d, color = if (d.startsWith("✓ delivered")) MaHost.Gold else MaHost.Muted, fontSize = 12.sp,
@@ -543,6 +578,23 @@ private fun ChatScreen(
                         wrong = wrongAt == m.at,
                         onAccept = {
                             val p = partner
+                            if (p != null && isWa) {
+                                val final = (if (editing) editText.trim() else (m.draft ?: m.shown))
+                                editingAt = -1L
+                                val chat = MaWhatsAppMac.pendingChat(app)
+                                if (chat.isBlank() || thinking) return@ReActions
+                                msgs.add(MaReChat.Msg(true, "Send it: $final"))
+                                persist()
+                                thinking = true
+                                status = "Sending exactly that on the Mac…"
+                                scope.launch {
+                                    val r = MaWhatsAppMac.sendApproved(app, chat, final, MaWhatsAppMac.pendingPhoto(app))
+                                    thinking = false
+                                    status = ""
+                                    showWa(r.copy(draft = null))
+                                }
+                                return@ReActions
+                            }
                             if (p != null) {
                                 val final = if (editing) editText.trim() else (m.draft ?: m.shown)
                                 editingAt = -1L
@@ -587,6 +639,19 @@ private fun ChatScreen(
             if (thinking) item { TypingBalloon() }
         }
 
+        if (isWa && waChoices.isNotEmpty()) {
+            Row(modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).padding(horizontal = 3.dp)) {
+                waChoices.forEach { title ->
+                    MaHostKey(title.take(28), ring = MaHost.RingSwitch, fontSize = 13, padH = 8) {
+                        if (thinking) return@MaHostKey
+                        waChoices = emptyList()
+                        msgs.add(MaReChat.Msg(true, title)); persist()
+                        thinking = true; status = "Asking the Mac…"
+                        scope.launch { val r = MaWhatsAppMac.pick(app, title); thinking = false; status = ""; showWa(r) }
+                    }
+                }
+            }
+        }
         // ---- the Reader's subtitle box, when the Reader shows subtitles
         if (display == "subtitle" && MaReader.state != MaReader.State.IDLE && speakingAt > 0) {
             Box(modifier = Modifier.fillMaxWidth().padding(horizontal = 6.dp)) { MaSubtitleRow() }
@@ -707,7 +772,7 @@ private fun ChatScreen(
     if (confirmClear) {
         HostDialog(
             title = "Clear the chat?",
-            text = partner?.let { "Deletes this chat with Claude Code · $it on this phone. The session on the Mac keeps its own." }
+            text = if (isWa) "Deletes this WhatsApp tab history on this phone. WhatsApp on the Mac is untouched." else partner?.let { "Deletes this chat with Claude Code · $it on this phone. The session on the Mac keeps its own." }
                 ?: ("RE first writes what it learned into TAKEOVER, LESSONS, SKILLS and the file of the person you are talking to " +
                 "(synced to GitHub). Then the chat is deleted; those files stay (People)."),
             confirmLabel = "Clear",

@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<shortcuts xmlns:android="http://schemas.android.com/apk/res/android">
+    <shortcut
+        android:shortcutId="ttt_re_scratch"
+        android:enabled="true"
+        android:icon="@drawable/ic_dictate_overlay_mic"
+        android:shortcutShortLabel="@string/shortcut_ttt_re_short"
+        android:shortcutLongLabel="@string/shortcut_ttt_re_long">
+        <intent
+            android:action="android.intent.action.MAIN"
+            android:targetPackage="com.mantraproductions.tttlight"
+            android:targetClass="dev.patrickgold.florisboard.app.FlorisAppActivity">
+            <extra android:name="ttt_scratch" android:value="true"/>
+        </intent>
+    </shortcut>
+</shortcuts>

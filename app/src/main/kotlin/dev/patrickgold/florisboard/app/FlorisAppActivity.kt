@@ -172,9 +172,16 @@ class FlorisAppActivity : ComponentActivity() {
         }
     }
 
+    /** Bumped when the launcher shortcut or the Quick Settings tile asks for the scratch box (MaScratchBox). */
+    private var scratchTick by androidx.compose.runtime.mutableIntStateOf(0)
+
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         setIntent(intent)
+        if (intent.getBooleanExtra(MaScratchBox.EXTRA, false)) {
+            scratchTick++
+            intent.removeExtra(MaScratchBox.EXTRA)
+        }
 
         if (intent.action == Intent.ACTION_VIEW && intent.categories?.contains(Intent.CATEGORY_BROWSABLE) == true) {
             intentToBeHandled = intent
@@ -303,6 +310,7 @@ class FlorisAppActivity : ComponentActivity() {
                         }
                         .imePadding(),
                 ) {
+                    if (isImeSetUp) MaScratchBoxField(scratchTick)
                     Routes.AppNavHost(
                         modifier = Modifier.weight(1.0f),
                         navController = navController,
