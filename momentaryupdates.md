@@ -523,3 +523,7 @@ voices. Stopped here: a further build plus a full suite (~1 h) would not finish 
 > "Yes, I hear the robot, but Beatrice is also building my TTT Mini, so you can talk through my TTT. It's not TTT Mini anymore, sorry. To TTT Advanced Keyboard, Talking Keyboard, you can talk to me, until this builds. Please build for this my application TTT make Python API so you can do anything from the distance. You can even talk through my keyboard if you want to." (Marko, 13.11.2026)
 
 **Status:** tools/ttt_remote.py (connect, say = Beatrice through TTT, vsay = Voice Engine v4, status, type, re, engine, compare, shot, ui, tap, key, text, install, log); TTT receiver gets dev.ttt.remote.TYPE / STATUS / RE_ENGINE / RE_ASK (adb only, answers in files/remote/<id>.json, never a key value). Ships in build 642.
+
+> "Here is the speechify key. There are multiple ones ... If the key is exhausted, we rotate it ... do it for my voice engine and for my TTT. We are using this fallback and free accounts." (Marko, 13.11.2026; Download/Api/speechify_api.txt)
+
+**Status:** TTT's Reader (MaSpeechify.synthesize) already walked the keys from the last good one on 401/403/429; now also on 402 (free use spent). Voice Engine v5: the same ring.

@@ -288,6 +288,12 @@ object MaSpeechify {
                     MaLog.add("read", "key ${index + 1} throttled, rolling forward")
                     continue
                 }
+                // A free account that has used its characters answers 402 (Marko, 13.11.2026: "if the key is exhausted,
+                // we rotate it"): the next key, at once.
+                402 -> {
+                    MaLog.add("read", "key ${index + 1} out of free use, rolling forward")
+                    continue
+                }
                 else -> {
                     MaLog.add("read", "speak refused, http $result")
                     return null
