@@ -20,6 +20,13 @@ ever leaves the phone through this; status shows counts only.
     python3 tools/ttt_remote.py tap X Y | key BACK | text "abc"
     python3 tools/ttt_remote.py install 642             # release build-642 from GitHub, adb install -r (never uninstall)
     python3 tools/ttt_remote.py log                     # files/engines_log.txt
+    python3 tools/ttt_remote.py lock "what I am doing"  # Voice Engine v7: CLAUDE IS USING THE PHONE (LET ME USE IT overrides)
+    python3 tools/ttt_remote.py unlock
+    python3 tools/ttt_remote.py done                    # unlock + bring Marko's Claude chat back to the front
+
+THE EXCHANGE (Marko, 13.11.2026; MANTRA_MANIFEST modules/phone-lock.md): lock before using the phone, `done` as soon as
+it is not needed. While locked, tap/key/text/shot pass through the lock by themselves. If he pressed LET ME USE IT
+(status lock = "overridden"), stop touching the phone and wait for him.
 """
 import json
 import os
@@ -88,6 +95,28 @@ def connect():
     print(adb("get-state").strip() or "not connected")
 
 
+def ve(path, body=None):
+    """Voice Engine (127.0.0.1:8720 on the phone, through an adb forward)."""
+    adb("forward", "tcp:18720", "tcp:8720")
+    data = json.dumps(body or {}).encode() if body is not None else None
+    try:
+        r = urllib.request.urlopen(urllib.request.Request("http://127.0.0.1:18720" + path, data=data,
+                                                          headers={"Content-Type": "application/json"}), timeout=10)
+        return json.loads(r.read().decode() or "{}")
+    except Exception as e:
+        return {"error": str(e)}
+
+
+def through(ms=900):
+    """Our own tap or screenshot passes the lock; refuses when Marko took the phone back."""
+    st = ve("/status").get("lock")
+    if st == "overridden":
+        sys.exit("Marko pressed LET ME USE IT: the phone is his. Wait.")
+    if st == "on":
+        ve("/through", {"ms": ms})
+        time.sleep(0.15)
+
+
 def ui():
     adb("shell", "uiautomator", "dump", "/sdcard/ui.xml")
     x = adb("shell", "cat", "/sdcard/ui.xml")
@@ -146,17 +175,29 @@ def main(argv):
         out = opt.get("out")
         if out:
             json.dump(rows, open(out, "w"), indent=1, ensure_ascii=False)
+    elif cmd == "lock":
+        print(ve("/lock", {"text": " ".join(pos) or "Testing. It is yours again when this disappears."}))
+    elif cmd == "unlock":
+        print(ve("/unlock", {}))
+    elif cmd == "done":
+        print(ve("/unlock", {}))
+        adb("shell", "monkey", "-p", "com.anthropic.claude", "-c", "android.intent.category.LAUNCHER", "1")
     elif cmd == "shot":
+        through(1500)
         png = adb("exec-out", "screencap", "-p", text=False)
         open(pos[0] if pos else "shot.png", "wb").write(png)
         print(pos[0] if pos else "shot.png")
     elif cmd == "ui":
+        through(2500)
         ui()
     elif cmd == "tap":
+        through()
         adb("shell", "input", "tap", pos[0], pos[1])
     elif cmd == "key":
+        through()
         adb("shell", "input", "keyevent", pos[0])
     elif cmd == "text":
+        through(2000)
         adb("shell", "input", "text", q(" ".join(pos).replace(" ", "%s")))
     elif cmd == "install":
         n = pos[0]

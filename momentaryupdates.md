@@ -527,3 +527,9 @@ voices. Stopped here: a further build plus a full suite (~1 h) would not finish 
 > "Here is the speechify key. There are multiple ones ... If the key is exhausted, we rotate it ... do it for my voice engine and for my TTT. We are using this fallback and free accounts." (Marko, 13.11.2026; Download/Api/speechify_api.txt)
 
 **Status:** TTT's Reader (MaSpeechify.synthesize) already walked the keys from the last good one on 401/403/429; now also on 402 (free use spent). Voice Engine v5: the same ring.
+
+## 13.11.2026 – lock the phone when using it, give it back with the chat in front
+
+> "after you finish testing, please bring back, make everything tidy, bring back your  Also, when you don't need phone just bring back your chat so I can scroll to it and see what's going on. When you need phone make a lock. Look at my GitHub repositories how I make a lock in my Mac OS. When my Mantra macro recorder is using the keyboard I cannot use my computer at all. It blocks everything. Now you can do the same block here. You just put one badge over the middle of the screen, say Claude is using the phone, and then if I press some button on that badge, I can override it. But basically it says to me, stay away, I am now in action. And when it disappears, I can use it. So we can be in exchange. I don't need to give you a phone for the next five hours if you are not needing it. From time to time when you need it, you block me and I let you use it. That's the thing. please put this in mantra manifest so we always work like this" (Marko, 13.11.2026)
+
+**Status:** Voice Engine v7 (/lock, /unlock, /through); tools/ttt_remote.py lock/unlock/done, taps and shots pass the lock and stop after an override; MANTRA_MANIFEST modules/phone-lock.md.
