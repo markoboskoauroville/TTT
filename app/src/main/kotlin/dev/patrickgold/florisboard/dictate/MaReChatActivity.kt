@@ -11,12 +11,16 @@
 package dev.patrickgold.florisboard.dictate
 
 import android.Manifest
+import android.content.ClipData
+import android.content.ClipboardManager
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Bundle
+import android.os.SystemClock
 import android.widget.Toast
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
@@ -26,6 +30,7 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -34,6 +39,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
@@ -43,31 +49,37 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.Send
+import androidx.compose.material.icons.automirrored.filled.VolumeOff
+import androidx.compose.material.icons.automirrored.filled.VolumeUp
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.ContentCopy
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.DeleteSweep
-import androidx.compose.material.icons.filled.History
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Keyboard
 import androidx.compose.material.icons.filled.Mic
-import androidx.compose.material.icons.filled.Stop
-import androidx.compose.material.icons.filled.VolumeOff
-import androidx.compose.material.icons.filled.VolumeUp
+import androidx.compose.material.icons.filled.People
+import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.ThumbDown
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableLongStateOf
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -76,10 +88,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextStyle
@@ -92,10 +103,14 @@ import dev.patrickgold.florisboard.app.FlorisPreferenceStore
 import dev.patrickgold.florisboard.dictate.audio.MaResample
 import dev.patrickgold.florisboard.dictate.audio.RecordingController
 import dev.patrickgold.florisboard.dictate.engines.EngineAdapters
+import dev.patrickgold.florisboard.dictate.engines.EngineCatalog
 import dev.patrickgold.florisboard.dictate.engines.EngineChain
 import dev.patrickgold.florisboard.dictate.engines.EngineStore
 import dev.patrickgold.florisboard.dictate.engines.FailKind
 import dev.patrickgold.florisboard.dictate.engines.FallbackRunner
+import dev.patrickgold.florisboard.dictate.ui.MaHost
+import dev.patrickgold.florisboard.dictate.ui.MaHostKey
+import dev.patrickgold.florisboard.dictate.ui.MaRecorderReadout
 import dev.patrickgold.florisboard.dictate.ui.MaSubtitleRow
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
@@ -107,17 +122,19 @@ import java.io.File
 import dev.patrickgold.jetpref.datastore.model.collectAsState as collectPrefAsState
 
 /**
- * The RE Magic chat window (Marko, 13.11.2026), in the look of Facebook Messenger: his messages on the right in blue,
- * RE's on the left in grey with its round avatar, a "typing" bubble while RE thinks, a pill composer at the bottom.
+ * The RE Magic chat (Marko, 13.11.2026, second version): in the keyboard's own look (.claude/skills/ttt-design), the
+ * balloon idea from iPhone Messages.
  *
- * Options at the top: **Close** (closes, nothing happens), **Accept** (RE's last draft goes into the field behind),
- * **Clear** (RE writes TAKEOVER, LESSONS and SKILLS from the chat, then the chat is wiped).
- *
- * Switches at the bottom: **Text / Voice** and **Sound**. In Voice mode he taps the microphone, speaks, taps again; his
- * words are transcribed with the engine of his H/E key and appear as his bubble. RE's answer is shown and, with Sound
- * on, read aloud by the Reader voice: the sentence being read and the word being said are lit in the bubble, the same
- * engine as the Reader. With "Where the reading is shown" set to subtitles, the subtitle box of the keyboard is shown
- * here too, in the same style.
+ * - **No title bar.** The chat fills the screen; at the bottom, the composer and one row of keys.
+ * - **Balloons**: his on the right, RE's on the left; under every RE answer its own keys: Accept (into the app behind),
+ *   Edit (change it, then Accept; the change is a lesson), Copy, Speak, Retry, Wrong (the next thing he says is how it
+ *   should be, and that becomes a lesson at once).
+ * - **Voice**: the keyboard's recorder: language badge, trash, the red-ringed recorder key with lamp, clock, MB and
+ *   meter ([MaRecorderReadout], the same drawing as the keyboard strip), send. Transcribed with his H/E engine only.
+ * - **Keys row**: Text, Voice, Sound (green ring when on), People (summaries per person), Clear (RE writes its memory,
+ *   then the chat goes), Close.
+ * - RE's spoken answer lights the sentence and the word in the balloon (the Reader's index); with Reader subtitles on,
+ *   the subtitle box is shown too.
  */
 class MaReChatActivity : ComponentActivity() {
 
@@ -126,10 +143,11 @@ class MaReChatActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        MaRemoteDb.attach(this)
         MaReChat.ensureMemory()
         setContent {
-            MaterialTheme(colorScheme = darkColorScheme()) {
-                Surface(modifier = Modifier.fillMaxSize(), color = BG) {
+            MaterialTheme(colorScheme = darkColorScheme(background = MaHost.Bg, surface = MaHost.Bg)) {
+                Surface(modifier = Modifier.fillMaxSize(), color = MaHost.Bg) {
                     ChatScreen(
                         onAccept = { text, words ->
                             accepted = true
@@ -155,11 +173,6 @@ class MaReChatActivity : ComponentActivity() {
     }
 
     companion object {
-        internal val BG = Color(0xFF000000)
-        internal val ME = Color(0xFF0084FF)
-        internal val THEM = Color(0xFF303030)
-        internal val DIM = Color(0xFF8A8D91)
-
         fun open(context: Context) {
             context.startActivity(
                 Intent(context.applicationContext, MaReChatActivity::class.java)
@@ -167,7 +180,7 @@ class MaReChatActivity : ComponentActivity() {
             )
         }
 
-        /** The RE key: remember the field, read the screen behind, then open the chat over it. */
+        /** The RE key: remember the field, read who he talks to and the screen behind, then open the chat over it. */
         fun openFromKey(context: Context, pkg: String?, fieldId: Int) {
             MaReChat.pkg = pkg?.takeIf { it != context.packageName }
             MaReChat.fieldId = fieldId
@@ -175,7 +188,6 @@ class MaReChatActivity : ComponentActivity() {
             MaReChat.screen = null
             MaReChat.person = null
             MaReChat.scope.launch {
-                // Who he is talking to: the chat title at the top of the screen behind (13.11.2026).
                 if (MaReChat.pkg != null) MaReChat.person = runCatching { MaSkills.chatTitle() }.getOrNull()?.trim()?.takeIf { it.length in 2..60 }
                 if (MaScreenRead.on()) MaReChat.screen = withTimeoutOrNull(3_000L) { MaScreenRead.read() }
                 withContext(Dispatchers.Main) { open(context) }
@@ -202,38 +214,58 @@ private fun ChatScreen(
     var muted by remember { mutableStateOf(MaReChat.muted(app)) }
     var recording by remember { mutableStateOf(false) }
     var transcribing by remember { mutableStateOf(false) }
-    var speakingAt by remember { mutableStateOf(-1L) }
+    var speakingAt by remember { mutableLongStateOf(-1L) }
+    var editingAt by remember { mutableLongStateOf(-1L) }
+    var editText by remember { mutableStateOf("") }
+    var wrongAt by remember { mutableLongStateOf(-1L) }
     var confirmClear by remember { mutableStateOf(false) }
     var clearing by remember { mutableStateOf(false) }
+    var showPeople by remember { mutableStateOf(false) }
+    var lang by remember { mutableStateOf(MaLanguage.active()) }
+    // The recorder's readings, sampled like the keyboard strip samples its own.
+    var level by remember { mutableFloatStateOf(0f) }
+    var elapsedMs by remember { mutableLongStateOf(0L) }
+    var bytes by remember { mutableLongStateOf(0L) }
+    var startedAt by remember { mutableLongStateOf(0L) }
     val listState = rememberLazyListState()
     val prefs by FlorisPreferenceStore
     val display by prefs.dictate.maReaderDisplay.collectPrefAsState()
+
+    if (showPeople) {
+        PeopleScreen(onBack = { showPeople = false })
+        return
+    }
 
     LaunchedEffect(msgs.size, thinking) {
         val n = msgs.size + (if (thinking) 1 else 0)
         if (n > 0) listState.animateScrollToItem(n - 1)
     }
+    LaunchedEffect(recording) {
+        while (recording) {
+            val r = recorderHolder() ?: break
+            level = (r.maxAmplitude() / 32767f).coerceIn(0f, 1f)
+            bytes = r.bytesWritten
+            elapsedMs = SystemClock.elapsedRealtime() - startedAt
+            delay(60L)
+        }
+        level = 0f
+    }
 
-    fun speak(m: MaReChat.Msg) {
-        if (muted) return
+    fun speak(m: MaReChat.Msg, force: Boolean = false) {
+        if (muted && !force) return
         speakingAt = m.at
         MaReader.speakText(app, m.shown) { }
     }
 
-    fun send(text: String) {
-        val t = text.trim()
-        if (t.isEmpty() || thinking) return
-        MaReader.stop()
-        msgs.add(MaReChat.Msg(true, t))
-        MaReChat.save(msgs.toList())
+    fun ask() {
         thinking = true
-        status = "typing…"
+        status = ""
         val sofar = msgs.toList()
         scope.launch {
             val r = runCatching { withContext(Dispatchers.IO) { MaReChat.ask(app, sofar) { s -> scope.launch { status = s } } } }
             thinking = false
-            status = ""
             r.onSuccess { a ->
+                status = ""
                 val m = MaReChat.Msg(false, a.ifBlank { "(no answer)" })
                 msgs.add(m)
                 MaReChat.save(msgs.toList())
@@ -245,6 +277,30 @@ private fun ChatScreen(
         }
     }
 
+    fun send(text: String) {
+        val t = text.trim()
+        if (t.isEmpty() || thinking) return
+        MaReader.stop()
+        // A cue: Wrong was pressed, or this reply corrects RE. It becomes a lesson now, not at Clear.
+        val lastRe = msgs.lastOrNull { !it.me }
+        val wrongMsg = msgs.firstOrNull { it.at == wrongAt }
+        val cue = when {
+            wrongMsg != null -> wrongMsg to "pressed Wrong under the answer"
+            lastRe != null && msgs.lastOrNull()?.me == false && MaReChat.looksLikeCorrection(t) -> lastRe to "corrected RE in the chat"
+            else -> null
+        }
+        if (cue != null) {
+            MaReChat.scope.launch {
+                val rule = MaReChat.lesson(app, cue.first.shown, t, cue.second)
+                if (rule != null) withContext(Dispatchers.Main) { status = "Lesson kept: " + rule.take(90) }
+            }
+        }
+        wrongAt = -1L
+        msgs.add(MaReChat.Msg(true, t))
+        MaReChat.save(msgs.toList())
+        ask()
+    }
+
     fun startListening() {
         if (context.checkSelfPermission(Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
             status = "Microphone permission is off for TTT"
@@ -254,8 +310,18 @@ private fun ChatScreen(
         val r = RecordingController(app)
         runCatching { r.start() }.onFailure { status = "Microphone busy: " + (it.message ?: ""); return }
         setRecorder(r)
+        startedAt = SystemClock.elapsedRealtime()
+        elapsedMs = 0L
+        bytes = 0L
         recording = true
-        status = "Listening… tap to send"
+        status = ""
+    }
+
+    fun discardListening() {
+        recorderHolder()?.let { runCatching { it.cancel() } }
+        setRecorder(null)
+        recording = false
+        status = ""
     }
 
     fun stopListening() {
@@ -267,18 +333,18 @@ private fun ChatScreen(
         val mine = File(app.cacheDir, "re_chat_${System.currentTimeMillis()}.wav")
         runCatching { wav.copyTo(mine, overwrite = true) }
         transcribing = true
-        val lang = MaLanguage.active()
-        val engine = EngineStore.selected(app, lang)
+        val l = MaLanguage.active()
+        val engine = EngineStore.selected(app, l)
         scope.launch {
             // His H/E engine only, never another one; no answer or no internet: 3 s and the same engine again, 10 times.
             var attempt = 0
             var words: String? = null
             while (words == null) {
-                status = "Transcribing · " + engine + (if (attempt > 0) " · retry $attempt/10" else "")
+                status = EngineCatalog.shortName(engine) + (if (attempt > 0) " · retry $attempt/10" else "")
                 val res = runCatching {
                     withContext(Dispatchers.IO) {
                         val w = MaResample.toTargetRate(mine) ?: mine
-                        try { EngineAdapters.run(app, engine, w, lang, EngineChain.names()) } finally { if (w !== mine) w.delete() }
+                        try { EngineAdapters.run(app, engine, w, l, EngineChain.names()) } finally { if (w !== mine) w.delete() }
                     }
                 }
                 res.onSuccess { words = it.trim() }
@@ -299,237 +365,245 @@ private fun ChatScreen(
         }
     }
 
-    var showPeople by remember { mutableStateOf(false) }
-    if (showPeople) {
-        PeopleScreen(onBack = { showPeople = false })
-        return
+    fun accept(m: MaReChat.Msg, text: String) {
+        val asked = msgs.lastOrNull { it.me && it.at < m.at }?.text.orEmpty()
+        val snapshot = msgs.toList()
+        MaReChat.scope.launch { MaReChat.learn(app, snapshot, "kept (a draft was accepted)") }
+        onAccept(text, asked)
     }
 
+    BackHandler { onClose() }
+
     Column(modifier = Modifier.fillMaxSize().safeDrawingPadding().imePadding()) {
-        // ---- header, Messenger style
-        Row(
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 8.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Avatar(40)
-            Column(modifier = Modifier.weight(1f).padding(start = 10.dp)) {
-                Text("RE Magic", color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.Bold)
-                val sub = when {
-                    thinking -> "typing…"
-                    status.isNotBlank() -> status
-                    else -> "Active now · " + MaReEngine.label()
-                }
-                Text(sub, color = if (thinking) MaReChatActivity.ME else MaReChatActivity.DIM, fontSize = 13.sp, maxLines = 2)
-                MaReChat.person?.let { Text("Talking to $it", color = MaReChatActivity.DIM, fontSize = 12.sp, maxLines = 1) }
-            }
-            // The people RE knows: summaries and flow of every conversation (13.11.2026).
-            Row(
-                modifier = Modifier.heightIn(min = 40.dp).background(Color(0xFF242526), RoundedCornerShape(20.dp))
-                    .clickable { showPeople = true }.padding(horizontal = 12.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Icon(Icons.Default.History, null, tint = Color.White, modifier = Modifier.size(20.dp))
-                Text("History", color = Color.White, fontSize = 15.sp, modifier = Modifier.padding(start = 6.dp))
-            }
-        }
-        // ---- the three options
-        Row(
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
-            val lastRe = msgs.lastOrNull { !it.me }
-            val acceptText = lastRe?.let { it.draft ?: it.shown }
-            Option(Icons.Default.Close, "Close", Modifier.weight(1f), onClick = onClose)
-            Option(
-                Icons.Default.Check, "Accept", Modifier.weight(1f), strong = true, enabled = !acceptText.isNullOrBlank() && MaReChat.pkg != null,
-            ) {
-                val text = acceptText ?: return@Option
-                val asked = msgs.lastOrNull { it.me }?.text.orEmpty()
-                val snapshot = msgs.toList()
-                // Accepting is a strong signal of his style: RE learns from it after the window has gone.
-                MaReChat.scope.launch { MaReChat.learn(app, snapshot, "kept (a draft was accepted)") }
-                onAccept(text, asked)
-            }
-            Option(Icons.Default.DeleteSweep, "Clear", Modifier.weight(1f), enabled = msgs.isNotEmpty() && !clearing) { confirmClear = true }
-        }
-        if (MaReChat.pkg == null) {
-            Text(
-                "Opened without a text field: Accept is off.",
-                color = MaReChatActivity.DIM, fontSize = 12.sp, modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
-            )
-        }
-        // ---- the chat
+        // ---- the chat: no title bar
         LazyColumn(
             state = listState,
             modifier = Modifier.weight(1f).fillMaxWidth(),
-            contentPadding = PaddingValues(horizontal = 10.dp, vertical = 12.dp),
-            verticalArrangement = Arrangement.spacedBy(4.dp),
+            contentPadding = PaddingValues(horizontal = 8.dp, vertical = 12.dp),
+            verticalArrangement = Arrangement.spacedBy(6.dp),
         ) {
             if (msgs.isEmpty() && !thinking) {
                 item {
-                    Column(modifier = Modifier.fillMaxWidth().padding(top = 40.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-                        Avatar(84)
-                        Text("RE Magic", color = Color.White, fontSize = 22.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(top = 10.dp))
-                        Text(
-                            "Ask me what to write. I read the chat behind and my notes about you.",
-                            color = MaReChatActivity.DIM, fontSize = 15.sp, modifier = Modifier.padding(16.dp),
-                        )
-                    }
+                    Text(
+                        (MaReChat.person?.let { "With $it. " } ?: "") + "Ask what to write; RE reads the chat behind and its notes.",
+                        color = MaHost.Muted, fontSize = 15.sp, modifier = Modifier.fillMaxWidth().padding(24.dp),
+                    )
                 }
             }
-            itemsIndexed(msgs, key = { _, m -> m.at.toString() + m.me }) { i, m ->
-                val nextSame = i + 1 < msgs.size && msgs[i + 1].me == m.me
-                Bubble(m, showAvatar = !m.me && !nextSame, speaking = speakingAt == m.at && MaReader.state != MaReader.State.IDLE)
+            itemsIndexed(msgs, key = { _, m -> m.at.toString() + m.me }) { _, m ->
+                if (m.me) {
+                    MineBalloon(m)
+                } else Column {
+                    val editing = editingAt == m.at
+                    ReBalloon(
+                        m = m,
+                        speaking = speakingAt == m.at && MaReader.state != MaReader.State.IDLE,
+                        editing = editing,
+                        editText = editText,
+                        onEditText = { editText = it },
+                        wrong = wrongAt == m.at,
+                    )
+                    ReActions(
+                        canAccept = MaReChat.pkg != null,
+                        editing = editing,
+                        speaking = speakingAt == m.at && MaReader.state != MaReader.State.IDLE,
+                        wrong = wrongAt == m.at,
+                        onAccept = {
+                            if (editing) {
+                                val original = m.draft ?: m.shown
+                                val edited = editText.trim()
+                                if (!MaReSkill.same(original, edited)) {
+                                    MaReChat.scope.launch { MaReChat.lesson(app, original, edited, "edited the draft before accepting it") }
+                                }
+                                accept(m, edited)
+                            } else {
+                                accept(m, m.draft ?: m.shown)
+                            }
+                        },
+                        onEdit = {
+                            if (editing) editingAt = -1L else { editingAt = m.at; editText = m.draft ?: m.shown }
+                        },
+                        onCopy = {
+                            val cm = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+                            cm.setPrimaryClip(ClipData.newPlainText("RE", m.draft ?: m.shown))
+                            Toast.makeText(context, "Copied", Toast.LENGTH_SHORT).show()
+                        },
+                        onSpeak = { if (speakingAt == m.at && MaReader.state != MaReader.State.IDLE) MaReader.stop() else speak(m, force = true) },
+                        onRetry = {
+                            if (!thinking) {
+                                MaReader.stop()
+                                msgs.remove(m)
+                                MaReChat.save(msgs.toList())
+                                ask()
+                            }
+                        },
+                        onWrong = {
+                            wrongAt = if (wrongAt == m.at) -1L else m.at
+                            status = if (wrongAt == m.at) "Say or type how it should be; RE keeps it as a lesson." else ""
+                        },
+                    )
+                }
             }
-            if (thinking) item { TypingBubble() }
+            if (thinking) item { TypingBalloon() }
         }
-        // ---- the subtitle box, when the Reader shows subtitles
+
+        // ---- the Reader's subtitle box, when the Reader shows subtitles
         if (display == "subtitle" && MaReader.state != MaReader.State.IDLE && speakingAt > 0) {
-            Box(modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp)) { MaSubtitleRow() }
+            Box(modifier = Modifier.fillMaxWidth().padding(horizontal = 6.dp)) { MaSubtitleRow() }
         }
-        // ---- composer
-        if (voice) {
-            Row(
-                modifier = Modifier.fillMaxWidth().padding(vertical = 10.dp),
-                horizontalArrangement = Arrangement.Center,
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
+        if (status.isNotBlank()) {
+            Text(status, color = MaHost.Muted, fontSize = 13.sp, maxLines = 2, modifier = Modifier.padding(horizontal = 14.dp, vertical = 2.dp))
+        }
+
+        // ---- the composer, as the keyboard's strip: language badge, (trash), field or recorder, send
+        Row(
+            modifier = Modifier.fillMaxWidth().height(64.dp).padding(horizontal = 3.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            MaHostKey(
+                label = if (lang == MaLanguage.EN) "ENG" else "HR",
+                ring = MaHost.RingSwitch,
+                onClick = { MaLanguage.toggle(app); lang = MaLanguage.active() },
+            )
+            if (voice) {
+                MaHostKey(label = null, icon = Icons.Default.Delete, enabled = recording, onClick = { discardListening() })
                 val busy = transcribing || thinking
                 Box(
-                    modifier = Modifier.size(76.dp).background(
-                        if (recording) Color(0xFFE53935) else if (busy) Color(0xFF3A3B3C) else MaReChatActivity.ME, CircleShape,
-                    ).clickable(enabled = !busy) { if (recording) stopListening() else startListening() },
+                    modifier = Modifier.weight(1f).fillMaxSize().padding(horizontal = 3.dp, vertical = 4.dp)
+                        .clip(MaHost.KeyShape).background(MaHost.Key)
+                        .border(1.5.dp, if (recording) MaHost.RingRecordLive else MaHost.RingRecord, MaHost.KeyShape)
+                        .clickable(enabled = !busy || recording) { if (recording) stopListening() else startListening() },
                     contentAlignment = Alignment.Center,
                 ) {
-                    Icon(if (recording) Icons.Default.Stop else Icons.Default.Mic, "Talk", tint = Color.White, modifier = Modifier.size(38.dp))
+                    if (recording || transcribing) {
+                        MaRecorderReadout(level, elapsedMs, bytes, recording = recording, sending = transcribing, tint = MaHost.Ink)
+                    } else {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Box(Modifier.size(11.dp).background(MaHost.RingRecord, CircleShape))
+                            Text(
+                                if (thinking) "RE is answering…" else "Tap and talk",
+                                color = MaHost.Ink, fontSize = 17.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(start = 8.dp),
+                            )
+                        }
+                    }
                 }
-                Text(
-                    when { recording -> "Listening… tap to send"; transcribing -> "Transcribing…"; thinking -> "RE is answering…"; else -> "Tap and talk" },
-                    color = MaReChatActivity.DIM, fontSize = 14.sp, modifier = Modifier.padding(start = 14.dp),
-                )
-            }
-        } else {
-            Row(
-                modifier = Modifier.fillMaxWidth().padding(horizontal = 10.dp, vertical = 8.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
+                MaHostKey(label = null, icon = Icons.AutoMirrored.Filled.Send, ink = MaHost.Gold, enabled = recording, onClick = { stopListening() })
+            } else {
                 Box(
-                    modifier = Modifier.weight(1f).background(Color(0xFF242526), RoundedCornerShape(22.dp))
-                        .padding(horizontal = 16.dp, vertical = 11.dp),
+                    modifier = Modifier.weight(1f).fillMaxSize().padding(horizontal = 3.dp, vertical = 4.dp)
+                        .clip(MaHost.KeyShape).background(MaHost.Key).padding(horizontal = 14.dp),
+                    contentAlignment = Alignment.CenterStart,
                 ) {
-                    if (input.isEmpty()) Text("Aa", color = MaReChatActivity.DIM, fontSize = 17.sp)
+                    if (input.isEmpty()) Text("Message", color = MaHost.Muted, fontSize = 17.sp)
                     BasicTextField(
                         value = input,
                         onValueChange = { input = it },
-                        textStyle = TextStyle(color = Color.White, fontSize = 17.sp),
-                        cursorBrush = SolidColor(MaReChatActivity.ME),
-                        modifier = Modifier.fillMaxWidth().heightIn(max = 140.dp),
+                        textStyle = TextStyle(color = MaHost.Ink, fontSize = 17.sp),
+                        cursorBrush = SolidColor(MaHost.Gold),
+                        modifier = Modifier.fillMaxWidth().heightIn(max = 120.dp),
                     )
                 }
-                Box(
-                    modifier = Modifier.padding(start = 8.dp).size(44.dp).clickable(enabled = input.isNotBlank() && !thinking) {
-                        val t = input; input = ""; send(t)
-                    },
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Icon(Icons.AutoMirrored.Filled.Send, "Send", tint = if (input.isNotBlank()) MaReChatActivity.ME else MaReChatActivity.DIM, modifier = Modifier.size(28.dp))
-                }
+                MaHostKey(
+                    label = null, icon = Icons.AutoMirrored.Filled.Send, ink = MaHost.Gold,
+                    enabled = input.isNotBlank() && !thinking,
+                    onClick = { val t = input; input = ""; send(t) },
+                )
             }
         }
-        // ---- the switches
-        Row(
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp).padding(bottom = 8.dp),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Segment(Icons.Default.Keyboard, "Text", !voice, Modifier.weight(1f)) {
-                if (recording) { recorderHolder()?.cancel(); setRecorder(null); recording = false }
+
+        // ---- one row of keys, like the feature row
+        Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 3.dp).padding(bottom = 4.dp)) {
+            MaHostKey("Text", Modifier.weight(1f), icon = Icons.Default.Keyboard, ring = if (!voice) MaHost.RingOn else null, fontSize = 13) {
+                if (recording) discardListening()
                 voice = false; MaReChat.setVoiceMode(app, false)
             }
-            Segment(Icons.Default.Mic, "Voice", voice, Modifier.weight(1f)) { voice = true; MaReChat.setVoiceMode(app, true) }
-            Segment(if (muted) Icons.Default.VolumeOff else Icons.Default.VolumeUp, if (muted) "Muted" else "Sound", !muted, Modifier.weight(1f)) {
+            MaHostKey("Voice", Modifier.weight(1f), icon = Icons.Default.Mic, ring = if (voice) MaHost.RingOn else MaHost.RingRecord, fontSize = 13) {
+                voice = true; MaReChat.setVoiceMode(app, true)
+            }
+            MaHostKey(
+                null, Modifier.weight(0.7f),
+                icon = if (muted) Icons.AutoMirrored.Filled.VolumeOff else Icons.AutoMirrored.Filled.VolumeUp,
+                ring = if (!muted) MaHost.RingOn else null,
+            ) {
                 muted = !muted
                 MaReChat.setMuted(app, muted)
                 if (muted) MaReader.stop()
             }
+            MaHostKey(null, Modifier.weight(0.7f), icon = Icons.Default.People, ring = MaHost.RingSwitch) { showPeople = true }
+            MaHostKey(null, Modifier.weight(0.7f), icon = Icons.Default.DeleteSweep, ink = MaHost.DangerInk, enabled = msgs.isNotEmpty() && !clearing) { confirmClear = true }
+            MaHostKey(null, Modifier.weight(0.7f), icon = Icons.Default.Close, onClick = onClose)
         }
     }
 
     if (confirmClear) {
-        AlertDialog(
-            onDismissRequest = { confirmClear = false },
-            title = { Text("Clear the chat?") },
-            text = { Text("RE first writes what it learned into its takeover, lessons and skills files and the file of the person you are talking to. Then the chat is deleted; those files stay (see History).", fontSize = 16.sp) },
-            confirmButton = {
-                TextButton(onClick = {
-                    confirmClear = false
-                    clearing = true
-                    status = "Writing takeover, lessons, skills…"
-                    MaReader.stop()
-                    val snapshot = msgs.toList()
-                    scope.launch {
-                        val n = withContext(Dispatchers.IO) { MaReChat.learn(app, snapshot, "cleared") }
-                        MaReChat.clearChat()
-                        msgs.clear()
-                        clearing = false
-                        status = ""
-                        Toast.makeText(
-                            app,
-                            if (n > 0) "Chat cleared · RE kept $n memory file(s)" else "Chat cleared · RE could not update its memory this time",
-                            Toast.LENGTH_LONG,
-                        ).show()
-                    }
-                }) { Text("Clear", color = Color(0xFFFF6B6B), fontWeight = FontWeight.Bold) }
+        HostDialog(
+            title = "Clear the chat?",
+            text = "RE first writes what it learned into TAKEOVER, LESSONS, SKILLS and the file of the person you are talking to " +
+                "(synced to GitHub). Then the chat is deleted; those files stay (People).",
+            confirmLabel = "Clear",
+            onConfirm = {
+                confirmClear = false
+                clearing = true
+                status = "Writing takeover, lessons, skills…"
+                MaReader.stop()
+                val snapshot = msgs.toList()
+                scope.launch {
+                    val n = withContext(Dispatchers.IO) { MaReChat.learn(app, snapshot, "cleared") }
+                    MaReChat.clearChat()
+                    msgs.clear()
+                    clearing = false
+                    status = if (n > 0) "Chat cleared · RE kept $n memory file(s)" else "Chat cleared · RE could not update its memory this time"
+                }
             },
-            dismissButton = { TextButton(onClick = { confirmClear = false }) { Text("Keep") } },
+            onDismiss = { confirmClear = false },
+        )
+    }
+}
+
+private val BalloonMine = RoundedCornerShape(18.dp, 18.dp, 4.dp, 18.dp)
+private val BalloonRe = RoundedCornerShape(18.dp, 18.dp, 18.dp, 4.dp)
+
+@Composable
+private fun MineBalloon(m: MaReChat.Msg) {
+    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+        Text(
+            m.text, color = MaHost.Ink, fontSize = 17.sp, lineHeight = 23.sp,
+            modifier = Modifier.widthIn(max = 310.dp).padding(start = 48.dp).clip(BalloonMine).background(MaHost.Mine)
+                .padding(horizontal = 14.dp, vertical = 9.dp),
         )
     }
 }
 
 @Composable
-private fun Avatar(sizeDp: Int) {
-    Box(
-        modifier = Modifier.size(sizeDp.dp).background(
-            Brush.linearGradient(listOf(Color(0xFF00C6FF), Color(0xFF8E2DE2), Color(0xFFFF6A88))), CircleShape,
-        ),
-        contentAlignment = Alignment.Center,
-    ) {
-        Text("RE", color = Color.White, fontWeight = FontWeight.Bold, fontSize = (sizeDp * 0.38f).sp)
-    }
-}
-
-@Composable
-private fun Bubble(m: MaReChat.Msg, showAvatar: Boolean, speaking: Boolean) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = if (m.me) Arrangement.End else Arrangement.Start,
-        verticalAlignment = Alignment.Bottom,
-    ) {
-        if (!m.me) {
-            Box(modifier = Modifier.size(28.dp)) { if (showAvatar) Avatar(28) }
-            Spacer(Modifier.size(6.dp))
-        }
-        val shape = if (m.me) RoundedCornerShape(18.dp, 18.dp, 4.dp, 18.dp) else RoundedCornerShape(18.dp, 18.dp, 18.dp, 4.dp)
+private fun ReBalloon(m: MaReChat.Msg, speaking: Boolean, editing: Boolean, editText: String, onEditText: (String) -> Unit, wrong: Boolean) {
+    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Start) {
         Column(
-            modifier = Modifier.widthIn(max = 300.dp)
-                .background(if (m.me) MaReChatActivity.ME else MaReChatActivity.THEM, shape)
-                .padding(horizontal = 13.dp, vertical = 9.dp),
+            modifier = Modifier.widthIn(max = 320.dp).padding(end = 40.dp).clip(BalloonRe).background(MaHost.Theirs)
+                .border(1.dp, if (wrong) MaHost.DangerInk else MaHost.RingSwitch.copy(alpha = 0.35f), BalloonRe)
+                .padding(horizontal = 14.dp, vertical = 9.dp),
         ) {
-            if (speaking) {
-                SpokenText()
-            } else {
-                val draft = m.draft
-                val talk = if (draft != null) m.text.replace(Regex("<draft>[\\s\\S]*?</draft>", RegexOption.IGNORE_CASE), "").trim() else m.shown
-                if (talk.isNotBlank()) Text(talk, color = Color.White, fontSize = 17.sp, lineHeight = 23.sp)
-                if (draft != null) {
-                    Column(
-                        modifier = Modifier.padding(top = if (talk.isNotBlank()) 8.dp else 0.dp).fillMaxWidth()
-                            .background(Color(0xFF1E1F21), RoundedCornerShape(12.dp))
-                            .border(1.dp, MaReChatActivity.ME.copy(alpha = 0.6f), RoundedCornerShape(12.dp))
-                            .padding(10.dp),
-                    ) {
-                        Text("DRAFT · Accept puts it in your app", color = MaReChatActivity.ME, fontSize = 11.sp, fontWeight = FontWeight.Bold)
-                        Text(draft, color = Color.White, fontSize = 17.sp, lineHeight = 23.sp, modifier = Modifier.padding(top = 4.dp))
+            when {
+                editing -> BasicTextField(
+                    value = editText, onValueChange = onEditText,
+                    textStyle = TextStyle(color = MaHost.Ink, fontSize = 17.sp, lineHeight = 23.sp),
+                    cursorBrush = SolidColor(MaHost.Gold),
+                    modifier = Modifier.fillMaxWidth(),
+                )
+                speaking -> SpokenText()
+                else -> {
+                    val draft = m.draft
+                    val talk = if (draft != null) m.text.replace(Regex("<draft>[\\s\\S]*?</draft>", RegexOption.IGNORE_CASE), "").trim() else m.shown
+                    if (talk.isNotBlank()) Text(talk, color = MaHost.Ink, fontSize = 17.sp, lineHeight = 23.sp)
+                    if (draft != null) {
+                        Column(
+                            modifier = Modifier.padding(top = if (talk.isNotBlank()) 8.dp else 0.dp).fillMaxWidth()
+                                .clip(RoundedCornerShape(12.dp)).background(MaHost.Bg)
+                                .border(1.dp, MaHost.Gold.copy(alpha = 0.55f), RoundedCornerShape(12.dp))
+                                .padding(10.dp),
+                        ) {
+                            Text("DRAFT", color = MaHost.Gold, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                            Text(draft, color = MaHost.Ink, fontSize = 17.sp, lineHeight = 23.sp, modifier = Modifier.padding(top = 3.dp))
+                        }
                     }
                 }
             }
@@ -537,16 +611,40 @@ private fun Bubble(m: MaReChat.Msg, showAvatar: Boolean, speaking: Boolean) {
     }
 }
 
+/** The keys under every RE answer. */
+@Composable
+private fun ReActions(
+    canAccept: Boolean,
+    editing: Boolean,
+    speaking: Boolean,
+    wrong: Boolean,
+    onAccept: () -> Unit,
+    onEdit: () -> Unit,
+    onCopy: () -> Unit,
+    onSpeak: () -> Unit,
+    onRetry: () -> Unit,
+    onWrong: () -> Unit,
+) {
+    Row(modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).padding(end = 24.dp)) {
+        MaHostKey("Accept", icon = Icons.Default.Check, ring = MaHost.RingOn, enabled = canAccept, fontSize = 13, onClick = onAccept)
+        MaHostKey(if (editing) "Done" else "Edit", icon = Icons.Default.Edit, lit = editing, fontSize = 13, onClick = onEdit)
+        MaHostKey(null, icon = Icons.Default.ContentCopy, onClick = onCopy)
+        MaHostKey(null, icon = if (speaking) Icons.AutoMirrored.Filled.VolumeOff else Icons.AutoMirrored.Filled.VolumeUp, lit = speaking, onClick = onSpeak)
+        MaHostKey(null, icon = Icons.Default.Refresh, onClick = onRetry)
+        MaHostKey("Wrong", icon = Icons.Default.ThumbDown, ink = MaHost.DangerInk, ring = if (wrong) MaHost.DangerInk else null, fontSize = 13, onClick = onWrong)
+    }
+}
+
 /**
- * The answer being read, from the Reader's own word list: the sentence being read is lit, the word being said is
- * yellow and bold. Same index the Reader's karaoke uses, so the two never disagree.
+ * The answer being read, from the Reader's own word list: the sentence being read on a lit band, the word being said
+ * in gold and bold (the Reader's highlight colour). Same index as the Reader's karaoke.
  */
 @Composable
 private fun SpokenText() {
     val words = MaReader.allWords
     val idx = MaReader.currentIndex
     if (words.isEmpty()) {
-        Text("…", color = Color.White, fontSize = 17.sp)
+        Text("…", color = MaHost.Ink, fontSize = 17.sp)
         return
     }
     fun ends(w: String) = w.trimEnd('"', '”', ')', '\'').lastOrNull() in setOf('.', '!', '?')
@@ -562,165 +660,133 @@ private fun SpokenText() {
         words.forEachIndexed { i, w ->
             if (i > 0) append(" ")
             when {
-                i == idx -> withStyle(SpanStyle(color = Color(0xFFFFEB3B), fontWeight = FontWeight.Bold, background = Color(0x55FFEB3B))) { append(w.text) }
-                idx in words.indices && i in start..end -> withStyle(SpanStyle(background = Color(0x33FFFFFF))) { append(w.text) }
+                i == idx -> withStyle(SpanStyle(color = MaHost.Gold, fontWeight = FontWeight.Bold, background = Color(0x33E8B15C))) { append(w.text) }
+                idx in words.indices && i in start..end -> withStyle(SpanStyle(background = Color(0x1FFFFFFF))) { append(w.text) }
                 else -> append(w.text)
             }
         }
     }
-    Text(text, color = Color.White, fontSize = 17.sp, lineHeight = 23.sp)
+    Text(text, color = MaHost.Ink, fontSize = 17.sp, lineHeight = 23.sp)
 }
 
 @Composable
-private fun TypingBubble() {
+private fun TypingBalloon() {
     val t = rememberInfiniteTransition(label = "typing")
-    Row(verticalAlignment = Alignment.Bottom) {
-        Avatar(28)
-        Spacer(Modifier.size(6.dp))
-        Row(
-            modifier = Modifier.background(MaReChatActivity.THEM, RoundedCornerShape(18.dp)).padding(horizontal = 14.dp, vertical = 12.dp),
-            horizontalArrangement = Arrangement.spacedBy(5.dp),
-        ) {
-            for (i in 0..2) {
-                val a by t.animateFloat(
-                    initialValue = 0.25f, targetValue = 1f,
-                    animationSpec = infiniteRepeatable(tween(500, delayMillis = i * 160), RepeatMode.Reverse), label = "dot$i",
-                )
-                Box(Modifier.size(8.dp).alpha(a).background(Color(0xFFB0B3B8), CircleShape))
-            }
+    Row(
+        modifier = Modifier.clip(BalloonRe).background(MaHost.Theirs).padding(horizontal = 14.dp, vertical = 13.dp),
+        horizontalArrangement = Arrangement.spacedBy(5.dp),
+    ) {
+        for (i in 0..2) {
+            val a by t.animateFloat(
+                initialValue = 0.25f, targetValue = 1f,
+                animationSpec = infiniteRepeatable(tween(500, delayMillis = i * 160), RepeatMode.Reverse), label = "dot$i",
+            )
+            Box(Modifier.size(8.dp).alpha(a).background(MaHost.Sand, CircleShape))
         }
     }
 }
 
+/** A confirmation in the host look. */
 @Composable
-private fun Option(
-    icon: ImageVector,
-    label: String,
-    modifier: Modifier,
-    strong: Boolean = false,
-    enabled: Boolean = true,
-    onClick: () -> Unit,
-) {
-    Row(
-        modifier = modifier.heightIn(min = 46.dp)
-            .background(if (strong && enabled) MaReChatActivity.ME else Color(0xFF242526), RoundedCornerShape(23.dp))
-            .clickable(enabled = enabled, onClick = onClick)
-            .alpha(if (enabled) 1f else 0.4f)
-            .padding(horizontal = 10.dp),
-        horizontalArrangement = Arrangement.Center,
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Icon(icon, null, tint = Color.White, modifier = Modifier.size(20.dp))
-        Text(label, color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.padding(start = 6.dp))
-    }
-}
-
-@Composable
-private fun Segment(icon: ImageVector, label: String, on: Boolean, modifier: Modifier, onClick: () -> Unit) {
-    Row(
-        modifier = modifier.heightIn(min = 42.dp)
-            .background(if (on) Color(0xFF2D3B55) else Color(0xFF18191A), RoundedCornerShape(21.dp))
-            .border(1.dp, if (on) MaReChatActivity.ME else Color(0xFF3A3B3C), RoundedCornerShape(21.dp))
-            .clickable(onClick = onClick),
-        horizontalArrangement = Arrangement.Center,
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Icon(icon, null, tint = if (on) Color.White else MaReChatActivity.DIM, modifier = Modifier.size(18.dp))
-        Text(label, color = if (on) Color.White else MaReChatActivity.DIM, fontSize = 14.sp, modifier = Modifier.padding(start = 6.dp))
-    }
+private fun HostDialog(title: String, text: String, confirmLabel: String, onConfirm: () -> Unit, onDismiss: () -> Unit) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        containerColor = MaHost.Key,
+        title = { Text(title, color = MaHost.Ink, fontWeight = FontWeight.Bold) },
+        text = { Text(text, color = MaHost.Ink, fontSize = 16.sp) },
+        confirmButton = { MaHostKey(confirmLabel, ink = MaHost.DangerInk, ring = MaHost.Danger, onClick = onConfirm) },
+        dismissButton = { MaHostKey("Keep", onClick = onDismiss) },
+    )
 }
 
 /**
- * The People screen (History button in the RE chat, Marko 13.11.2026): every person RE has met, with the summaries of
- * their conversations and the flow, from re/people/<name>.md. These files survive Clear in the chat; only this screen
- * deletes them, one person or all, after a confirmation.
+ * People (the People key): every person RE has met, with the summaries of their conversations and the flow, from
+ * re/people/<name>.md. These files survive Clear in the chat; only this screen deletes them, one or all, after asking.
  */
 @Composable
 private fun PeopleScreen(onBack: () -> Unit) {
     var people by remember { mutableStateOf(MaReChat.people()) }
     var open by remember { mutableStateOf<MaReChat.Person?>(null) }
-    var confirm by remember { mutableStateOf<String?>(null) } // slug, or "*" for everyone
-    androidx.activity.compose.BackHandler { if (open != null) open = null else onBack() }
+    var asking by remember { mutableStateOf<String?>(null) } // slug, or "*" for everyone
+    BackHandler { if (open != null) open = null else onBack() }
 
     Column(modifier = Modifier.fillMaxSize().safeDrawingPadding()) {
-        Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
-            androidx.compose.material3.IconButton(onClick = { if (open != null) open = null else onBack() }) {
-                Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back", tint = Color.White)
-            }
-            Column(modifier = Modifier.weight(1f)) {
-                Text(open?.name ?: "People", color = Color.White, fontSize = 22.sp, fontWeight = FontWeight.Bold)
-                Text(
-                    if (open != null) "Summaries and flow of your conversations" else "${people.size} people \u00b7 what RE remembers",
-                    color = MaReChatActivity.DIM, fontSize = 13.sp,
-                )
-            }
-            val o = open
-            TextButton(onClick = { confirm = o?.slug ?: "*" }, enabled = o != null || people.isNotEmpty()) {
-                Text(if (o != null) "Clear" else "Clear all", color = Color(0xFFFF6B6B), fontSize = 16.sp)
-            }
-        }
         val o = open
         if (o != null) {
-            androidx.compose.foundation.lazy.LazyColumn(modifier = Modifier.fillMaxSize(), contentPadding = PaddingValues(16.dp)) {
+            LazyColumn(modifier = Modifier.weight(1f).fillMaxWidth(), contentPadding = PaddingValues(16.dp)) {
                 item {
+                    Text(o.name, color = MaHost.Ink, fontSize = 22.sp, fontWeight = FontWeight.Bold)
                     for (line in o.text.lines()) {
                         when {
                             line.startsWith("# ") -> {}
                             line.startsWith("## ") -> Text(
-                                line.removePrefix("## "), color = MaReChatActivity.ME, fontSize = 17.sp, fontWeight = FontWeight.Bold,
+                                line.removePrefix("## "), color = MaHost.Gold, fontSize = 16.sp, fontWeight = FontWeight.Bold,
                                 modifier = Modifier.padding(top = 14.dp, bottom = 4.dp),
                             )
                             line.isBlank() -> Spacer(Modifier.size(4.dp))
-                            else -> Text(line, color = Color.White, fontSize = 16.sp, lineHeight = 22.sp)
+                            else -> Text(line, color = MaHost.Ink, fontSize = 16.sp, lineHeight = 22.sp)
                         }
                     }
                 }
             }
         } else if (people.isEmpty()) {
-            Box(Modifier.fillMaxSize().padding(24.dp), contentAlignment = Alignment.Center) {
-                Text("No one yet. Open RE from a chat with someone; after Accept or Clear RE writes what it learned about them.", color = MaReChatActivity.DIM, fontSize = 16.sp)
+            Box(Modifier.weight(1f).fillMaxWidth().padding(24.dp), contentAlignment = Alignment.Center) {
+                Text(
+                    "No one yet. Open RE from a chat with someone; after Accept or Clear RE writes what it learned about them.",
+                    color = MaHost.Muted, fontSize = 16.sp,
+                )
             }
         } else {
-            LazyColumn(modifier = Modifier.fillMaxSize(), contentPadding = PaddingValues(12.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            LazyColumn(
+                modifier = Modifier.weight(1f).fillMaxWidth(),
+                contentPadding = PaddingValues(8.dp),
+                verticalArrangement = Arrangement.spacedBy(6.dp),
+            ) {
                 itemsIndexed(people, key = { _, p -> p.slug }) { _, p ->
                     Row(
-                        modifier = Modifier.fillMaxWidth().background(Color(0xFF1C1E22), RoundedCornerShape(16.dp))
+                        modifier = Modifier.fillMaxWidth().clip(MaHost.KeyShape).background(MaHost.Key)
                             .clickable { open = p }.padding(14.dp),
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
                         Box(
-                            modifier = Modifier.size(48.dp).background(MaReChatActivity.THEM, CircleShape),
+                            modifier = Modifier.size(44.dp).background(MaHost.Bg, CircleShape).border(1.5.dp, MaHost.RingSwitch, CircleShape),
                             contentAlignment = Alignment.Center,
-                        ) { Text(p.name.take(1).uppercase(), color = Color.White, fontSize = 20.sp, fontWeight = FontWeight.Bold) }
+                        ) { Text(p.name.take(1).uppercase(), color = MaHost.Sand, fontSize = 19.sp, fontWeight = FontWeight.Bold) }
                         Column(modifier = Modifier.weight(1f).padding(start = 12.dp)) {
-                            Text(p.name, color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.SemiBold, maxLines = 1)
-                            val last = p.text.lines().lastOrNull { it.trim().startsWith("-") || (it.isNotBlank() && !it.startsWith("#")) }.orEmpty()
-                            Text(last.trim().removePrefix("-").trim(), color = MaReChatActivity.DIM, fontSize = 14.sp, maxLines = 2)
+                            Text(p.name, color = MaHost.Ink, fontSize = 17.sp, fontWeight = FontWeight.Bold, maxLines = 1)
+                            val last = p.text.lines().lastOrNull { it.isNotBlank() && !it.startsWith("#") }.orEmpty()
+                            Text(last.trim().removePrefix("-").trim(), color = MaHost.Muted, fontSize = 14.sp, maxLines = 2)
                             Text(
                                 android.text.format.DateUtils.getRelativeTimeSpanString(p.updated).toString(),
-                                color = MaReChatActivity.DIM, fontSize = 12.sp,
+                                color = MaHost.Muted, fontSize = 12.sp,
                             )
                         }
                     }
                 }
             }
         }
+        Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 3.dp).padding(bottom = 4.dp)) {
+            MaHostKey("Back", Modifier.weight(1f), icon = Icons.AutoMirrored.Filled.ArrowBack) { if (open != null) open = null else onBack() }
+            MaHostKey(
+                if (o != null) "Clear ${o.name.substringBefore(' ')}" else "Clear all",
+                Modifier.weight(1f), icon = Icons.Default.DeleteSweep, ink = MaHost.DangerInk,
+                enabled = o != null || people.isNotEmpty(),
+            ) { asking = o?.slug ?: "*" }
+        }
     }
 
-    confirm?.let { which ->
-        AlertDialog(
-            onDismissRequest = { confirm = null },
-            title = { Text(if (which == "*") "Clear every person?" else "Clear ${open?.name ?: "this person"}?") },
-            text = { Text("The summaries, the flow and the style notes are deleted. This cannot be undone.", fontSize = 16.sp) },
-            confirmButton = {
-                TextButton(onClick = {
-                    if (which == "*") MaReChat.deleteAllPeople() else MaReChat.deletePerson(which)
-                    confirm = null
-                    open = null
-                    people = MaReChat.people()
-                }) { Text("Delete", color = Color(0xFFFF6B6B), fontWeight = FontWeight.Bold) }
+    asking?.let { which ->
+        HostDialog(
+            title = if (which == "*") "Clear every person?" else "Clear ${open?.name ?: "this person"}?",
+            text = "The summaries, the flow and the style notes are deleted, here and in the GitHub copy at the next sync.",
+            confirmLabel = "Delete",
+            onConfirm = {
+                if (which == "*") MaReChat.deleteAllPeople() else MaReChat.deletePerson(which)
+                asking = null
+                open = null
+                people = MaReChat.people()
             },
-            dismissButton = { TextButton(onClick = { confirm = null }) { Text("Keep") } },
+            onDismiss = { asking = null },
         )
     }
 }

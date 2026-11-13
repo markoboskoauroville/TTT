@@ -18,7 +18,11 @@ description: TTT, Talk to Type Advanced Keyboard (repo TTT, folder TTT_MINI): Ma
 11. NEVER switch engine/provider/model automatically: same engine, retry every 3 s (10 times), next key of the same provider only on quota/refused, network errors never move the ring; audio kept, Resend from History.
 12. Before EVERY TTT upgrade: export the Nothing UI (broadcast dev.ttt.engines.EXPORT_UI, pull ui_config.json), check for secrets, refresh app/src/main/assets/default_config.json (raise version). UI only. RE engine = Anthropic or Groq (switch in Settings and long press on RE).
 13. The recorder (dictation not idle) is shown in every view; suggestions only with the letter keys open. Test: collapse the keyboard, press record, screenshot.
+14. DESIGN: before any UI work load the ttt-design skill; every new screen, panel, recorder or menu reuses the keyboard's modules (MaHostKey, MaKeyPanel, MaRecorderReadout) and MaHost colours. No title bars, no Material default looks.
+15. BEFORE EVERY PUSH, the checklist (the hole Marko found 13.11.2026: rules written but not checked): grep the diff and the touched screens for TextField/OutlinedTextField with key/token/password labels (none allowed), DropdownMenu on the keyboard (none), new hard-coded colours (only MaHost); re-read rules 1-15 against the diff; record the request in momentaryupdates.md, the state in TAKEOVER.md, the mistake in LESSONS.md, the rule here.
+16. RE memory lives in Documents/TTTmini/re/ (TAKEOVER, LESSONS, SKILLS, people/, notes/) and is pushed to the private repo RE_MAGIC_DATABASE after every change (MaRemoteDb, token only from a key file).
 ## Run log
+- 13.11.2026: RE chat redesigned in the host look (ttt-design skill, MaHost/MaKeyPanel/MaRecorderReadout), per-answer keys, lessons at once, re/ synced to GitHub, token and KLIPY key only from files, CI test_host_rules.py.
 - 13.11.2026: build 635 (audio-only history, full-screen History, RE Magic chat with memory, per-person People screen); compiled, not yet installed (no adb in the cloud session, Pixel 7 offline).
 - 10.11.2026: shipped default UI, RE Groq switch, Groq small model gpt-oss-20b.
 - 10.11.2026: no automatic engine switch, 3 s retries.

@@ -117,6 +117,16 @@ object MaRemoteDb {
         status = "Token deleted."
     }
 
+    /**
+     * True when [tok] can write to the RE database repository (the key file picker tests GitHub tokens with this,
+     * 13.11.2026: keys only from files, never a paste box). Blocking; never logs the token.
+     */
+    fun tokenWorks(tok: String): Boolean = runCatching {
+        http.newCall(req(API, tok).build()).execute().use { r ->
+            r.isSuccessful && JSONObject(r.body.string()).optJSONObject("permissions")?.optBoolean("push") == true
+        }
+    }.getOrDefault(false)
+
     fun hasToken(): Boolean = prefs()?.getString("t", null) != null
 
     private fun token(): String? = runCatching {
@@ -131,7 +141,9 @@ object MaRemoteDb {
     /** Paths that belong in the repository (relative to Documents/TTTmini). */
     fun synced(path: String): Boolean =
         path.startsWith("re_ttt_skill") || path.startsWith("dictation_corrections") || path.startsWith("dictation_learned") ||
-            path.startsWith("re_corrections") || (path.startsWith("skills/") && (path.endsWith(".md")))
+            path.startsWith("re_corrections") || (path.startsWith("skills/") && (path.endsWith(".md"))) ||
+            // The RE chat's memory (13.11.2026): TAKEOVER, LESSONS, SKILLS, people/ and notes/; never the chat itself.
+            (path.startsWith("re/") && path.endsWith(".md"))
 
     private fun localFiles(): Map<String, File> {
         val root = MaVault.dir()
@@ -194,6 +206,13 @@ object MaRemoteDb {
         }
     }
 
+    private fun deleteRemote(path: String, sha: String, tok: String): Boolean {
+        val body = JSONObject().put("message", "RE: delete $path").put("branch", BRANCH).put("sha", sha)
+        return runCatching {
+            http.newCall(req("$API/contents/$path", tok).delete(body.toString().toRequestBody(JSON)).build()).execute().use { it.isSuccessful }
+        }.getOrDefault(false)
+    }
+
     /** Saves one benchmark result as benchmarks/<date>.json (engines + benchmark, 9.11.2026). Blocking. */
     fun pushBenchmark(date: String, json: String): String {
         val tok = token() ?: return "not saved to the database (no token set)"
@@ -210,7 +229,7 @@ object MaRemoteDb {
 
     /** Pulls and pushes as described above; returns a one line result (also kept in [status]). */
     fun syncNow(): String {
-        val tok = token() ?: return "No token: paste it in Settings, RE Magic, RE Magic Database.".also { status = it }
+        val tok = token() ?: return "No token: put it in a text file and use Import keys from file.".also { status = it }
         val result = runCatching { doSync(tok) }.getOrElse { "Sync failed: ${it.javaClass.simpleName} ${it.message?.take(80).orEmpty()}" }
         status = result
         MaLog.add("db", result)
@@ -231,6 +250,11 @@ object MaRemoteDb {
             val r = remote[path]
             val s = state.optString(path, "")
             when {
+                // Deleted on the phone since the last sync (the People screen, 13.11.2026): delete it in the repository too,
+                // instead of pulling it back. Only when the repository still has exactly what was synced.
+                l == null && r != null && s == r -> {
+                    if (deleteRemote(path, r, tok)) { state.remove(path); pushed++ }
+                }
                 l == null && r != null -> {
                     val b = download(path, tok) ?: continue
                     File(root, path).also { it.parentFile?.mkdirs() }.writeBytes(b)

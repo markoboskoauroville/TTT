@@ -21,6 +21,7 @@ import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -132,7 +133,7 @@ class MaHistoryActivity : ComponentActivity() {
     companion object {
         const val EXTRA_PKG = "pkg"
         const val EXTRA_FIELD = "field"
-        private val BG = Color(0xFF101114)
+        private val BG = dev.patrickgold.florisboard.dictate.ui.MaHost.Bg
 
         fun open(context: Context, pkg: String?, fieldId: Int) {
             context.startActivity(
@@ -187,13 +188,13 @@ private fun HistoryScreen(canInsert: Boolean, onInsert: (String) -> Unit, onClos
                 val mb = list.sumOf { it.audioBytes } / 1_000_000.0
                 Text(
                     "${list.size} entries · $audio with audio · ${"%.1f".format(mb)} MB",
-                    fontSize = 13.sp, color = Color(0xFF9AA0A6),
+                    fontSize = 13.sp, color = dev.patrickgold.florisboard.dictate.ui.MaHost.Muted,
                 )
             }
             TextButton(onClick = { confirmClear = true }, enabled = !entries.isNullOrEmpty()) {
-                Icon(Icons.Default.DeleteForever, null, tint = Color(0xFFFF6B6B))
+                Icon(Icons.Default.DeleteForever, null, tint = dev.patrickgold.florisboard.dictate.ui.MaHost.DangerInk)
                 Spacer(Modifier.width(4.dp))
-                Text("Clear history", color = Color(0xFFFF6B6B), fontSize = 16.sp)
+                Text("Clear history", color = dev.patrickgold.florisboard.dictate.ui.MaHost.DangerInk, fontSize = 16.sp)
             }
         }
         val list = entries
@@ -247,7 +248,7 @@ private fun HistoryScreen(canInsert: Boolean, onInsert: (String) -> Unit, onClos
                     confirmClear = false
                     stopPlay()
                     scope.launch(Dispatchers.IO) { DictateHistoryStore.clearAll(context) }
-                }) { Text("Delete all", color = Color(0xFFFF6B6B), fontWeight = FontWeight.Bold) }
+                }) { Text("Delete all", color = dev.patrickgold.florisboard.dictate.ui.MaHost.DangerInk, fontWeight = FontWeight.Bold) }
             },
             dismissButton = { TextButton(onClick = { confirmClear = false }) { Text("Keep") } },
         )
@@ -274,14 +275,15 @@ private fun EntryCard(
     var expanded by remember { mutableStateOf(false) }
     Column(
         modifier = Modifier.fillMaxWidth()
-            .background(if (audioOnly) Color(0xFF2A2116) else Color(0xFF1C1E22), RoundedCornerShape(18.dp))
+            .background(dev.patrickgold.florisboard.dictate.ui.MaHost.Key, dev.patrickgold.florisboard.dictate.ui.MaHost.KeyShape)
+            .then(if (audioOnly) Modifier.border(1.5.dp, dev.patrickgold.florisboard.dictate.ui.MaHost.Gold, dev.patrickgold.florisboard.dictate.ui.MaHost.KeyShape) else Modifier)
             .padding(14.dp),
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             if (audioOnly) {
                 Text(
                     "AUDIO ONLY", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = Color.Black,
-                    modifier = Modifier.background(Color(0xFFFFB74D), RoundedCornerShape(6.dp)).padding(horizontal = 6.dp, vertical = 2.dp),
+                    modifier = Modifier.background(dev.patrickgold.florisboard.dictate.ui.MaHost.Gold, RoundedCornerShape(6.dp)).padding(horizontal = 6.dp, vertical = 2.dp),
                 )
                 Spacer(Modifier.width(8.dp))
             }
@@ -292,7 +294,7 @@ private fun EntryCard(
                 if (!audioOnly && e.providerName.isNotBlank()) add(e.providerName)
                 add(if (hasAudio) "audio ${"%.1f".format(e.audioBytes / 1_000_000.0)} MB" else "no audio")
             }.joinToString(" · ")
-            Text(meta, fontSize = 13.sp, color = Color(0xFF9AA0A6), maxLines = 2, overflow = TextOverflow.Ellipsis)
+            Text(meta, fontSize = 13.sp, color = dev.patrickgold.florisboard.dictate.ui.MaHost.Muted, maxLines = 2, overflow = TextOverflow.Ellipsis)
         }
         if (e.title.isNotBlank() && !audioOnly) {
             Text(e.title, fontSize = 18.sp, fontWeight = FontWeight.Bold, color = Color.White, modifier = Modifier.padding(top = 6.dp))
@@ -301,7 +303,7 @@ private fun EntryCard(
             text = e.text,
             fontSize = if (audioOnly) 16.sp else 19.sp,
             lineHeight = if (audioOnly) 22.sp else 26.sp,
-            color = if (audioOnly) Color(0xFFFFCC80) else Color.White,
+            color = if (audioOnly) dev.patrickgold.florisboard.dictate.ui.MaHost.Sand else dev.patrickgold.florisboard.dictate.ui.MaHost.Ink,
             maxLines = if (expanded) Int.MAX_VALUE else 6,
             overflow = TextOverflow.Ellipsis,
             modifier = Modifier.fillMaxWidth().padding(top = 8.dp).clickable { expanded = !expanded },
@@ -322,17 +324,13 @@ private fun EntryCard(
 
 @Composable
 private fun Action(icon: ImageVector, label: String, strong: Boolean = false, danger: Boolean = false, onClick: () -> Unit) {
-    FilledTonalButton(
+    // The keyboard's own key (MaHostKey): green ring = the main action, light red text = deletes.
+    dev.patrickgold.florisboard.dictate.ui.MaHostKey(
+        label = label, icon = icon,
+        ring = if (strong) dev.patrickgold.florisboard.dictate.ui.MaHost.RingOn else null,
+        ink = if (danger) dev.patrickgold.florisboard.dictate.ui.MaHost.DangerInk else dev.patrickgold.florisboard.dictate.ui.MaHost.Ink,
         onClick = onClick,
-        modifier = Modifier.heightIn(min = 48.dp),
-        colors = androidx.compose.material3.ButtonDefaults.filledTonalButtonColors(
-            containerColor = when { strong -> Color(0xFF0A84FF); danger -> Color(0xFF3A2224); else -> Color(0xFF2C2F35) },
-            contentColor = when { strong -> Color.White; danger -> Color(0xFFFF8A80); else -> Color.White },
-        ),
-    ) {
-        Icon(icon, null, modifier = Modifier.padding(end = 6.dp))
-        Text(label, fontSize = 16.sp)
-    }
+    )
 }
 
 @Composable

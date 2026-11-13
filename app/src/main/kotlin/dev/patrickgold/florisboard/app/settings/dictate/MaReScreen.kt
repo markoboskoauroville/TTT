@@ -134,7 +134,6 @@ fun MaReScreen() = FlorisScreen {
             }
         }
         val dbContext = androidx.compose.ui.platform.LocalContext.current
-        var tokenInput by remember { mutableStateOf("") }
         var dbStatus by remember { mutableStateOf(dev.patrickgold.florisboard.dictate.MaRemoteDb.status) }
         var hasToken by remember { mutableStateOf(dev.patrickgold.florisboard.dictate.MaRemoteDb.hasToken()) }
         val dbScope = rememberCoroutineScope()
@@ -152,19 +151,15 @@ fun MaReScreen() = FlorisScreen {
                 style = MaterialTheme.typography.bodyMedium,
                 modifier = Modifier.padding(top = 4.dp),
             )
-            OutlinedTextField(
-                value = tokenInput, onValueChange = { tokenInput = it },
-                label = { Text("Paste the token here") },
-                visualTransformation = androidx.compose.ui.text.input.PasswordVisualTransformation(),
-                singleLine = true,
-                modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
+            // No paste box (Marko, 13.11.2026): the token comes from a file, through the one picker
+            // (Settings, Engines, "Import keys from file"); a github_pat_/ghp_ token there is tested and stored here.
+            Text(
+                text = "To add or change it: put the token in a text file and use Import keys from file (Engines).",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(top = 4.dp),
             )
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(top = 6.dp)) {
-                OutlinedButton(enabled = tokenInput.isNotBlank(), onClick = {
-                    val ok = dev.patrickgold.florisboard.dictate.MaRemoteDb.saveToken(tokenInput)
-                    tokenInput = ""; hasToken = dev.patrickgold.florisboard.dictate.MaRemoteDb.hasToken()
-                    dbStatus = if (ok) "Token saved." else "Could not save the token."
-                }) { Text("Save token") }
                 OutlinedButton(enabled = hasToken, onClick = {
                     dev.patrickgold.florisboard.dictate.MaRemoteDb.clearToken(); hasToken = false
                     dbStatus = dev.patrickgold.florisboard.dictate.MaRemoteDb.status

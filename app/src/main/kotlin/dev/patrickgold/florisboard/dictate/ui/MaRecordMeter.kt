@@ -334,3 +334,63 @@ private fun maDbColour(db: Float, tint: Color): Color = when {
     db > -12f -> Color(0xFFF0883E)
     else -> Color(0xFF56D364)
 }
+
+/**
+ * THE SAME RECORDER READOUT, FED FROM OUTSIDE (Marko, 13.11.2026: a recorder in another module "follows the same
+ * visual style or even reuses the same modules"). The lamp, the bold clock, the megabytes and the hairline meter of
+ * the keyboard's recording strip, drawn by the same helpers, for a recorder that is not DictateController's (the RE
+ * chat). [level] is 0..1 like DictateController.audioLevel.
+ */
+@Composable
+fun MaRecorderReadout(level: Float, elapsedMs: Long, bytes: Long, recording: Boolean, sending: Boolean, tint: Color) {
+    val db = maToDb(level)
+    val smoothed by animateFloatAsState(targetValue = db, animationSpec = tween(70), label = "maDbOut")
+    var peakDb by remember { mutableFloatStateOf(FLOOR_DB) }
+    LaunchedEffect(db) { peakDb = if (db > peakDb) db else (peakDb - 0.6f).coerceAtLeast(FLOOR_DB) }
+    var sweep by remember { mutableFloatStateOf(0f) }
+    LaunchedEffect(sending) {
+        if (!sending) return@LaunchedEffect
+        var rising = true
+        while (sending) {
+            sweep = (sweep + if (rising) 0.06f else -0.06f).coerceIn(0f, 1f)
+            if (sweep >= 1f) rising = false
+            if (sweep <= 0f) rising = true
+            delay(40L)
+        }
+    }
+    Column(modifier = Modifier.fillMaxSize().padding(horizontal = 14.dp), verticalArrangement = Arrangement.Bottom) {
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(bottom = 2.dp),
+            horizontalArrangement = Arrangement.Center,
+            verticalAlignment = Alignment.Bottom,
+        ) {
+            Box(
+                modifier = Modifier.align(Alignment.CenterVertically).padding(end = 8.dp).size(11.dp)
+                    .background(if (recording && !sending) MaRecordLampOn else MaRecordLampOff, CircleShape),
+            )
+            Text(
+                text = "%d:%02d".format(elapsedMs / 60000, (elapsedMs / 1000) % 60),
+                color = tint, fontSize = 30.sp, fontWeight = FontWeight.Bold, maxLines = 1,
+            )
+            Text(
+                text = if (sending) "" else "%.1f MB".format(bytes / 1_048_576.0),
+                color = tint.copy(alpha = 0.75f), fontSize = 12.sp, fontWeight = FontWeight.Bold,
+                maxLines = 1, softWrap = false, modifier = Modifier.padding(start = 6.dp),
+            )
+        }
+        Canvas(modifier = Modifier.fillMaxWidth().height(3.dp).padding(bottom = 1.dp)) {
+            val h = size.height
+            val full = size.width
+            drawRoundRect(color = tint.copy(alpha = 0.18f), topLeft = Offset(0f, 0f), size = Size(full, h), cornerRadius = CornerRadius(h / 2f, h / 2f))
+            if (sending) {
+                val half = full / 2f
+                val reach = half * sweep
+                drawRoundRect(color = tint.copy(alpha = 0.85f), topLeft = Offset(half - reach, 0f), size = Size(reach * 2f, h), cornerRadius = CornerRadius(h / 2f, h / 2f))
+            } else {
+                drawRoundRect(color = maDbColour(smoothed, tint), topLeft = Offset(0f, 0f), size = Size(full * maNorm(smoothed), h), cornerRadius = CornerRadius(h / 2f, h / 2f))
+                val peakX = (full * maNorm(peakDb)).coerceIn(0f, full - 2f)
+                drawRoundRect(color = maDbColour(peakDb, tint).copy(alpha = 0.9f), topLeft = Offset(peakX, 0f), size = Size(2f, h), cornerRadius = CornerRadius(1f, 1f))
+            }
+        }
+    }
+}

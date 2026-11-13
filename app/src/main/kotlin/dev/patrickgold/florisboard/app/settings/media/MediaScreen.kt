@@ -316,22 +316,12 @@ private fun GifSetupDialog(
                 )
                 Text(stringRes(R.string.prefs__media__gif_setup__open_klipy))
             }
-            OutlinedTextField(
-                value = key,
-                onValueChange = { key = it },
-                modifier = Modifier.fillMaxWidth(),
-                singleLine = true,
-                label = { Text(stringRes(R.string.prefs__media__gif_setup__key_label)) },
-                visualTransformation = if (reveal) VisualTransformation.None else PasswordVisualTransformation(),
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-                trailingIcon = {
-                    IconButton(onClick = { reveal = !reveal }) {
-                        Icon(
-                            if (reveal) Icons.Outlined.VisibilityOff else Icons.Outlined.Visibility,
-                            contentDescription = null,
-                        )
-                    }
-                },
+            // No key field (Marko: keys enter only through a file). The key comes from "Import keys from file":
+            // a line labelled KLIPY (or a file named klipy...) is stored here by KeyImporter.
+            Text(
+                text = (if (key.isBlank()) "Key: none yet." else "Key: saved (hidden).") +
+                    " Put it in a text file on a line with the word KLIPY and use Settings, Engines, Import keys from file.",
+                style = MaterialTheme.typography.bodyMedium,
             )
             Text(
                 text = stringRes(R.string.prefs__media__gif_setup__privacy_note),

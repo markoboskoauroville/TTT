@@ -33,7 +33,8 @@ scr = code(SRC / "app/settings/dictate/MaReScreen.kt")
 check("the repo is the private RE_MAGIC_DATABASE", 'REPO = "markoboskoauroville/RE_MAGIC_DATABASE"' in db)
 check("the token is encrypted with a Keystore key", "AndroidKeyStore" in db and "AES/GCM/NoPadding" in db)
 check("the token never reaches a log", not re.search(r"MaLog\.add\([^)]*(tok|token)\b", db) and not re.search(r"(?<!Ma)Log\.", db))
-check("the token is masked in the UI", "PasswordVisualTransformation" in scr and "Delete token" in scr)
+# 13.11.2026: no paste box; the token comes from a key file (KeyImporter), Settings only shows saved / delete.
+check("the token is never typed in the UI", "PasswordVisualTransformation" not in scr and "OutlinedTextField(\n                value = tokenInput" not in scr and "Delete token" in scr)
 check("conflicts keep both", ".conflict-" in db and "localChanged" in db and "remoteChanged" in db)
 check("small text files only", "length() < 400_000" in db and "path.endsWith(\".md\")" in db)
 check("one pull on start, a push after each update", "maybePull()" in code(SRC / "FlorisImeService.kt") and db.count("syncSoon()") >= 1

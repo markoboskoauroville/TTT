@@ -87,8 +87,51 @@ object MaReChat {
         }?.sortedByDescending { it.updated }.orEmpty()
     }.getOrDefault(emptyList())
 
-    fun deletePerson(slug: String) { runCatching { File(peopleDir(), "$slug.md").delete() } }
-    fun deleteAllPeople() { runCatching { peopleDir().deleteRecursively() } }
+    fun deletePerson(slug: String) { runCatching { File(peopleDir(), "$slug.md").delete() }; synced() }
+    fun deleteAllPeople() { runCatching { peopleDir().deleteRecursively() }; synced() }
+
+    /**
+     * Every change to RE's memory goes to GitHub (Marko, 13.11.2026), to the private RE Magic Database, with the token
+     * already on the phone (MaRemoteDb, debounced 15 s so a burst is one sync). Without a token nothing leaves the phone.
+     */
+    fun synced() {
+        runCatching { MaRemoteDb.syncSoon() }
+    }
+
+    // ------------------------------------------------------------------ lessons, at once (13.11.2026)
+    //
+    // "improve how application is learning from my cues and never repeat the same mistake twice". A cue is: the Wrong
+    // button under an answer, a reply that corrects RE ("no", "shorter", "ne tako"...), an Edit before Accept, a Retry.
+    // Each one becomes one dated rule in LESSONS.md right away (not only at Clear), and LESSONS.md is the first thing in
+    // every prompt.
+
+    private val CORRECTION = Regex(
+        "^(no\\b|nope|not like that|wrong|that'?s wrong|don'?t\\b|do not\\b|never\\b|stop\\b|instead\\b|too (long|short|formal|casual|much)|" +
+            "shorter|longer|less |more |ne\\b|nemoj|krivo|nije tako|ne tako|kra[cć]e|du[zž]e|bez |manje|vi[sš]e )",
+        RegexOption.IGNORE_CASE,
+    )
+
+    fun looksLikeCorrection(text: String): Boolean = CORRECTION.containsMatchIn(text.trim())
+
+    /** Writes one rule into LESSONS.md from what RE said and how Marko corrected it. Returns the rule or null. */
+    suspend fun lesson(context: Context, reSaid: String, marko: String, cue: String): String? {
+        ensureMemory()
+        val p = "RE, Marko's writing assistant, made a mistake and Marko corrected it ($cue). Write ONE rule, one line, " +
+            "that stops RE from ever making this mistake again: concrete, about Marko's preferences, in English, no names " +
+            "of the cue. Answer with the rule only.\n\nAlready known lessons:\n" + read(LESSONS).take(4000) +
+            "\n\nRE said:\n" + reSaid.take(2000) + "\n\nMarko:\n" + marko.take(2000)
+        val rule = runCatching {
+            if (MaReEngine.engine() == MaReEngine.GROQ) MaReEngine.groqAsk(context, "You write one-line rules.", p) { }
+            else DictateController.reChatAnthropic(context, p)
+        }.getOrNull()?.lineSequence()?.map { it.trim().trimStart('-', '*', ' ') }?.firstOrNull { it.length > 8 } ?: return null
+        val line = "- " + SimpleDateFormat("d.M.yyyy", Locale.ROOT).format(Date()) + " " + rule.take(300)
+        val old = read(LESSONS)
+        if (old.contains(rule.take(60), ignoreCase = true)) return rule
+        runCatching { file(LESSONS).writeText(old.trimEnd() + "\n" + line + "\n") }
+        MaLog.add("re-chat", "lesson written ($cue)")
+        synced()
+        return rule
+    }
 
     /** The file for the person on screen, created with its heading the first time RE meets them. */
     private fun ensurePerson(name: String) {
@@ -149,8 +192,9 @@ object MaReChat {
 
     /** Every memory file, for the prompt. */
     private fun memoryBlock(): String = buildString {
+        // Lessons first and as rules (13.11.2026: "never repeat the same mistake twice").
+        append("<lessons>\nMistakes Marko already corrected. Never make any of them again:\n").append(read(LESSONS).take(FILE_MAX)).append("\n</lessons>\n")
         append("<takeover>\n").append(read(TAKEOVER).take(FILE_MAX)).append("\n</takeover>\n")
-        append("<lessons>\n").append(read(LESSONS).take(FILE_MAX)).append("\n</lessons>\n")
         append("<skills>\n").append(read(SKILLS).take(FILE_MAX)).append("\n</skills>\n")
         for ((n, t) in notes()) append("<note name=\"").append(n).append("\">\n").append(t).append("\n</note>\n")
         person?.let { n ->
@@ -255,7 +299,7 @@ object MaReChat {
             } ?: return@forEachIndexed
             if (runCatching { target.writeText(body.take(FILE_MAX) + "\n") }.isSuccess) wrote++
         }
-        if (wrote > 0) MaLog.add("re-chat", "memory: $wrote file(s) written")
+        if (wrote > 0) { MaLog.add("re-chat", "memory: $wrote file(s) written"); synced() }
         return wrote
     }
 

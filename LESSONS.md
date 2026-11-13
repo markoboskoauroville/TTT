@@ -21,3 +21,6 @@
 - 13.11.2026 A cancel is not a delete: a cancelled dictation keeps its audio in the history as "audio only" until he clears the history. Only an explicit Clear or a per-entry delete removes audio.
 - 13.11.2026 RE's memory lives in files the AI writes itself (TAKEOVER, LESSONS, SKILLS in Documents/TTTmini/re/); clearing the chat keeps them and a new chat reads only them.
 - 13.11.2026 Per-person memory survives clearing the chat; only the People screen deletes a person.
+- 13.11.2026 A rule only in a skill file is forgotten; a rule in CI is kept. Key/token fields, Material defaults and own colours in new screens now fail scripts/test_host_rules.py. A test that enforced a paste box (test_remote_db) was itself wrong and was turned around.
+- 13.11.2026 New screens copy the host, not another app: no title bar, no blue/purple/gradients, the keyboard's own key, panel and recorder (ttt-design skill). Build 635's Messenger-blue RE chat was rejected.
+- 13.11.2026 RE learns at the moment of the cue (Wrong, a correcting reply, an Edit), not only at Clear, and every memory change is pushed to GitHub.

@@ -11442,3 +11442,9 @@ Benchmark clips 10 to 5 per language, seed clips excluded; `EngineScores` keeps 
 - MaReChat + MaReChatActivity (new): Messenger-style RE chat, memory files, learn on Clear/Accept, voice/text/sound switches, Reader highlight and subtitles.
 - MaReEngine.groqAsk (own system prompt); MaReResult.acceptFor / closedWithoutInsert; MaFeatureRow: History and RE keys open the windows.
 - scripts/test_re_chat_history.py: 39 checks.
+
+## 13.11.2026 – RE redesign in the host look, keys from files, CI rules
+- New: ui/MaHost.kt, ui/MaKeyPanel.kt, MaRecorderReadout (ui/MaRecordMeter.kt), .claude/skills/ttt-design, scripts/test_host_rules.py (60 checks).
+- MaReChatActivity rewritten; MaHistoryActivity restyled; RE long press = MaKeyPanel.
+- MaReChat: lesson(), looksLikeCorrection(), synced(); lessons first in the prompt.
+- MaRemoteDb: re/*.md synced, tokenWorks(), local deletes go to the repository; MaReScreen token field removed; MediaScreen KLIPY field removed; KeyImporter: GitHub token and KLIPY key from files.

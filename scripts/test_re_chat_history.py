@@ -64,8 +64,9 @@ check("Re-transcribe can keep the new text", "onKeep" in hact)
 
 # 4. RE chat
 check("RE key opens the chat", "MaReChatActivity.openFromKey(" in row)
-for label in ["\"Close\"", "\"Accept\"", "\"Clear\""]:
-    check(f"chat option {label}", label in cact)
+check("Close key", "Icons.Default.Close, onClick = onClose" in cact)
+check("Accept under every answer", "MaHostKey(\"Accept\"" in cact)
+check("Clear key asks first", "Clear the chat?" in cact)
 for f in ["TAKEOVER.md", "LESSONS.md", "SKILLS.md"]:
     check(f"memory file {f}", f in chat)
 check("memory is seeded by default", "fun ensureMemory()" in chat and "ensureMemory()" in cact)
@@ -80,11 +81,11 @@ check("Accept only inserts, never sends", "MaReResult.acceptFor(" in cact and "p
 check("chat stored on the phone", "chat.json" in chat)
 
 # 5. voice / text / mute, highlight, subtitles
-check("Text / Voice / Sound switches", all(s in cact for s in ["\"Text\"", "\"Voice\"", "\"Sound\"", "\"Muted\""]))
+check("Text / Voice / Sound switches", all(s in cact for s in ["\"Text\"", "\"Voice\"", "VolumeOff", "setMuted"]))
 check("reply read with the Reader voice", "MaReader.speakText(" in cact)
 check("word highlight from the Reader index", "MaReader.currentIndex" in cact and "MaReader.allWords" in cact)
 check("subtitles when the Reader shows subtitles", "display == \"subtitle\"" in cact and "MaSubtitleRow()" in cact)
-check("voice uses his H/E engine only", "EngineStore.selected(app, lang)" in cact)
+check("voice uses his H/E engine only", "EngineStore.selected(app, l)" in cact)
 check("3 s retries, 10 times", "delay(3_000L)" in cact and "attempt > 10" in cact)
 
 # 6. people (13.11.2026, second request)

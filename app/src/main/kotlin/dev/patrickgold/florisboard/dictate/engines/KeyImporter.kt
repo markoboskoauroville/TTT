@@ -75,7 +75,59 @@ object KeyImporter {
         return if (skipped > 0) o.copy(summary = o.summary + "\n$skipped file(s) skipped: text files only (.txt, .json, .env).") else o
     }
 
+    /** GitHub tokens: only for RE's private memory repository (MaRemoteDb), never a transcription engine. */
+    private val GITHUB = Regex("github_pat_[A-Za-z0-9_]{40,}|gh[pousr]_[A-Za-z0-9]{30,}")
+
+    /**
+     * A GitHub token in the chosen files becomes the RE Magic Database token (Marko, 13.11.2026: "keys enter through
+     * file picking"; the Settings paste box is gone). The first one that can write to the repository is kept, encrypted.
+     */
+    private suspend fun importGithub(c: Context, files: List<Pair<String, String>>, onProgress: (String) -> Unit): String? {
+        val toks = files.flatMap { (_, t) -> GITHUB.findAll(t).map { it.value }.toList() }.distinct()
+        if (toks.isEmpty()) return null
+        dev.patrickgold.florisboard.dictate.MaRemoteDb.attach(c)
+        for ((i, t) in toks.withIndex()) {
+            onProgress("Testing GitHub token ${i + 1} of ${toks.size}…")
+            val ok = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) { dev.patrickgold.florisboard.dictate.MaRemoteDb.tokenWorks(t) }
+            if (ok && dev.patrickgold.florisboard.dictate.MaRemoteDb.saveToken(t)) {
+                dev.patrickgold.florisboard.dictate.MaRemoteDb.syncSoon()
+                return "GitHub (RE Magic Database): ${toks.size} token(s), token ${i + 1} can write, stored"
+            }
+        }
+        return "GitHub (RE Magic Database): ${toks.size} token(s), none can write to ${dev.patrickgold.florisboard.dictate.MaRemoteDb.REPO}, not stored"
+    }
+
+    /** The KLIPY GIF key (13.11.2026: its paste field is gone): a token on a line, or in a file, labelled klipy. */
+    private suspend fun importKlipy(files: List<Pair<String, String>>): String? {
+        val tok = Regex("[A-Za-z0-9_-]{20,}")
+        var found: String? = null
+        for ((name, text) in files) {
+            val lines = text.lines()
+            for ((i, line) in lines.withIndex()) {
+                val labelled = name.contains("klipy", true) || line.contains("klipy", true) ||
+                    (i > 0 && lines[i - 1].contains("klipy", true) && !tok.containsMatchIn(lines[i - 1].substringAfter(':', "")))
+                if (!labelled) continue
+                found = tok.findAll(line).map { it.value }.firstOrNull { !it.contains("klipy", true) } ?: continue
+                break
+            }
+            if (found != null) break
+        }
+        val k = found ?: return null
+        val prefs by dev.patrickgold.florisboard.app.FlorisPreferenceStore
+        prefs.gif.klipyApiKey.set(k)
+        return "KLIPY (GIF search): 1 key stored"
+    }
+
     suspend fun importTexts(c: Context, files: List<Pair<String, String>>, onProgress: (String) -> Unit): Outcome {
+        val gh = importGithub(c, files, onProgress)
+        val gif = importKlipy(files)
+        val o = importEngineKeys(c, files, onProgress)
+        val extra = listOfNotNull(gh, gif)
+        val more = extra.count { it.endsWith("stored") && !it.endsWith("not stored") }
+        return if (extra.isEmpty()) o else o.copy(summary = (extra + o.summary).joinToString("\n"), stored = o.stored + more)
+    }
+
+    private suspend fun importEngineKeys(c: Context, files: List<Pair<String, String>>, onProgress: (String) -> Unit): Outcome {
         val seen = HashSet<String>()
         val cands = files.flatMap { (n, t) -> KeyScan.scan(n, t) }.filter { seen.add(it.value) }
         if (cands.isEmpty()) return Outcome("No keys found in ${files.size} file(s).", 0)

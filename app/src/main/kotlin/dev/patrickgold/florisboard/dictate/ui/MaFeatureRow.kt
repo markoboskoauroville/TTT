@@ -379,6 +379,7 @@ fun MaFeatureRow(
     var engineMenu by remember { mutableStateOf<String?>(null) }
     // Where the pressed key sits in the keyboard window (updated by the key itself), the anchor of the engine panel.
     val engineKeyRect = remember { arrayOf<androidx.compose.ui.geometry.Rect?>(null) }
+    val reKeyRect = remember { arrayOf<androidx.compose.ui.geometry.Rect?>(null) }
 
     // The one-minute fill mark and its clock are gone. They existed to make a tick last long enough
     // to be seen; the ring on the key says the same thing for as long as it is true, so there is
@@ -1618,7 +1619,7 @@ fun MaFeatureRow(
                     var reMenu by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(false) }
                     val reEngine by prefs.dictate.maReEngine.collectAsState()
                     val reGroqModel by prefs.dictate.maReGroqModel.collectAsState()
-                    Box(modifier = keyMod) {
+                    Box(modifier = keyMod.androidx_onPlaced { reKeyRect[0] = it }) {
                     ThemedKey(
                         code = KeyCode.NOOP,
                         modifier = Modifier.fillMaxSize(),
@@ -1657,35 +1658,35 @@ fun MaFeatureRow(
                             )
                         }
                     }
-                    androidx.compose.material3.DropdownMenu(expanded = reMenu, onDismissRequest = { reMenu = false }) {
-                        @androidx.compose.runtime.Composable fun item(label: String, on: Boolean, pick: () -> Unit) = androidx.compose.material3.DropdownMenuItem(
-                            text = { Text((if (on) "\u2713 " else "    ") + label) },
-                            onClick = { reMenu = false; pick() },
-                        )
-                        item("Anthropic", reEngine != "groq") { scope.launch { prefs.dictate.maReEngine.set("anthropic") } }
-                        item("Groq \u00b7 gpt-oss-20b", reEngine == "groq" && reGroqModel != "openai/gpt-oss-120b") {
-                            scope.launch { prefs.dictate.maReEngine.set("groq"); prefs.dictate.maReGroqModel.set("openai/gpt-oss-20b") }
-                        }
-                        item("Groq \u00b7 gpt-oss-120b", reEngine == "groq" && reGroqModel == "openai/gpt-oss-120b") {
-                            scope.launch { prefs.dictate.maReEngine.set("groq"); prefs.dictate.maReGroqModel.set("openai/gpt-oss-120b") }
-                        }
-                        item("Speak an instruction (RE without chat)", false) {
-                            MaLanguage.set(context, MaLanguage.EN)
-                            MaReprompt.noteField(editorInstance.activeInfo.packageName, editorInstance.activeInfo.base.fieldId)
-                            DictateController.onMicClick(context, reprompt = true, engine = MaProviders.ENGINE_ASSEMBLYAI)
-                            MaMessage.show("RE: say the instruction (AssemblyAI)")
-                        }
-                        item("Tap opens the chat", dev.patrickgold.florisboard.dictate.MaReChat.chatOn(context)) {
-                            dev.patrickgold.florisboard.dictate.MaReChat.setChatOn(context, !dev.patrickgold.florisboard.dictate.MaReChat.chatOn(context))
-                        }
-                        item("Type the instruction\u2026", false) {
-                            val info = editorInstance.activeInfo
-                            val pkg = info.packageName
-                            val empty = editorInstance.activeContent.text.isBlank() && editorInstance.activeContent.selectedText.isBlank()
-                            if (pkg == null) MaMessage.show("Reprompt: no field to write into")
-                            else MaReprompt.open(context, pkg, info.base.fieldId, write = empty)
-                        }
-                    }
+                    // The app's own panel (Marko, 13.11.2026), grown up from the RE key like the H/E engine panel.
+                    if (reMenu) MaKeyPanel(
+                        title = "re", accent = MaRecordOutlineLive, anchor = reKeyRect[0], onDismiss = { reMenu = false },
+                        items = listOf(
+                            MaPanelItem("Anthropic", "RE engine", reEngine != "groq") { scope.launch { prefs.dictate.maReEngine.set("anthropic") } },
+                            MaPanelItem("Groq \u00b7 gpt-oss-20b", "RE engine", reEngine == "groq" && reGroqModel != "openai/gpt-oss-120b") {
+                                scope.launch { prefs.dictate.maReEngine.set("groq"); prefs.dictate.maReGroqModel.set("openai/gpt-oss-20b") }
+                            },
+                            MaPanelItem("Groq \u00b7 gpt-oss-120b", "RE engine", reEngine == "groq" && reGroqModel == "openai/gpt-oss-120b") {
+                                scope.launch { prefs.dictate.maReEngine.set("groq"); prefs.dictate.maReGroqModel.set("openai/gpt-oss-120b") }
+                            },
+                            MaPanelItem("Tap opens the chat", if (dev.patrickgold.florisboard.dictate.MaReChat.chatOn(context)) "on" else "off", dev.patrickgold.florisboard.dictate.MaReChat.chatOn(context)) {
+                                dev.patrickgold.florisboard.dictate.MaReChat.setChatOn(context, !dev.patrickgold.florisboard.dictate.MaReChat.chatOn(context))
+                            },
+                            MaPanelItem("Speak an instruction", "no chat") {
+                                MaLanguage.set(context, MaLanguage.EN)
+                                MaReprompt.noteField(editorInstance.activeInfo.packageName, editorInstance.activeInfo.base.fieldId)
+                                DictateController.onMicClick(context, reprompt = true, engine = MaProviders.ENGINE_ASSEMBLYAI)
+                                MaMessage.show("RE: say the instruction (AssemblyAI)")
+                            },
+                            MaPanelItem("Type the instruction", "no chat") {
+                                val info = editorInstance.activeInfo
+                                val pkg = info.packageName
+                                val empty = editorInstance.activeContent.text.isBlank() && editorInstance.activeContent.selectedText.isBlank()
+                                if (pkg == null) MaMessage.show("Reprompt: no field to write into")
+                                else MaReprompt.open(context, pkg, info.base.fieldId, write = empty)
+                            },
+                        ),
+                    )
                     }
                 }
                 MaFeatureKey.WHATSAPP -> {
