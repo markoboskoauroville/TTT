@@ -21,6 +21,7 @@ ever leaves the phone through this; status shows counts only.
     python3 tools/ttt_remote.py install 642             # release build-642 from GitHub, adb install -r (never uninstall)
     python3 tools/ttt_remote.py log                     # files/engines_log.txt
     python3 tools/ttt_remote.py lock "what I am doing"  # Voice Engine v7: CLAUDE IS USING THE PHONE (LET ME USE IT overrides)
+    python3 tools/ttt_remote.py request "what for"      # v11: the blob asks him; waits until he hands the phone over
     python3 tools/ttt_remote.py unlock
     python3 tools/ttt_remote.py done                    # unlock + bring Marko's Claude chat back to the front
 
@@ -111,7 +112,9 @@ def through(ms=900):
     """Our own tap or screenshot passes the lock; refuses when Marko took the phone back."""
     st = ve("/status").get("lock")
     if st == "overridden":
-        sys.exit("Marko pressed LET ME USE IT: the phone is his. Wait.")
+        sys.exit("Marko pressed LET ME USE IT: the phone is his. Wait (his blob gives it back).")
+    if st == "requested":
+        sys.exit("Asked for the phone; he has not handed it over yet. Wait.")
     if st == "on":
         ve("/through", {"ms": ms})
         time.sleep(0.15)
@@ -177,6 +180,11 @@ def main(argv):
             json.dump(rows, open(out, "w"), indent=1, ensure_ascii=False)
     elif cmd == "lock":
         print(ve("/lock", {"text": " ".join(pos) or "Testing. It is yours again when this disappears."}))
+    elif cmd == "request":
+        print(ve("/request", {"text": " ".join(pos) or "Claude needs the phone for a moment."}))
+        while ve("/status").get("lock") == "requested":
+            time.sleep(3)
+        print("lock:", ve("/status").get("lock"))
     elif cmd == "unlock":
         print(ve("/unlock", {}))
     elif cmd == "done":
