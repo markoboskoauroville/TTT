@@ -663,7 +663,10 @@ private fun SpokenText() {
     }
     val text = buildAnnotatedString {
         words.forEachIndexed { i, w ->
-            if (i > 0) append(" ")
+            // No space before closing punctuation or after an opening one (13.11.2026: '" The meeting ... ten. "').
+            val prev = if (i > 0) words[i - 1].text else ""
+            val glue = w.text.firstOrNull()?.let { it in ".,;:!?)]}\u201d\u2019" } == true || prev.lastOrNull()?.let { it in "([{\u201c\u2018" } == true
+            if (i > 0 && !glue) append(" ")
             when {
                 i == idx -> withStyle(SpanStyle(color = MaHost.Gold, fontWeight = FontWeight.Bold, background = Color(0x33E8B15C))) { append(w.text) }
                 idx in words.indices && i in start..end -> withStyle(SpanStyle(background = Color(0x1FFFFFFF))) { append(w.text) }
