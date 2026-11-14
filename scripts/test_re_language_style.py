@@ -72,6 +72,16 @@ check("the guide never asks", "Never ask" in guide)
 check("no key, token or phone number in the guide", not re.search(r"(sk-|ghp_|gsk_|\+?\d{9,})", guide))
 check("attached at start", "MaReStyle.attach(this)" in code(SRC / "FlorisImeService.kt"))
 
+# Afterman voice (Marko, 14.11.2026): capital after the dot, no emoji, serious
+check("guide: Yshai Afterman is the voice", "His voice is Yshai Afterman" in guide)
+check("guide: capital after every full stop", "starts with a capital letter, after a full stop" in guide)
+check("guide: no emoji, no smiley, no matching emoji", "No emoji, ever" in guide)
+check("guide: the old one-emoji and lower-case allowances are gone", "At most one emoji" not in guide and "Often starts in lower case" not in guide)
+check("RE chat system prompt names his style", "HIS STYLE (14.11.2026, final)" in chat and "NEVER an emoji" in chat)
+check("a draft is polished: emoji out, capitals in", "fun polish(" in style and "MaReStyle.polish(it)" in chat)
+check("polish leaves links alone", "[./@:]" in style)
+check("base lessons carry the style", "His style is Yshai Afterman" in chat)
+
 if failures:
     print("FAILED:\n" + "\n".join(failures))
     sys.exit(1)

@@ -44,7 +44,7 @@ object MaReChat {
     /** [image]: a picture sent by a Claude Code session (a WhatsApp screenshot from the Mac, MaClaudeLink), its path. */
     data class Msg(val me: Boolean, val text: String, val at: Long = System.currentTimeMillis(), val image: String? = null) {
         /** The sendable part of an RE answer, or null when it is only talk. */
-        val draft: String? get() = if (me) null else DRAFT.find(text)?.groupValues?.get(1)?.trim()?.takeIf { it.isNotEmpty() }
+        val draft: String? get() = if (me) null else DRAFT.find(text)?.groupValues?.get(1)?.trim()?.let { MaReStyle.polish(it) }?.takeIf { it.isNotEmpty() }
         /** What the bubble shows: the draft markers taken out. */
         val shown: String get() = text.replace(DRAFT_TAGS, "").trim()
     }
@@ -191,7 +191,8 @@ object MaReChat {
         "- 13.11.2026 Talk to Marko in the language of his last message; the draft is in the language of the chat with that person unless he asks.\n" +
         "- 13.11.2026 Croatian future: donijet ću, doći ću, javit ću (never donijeti ću). Standard Croatian only, never Serbian words (isprika, not izvinjenje).\n" +
         "- 13.11.2026 His dictation: \"creation\" means Croatian, \"Vesper\" means Whisper. Write the meant word.\n" +
-        "- 13.11.2026 Start a draft with the greeting he uses for that person (Bok Ana! / Hi Tom,) and keep their register (ti / Vi).\n"
+        "- 13.11.2026 Start a draft with the greeting he uses for that person (Bok Ana, / Hi Tom,) and keep their register (ti / Vi).\n" +
+        "- 14.11.2026 His style is Yshai Afterman: serious, a capital letter at the start and after every full stop, NO emoji ever, no exclamation marks. Never answer an emoji with an emoji.\n"
 
     private fun addBaseLessons() {
         val f = file(LESSONS)
@@ -252,7 +253,9 @@ object MaReChat {
         "LANGUAGE OF A DRAFT (14.11.2026): Marko speaks to you in English, always, but a draft is in the language of the message it " +
         "answers or edits (the newest [left] message on the screen, else the text he gave you), never in the language of his request: " +
         "a Croatian chat gets a Croatian draft with č ć š ž đ, every correction applied in Croatian, even when he asked in English. " +
-        "Only an explicit translate, in English or na hrvatski changes it. Never ask about language or style: write the draft in his style."
+        "Only an explicit translate, in English or na hrvatski changes it. Never ask about language or style: write the draft in his style. " +
+        "HIS STYLE (14.11.2026, final): the Yshai Afterman voice. Serious and warm. Every sentence starts with a capital letter, after every full stop too. " +
+        "NEVER an emoji, not even to answer a friend's emoji; no exclamation marks; no dashes. Short paragraphs. Never lower-case a message."
 
     /** The whole prompt for the next answer: memory, the screen behind, the chat so far. */
     fun prompt(msgs: List<Msg>, ctx: Ctx = current()): String = buildString {

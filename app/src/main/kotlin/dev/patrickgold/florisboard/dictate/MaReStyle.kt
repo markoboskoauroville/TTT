@@ -68,6 +68,24 @@ object MaReStyle {
             "Never ask which language or which style: write directly."
     }
 
+    /**
+     * The guarantee behind the guide (Marko, 14.11.2026: "the Afterman style, the first letter capital after the dot, and
+     * I don't use any emojis"): whatever the model wrote, a draft has no emoji and every sentence, and every line,
+     * starts with a capital letter. Pure, so the test suite runs it.
+     */
+    fun polish(text: String): String {
+        val sb = StringBuilder()
+        var i = 0
+        while (i < text.length) {
+            val cp = text.codePointAt(i)
+            i += Character.charCount(cp)
+            val emoji = cp in 0x1F000..0x1FAFF || cp in 0x2600..0x27BF || cp in 0x2B00..0x2BFF || cp == 0xFE0F || cp == 0x200D || cp in 0x1F1E6..0x1F1FF
+            if (!emoji) sb.appendCodePoint(cp)
+        }
+        val clean = sb.toString().replace(Regex("[ \\t]{2,}"), " ").replace(Regex("[ \\t]+\\n"), "\n").replace(Regex("[ \\t]+([.,!?;:])"), "$1").trim()
+        return Regex("(^|\\n|[.?!…]\\s+)(\\p{Ll})(?![\\p{L}\\p{N}_-]*[./@:][\\p{L}\\p{N}])").replace(clean) { m -> m.groupValues[1] + m.groupValues[2].uppercase() }
+    }
+
     /** The style guide as a prompt block, empty when there is none. */
     fun block(): String {
         val g = guide().trim()
