@@ -619,3 +619,9 @@ voices. Stopped here: a further build plus a full suite (~1 h) would not finish 
 > "I opened my Nothing Phone in Screen Copy Mantra, and I tried to transcribe some of my comments with TTT, and the sound is not heard" → "yes, go ahead and build our custom audio link with TTT" (Marko, 14.11.2026)
 
 **Status:** saved first. Contract: Screen Copy runs `adb reverse tcp:8879 tcp:8879`; TTT connects to 127.0.0.1:8879, sends `TTT-MIC 1 <rate>\n`, reads `OK <rate> 1 s16le\n` then raw PCM until it closes; `ERR <reason>` = fall back to the phone mic. Setting "Microphone: Auto / Phone only", cue "MAC MIC" while recording.
+
+## 14.11.2026 – live test: TTT on the Mac microphone through Screen Copy (via the coordinator)
+
+> "we are working on screen copy. First of all, rename the icon to be scrcpy In two lines. Fix remote sound. For example, right now I'm going to open my WhatsApp on my own account, where we can type freely without disturbing anybody. Now use DTT Mini to type something using the Adam speaker. Please try that, and if it lands in the message, let me know." (Marko, 14.11.2026; "DTT Mini" = TTT Mini)
+
+**Found:** Screen Copy's log showed four H presses at 10:26 where TTT connected to 127.0.0.1:8879 and closed after 0 bytes: the handshake over adb reverse through Tailscale (Nothing on mobile data, DERP Frankfurt, ping 80-120 ms) took 220-280 ms at rest, so TTT's 300 ms limit fell back to the phone mic. Fix: handshake read allowed 1.5 s (a missing link is still refused at once).
