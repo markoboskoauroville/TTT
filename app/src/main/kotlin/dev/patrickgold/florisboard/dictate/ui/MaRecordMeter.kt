@@ -261,32 +261,23 @@ private fun MaReadings(sending: Boolean, tint: Color) {
             fontWeight = FontWeight.Bold,
             maxLines = 1,
         )
-        Text(
-            // One digit, the separator, one digit, then MB. It was three bare characters and it did
-            // not say what they were: Marko had to guess that 5,6 meant megabytes, which is a
-            // reading nobody can use.
-            //
-            // The separator is the phone's, not a full stop forced on it. On his Croatian phone
-            // "%.1f" already gives 5,6 and that is correct there; hardcoding a dot would make the
-            // keyboard the only thing on the screen writing numbers the other way.
-            //
-            // maxLines and softWrap are the actual fix for the break he photographed. Sized to its
-            // own content now rather than to a share of the line, so there is nothing left to wrap.
-            text = if (sending) "" else "%.1f MB".format(bytes / 1_048_576.0),
-            color = tint.copy(alpha = 0.75f),
-            fontSize = 12.sp,
-            fontWeight = FontWeight.Bold,
-            maxLines = 1,
-            softWrap = false,
-            modifier = Modifier.padding(start = 6.dp),
-        )
-        // MAC MIC cue (14.11.2026): which microphone is live, only while the Mac's is.
+        // MAC MIC cue (14.11.2026): which microphone is live. Stacked over the size so it takes no extra width
+        // (a third sibling in the centred row was measured down to nothing).
         val macMic by dev.patrickgold.florisboard.dictate.audio.MacMicLink.active.collectAsState()
-        if (macMic && !sending) {
+        Column(modifier = Modifier.padding(start = 6.dp), horizontalAlignment = Alignment.Start) {
+            if (macMic && !sending) {
+                Text(
+                    text = "MAC MIC", color = tint, fontSize = 11.sp, fontWeight = FontWeight.Bold,
+                    maxLines = 1, softWrap = false,
+                )
+            }
             Text(
-                text = "MAC MIC",
-                color = tint, fontSize = 12.sp, fontWeight = FontWeight.Bold,
-                maxLines = 1, softWrap = false, modifier = Modifier.padding(start = 8.dp),
+                text = if (sending) "" else "%.1f MB".format(bytes / 1_048_576.0),
+                color = tint.copy(alpha = 0.75f),
+                fontSize = 12.sp,
+                fontWeight = FontWeight.Bold,
+                maxLines = 1,
+                softWrap = false,
             )
         }
         // No spacer at either end. A weight anywhere in this row would take the leftover space for
