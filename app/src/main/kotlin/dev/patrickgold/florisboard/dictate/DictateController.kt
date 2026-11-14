@@ -1825,6 +1825,7 @@ object DictateController {
                             engineOutcome = dev.patrickgold.florisboard.dictate.engines.EngineChain.dictate(
                                 appContext, engWav, engLang, first = engSelected, skip = emptySet(), legacyFailed = null,
                                 onStatus = { _maStatus.value = it },
+                                originalBytes = audioFile.length(),
                             )
                         }
                     } finally {
@@ -1922,6 +1923,12 @@ object DictateController {
                         }
                         val ring = MaKeyRingStore.load(account.providerId)
                         var rolled = 0
+                        // Original size, the size that goes up, and when the words should be back (14.11.2026).
+                        MaSendProgress.begin(
+                            appContext, "${account.providerId}/$sendModel/${if (fast) "fast" else "slow"}",
+                            audioFile.length(), sendFile.length(), recordedSeconds.toDouble(),
+                        )
+                        var maSentOk = false
                         val outcome = try {
                             MaKeyRing.run(maKeys, ring) { maKey ->
                                 rolled++
@@ -1947,13 +1954,15 @@ object DictateController {
                                         _state.value = UiState.Transcribing(attempt)
                                     },
                                 )
-                            }
+                            }.also { maSentOk = true }
                         } catch (e: MaKeyRing.NoKeyLeft) {
                             // Every key was tried. Persist what the walk learned before failing, or
                             // the very next recording pays to discover the same thing again.
                             MaKeyRingStore.save(account.providerId, e.ring)
                             throw e.last
                                 ?: DictateApiException(DictateApiException.Kind.INVALID_API_KEY, "No API key set")
+                        } finally {
+                            MaSendProgress.end(appContext, maSentOk)
                         }
                         MaKeyRingStore.save(account.providerId, outcome.second)
                         return outcome.first

@@ -77,6 +77,7 @@ object EngineChain {
         skip: Set<String>,
         legacyFailed: String?,
         onStatus: (String) -> Unit,
+        originalBytes: Long = wav.length(),
     ): ChainResult? {
         val l = if (lang == "en") "en" else "hr"
         val letter = if (l == "en") "E" else "H"
@@ -92,6 +93,9 @@ object EngineChain {
         val cand = candidate(c, id, wav, l)
         KeyRing.statusSink = { m -> onStatus("$letter \u00b7 $m") }
         val t0 = System.currentTimeMillis()
+        // Original size, the size that goes up, and when the words should be back (MaSendProgress, 14.11.2026).
+        dev.patrickgold.florisboard.dictate.MaSendProgress.begin(c, id, originalBytes, wav.length(), sec, cand.isLocal)
+        var ok = false
         try {
             var attempt = 0
             while (true) {
@@ -102,6 +106,7 @@ object EngineChain {
                     val text = kotlinx.coroutines.withTimeout(timeoutMs(sec, cand.isLocal)) { cand.call() }
                     val ms = System.currentTimeMillis()
                     onStatus("done (${cand.name}, ${FallbackRunner.seconds(ms - t0)} s)")
+                    ok = true
                     return ChainResult(text, cand.id, cand.name, ms - t0, listOf(Attempt(cand.id, true, null, ms - s)))
                 } catch (t: Throwable) {
                     if (t is kotlinx.coroutines.CancellationException && t !is kotlinx.coroutines.TimeoutCancellationException) throw t
@@ -122,6 +127,7 @@ object EngineChain {
                 }
             }
         } finally {
+            dev.patrickgold.florisboard.dictate.MaSendProgress.end(c, ok)
             KeyRing.statusSink = null
             EngineLive.setActive(l, null)
         }

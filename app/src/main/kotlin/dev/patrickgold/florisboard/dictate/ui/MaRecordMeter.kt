@@ -271,8 +271,8 @@ private fun MaReadings(sending: Boolean, tint: Color) {
                     maxLines = 1, softWrap = false,
                 )
             }
-            Text(
-                text = if (sending) "" else "%.1f MB".format(bytes / 1_048_576.0),
+            if (sending) MaSendFigures(tint) else Text(
+                text = "%.1f MB".format(bytes / 1_048_576.0),
                 color = tint.copy(alpha = 0.75f),
                 fontSize = 12.sp,
                 fontWeight = FontWeight.Bold,
@@ -372,8 +372,8 @@ fun MaRecorderReadout(level: Float, elapsedMs: Long, bytes: Long, recording: Boo
                 text = "%d:%02d".format(elapsedMs / 60000, (elapsedMs / 1000) % 60),
                 color = tint, fontSize = 30.sp, fontWeight = FontWeight.Bold, maxLines = 1,
             )
-            Text(
-                text = if (sending) "" else "%.1f MB".format(bytes / 1_048_576.0),
+            if (sending) Box(Modifier.padding(start = 6.dp)) { MaSendFigures(tint) } else Text(
+                text = "%.1f MB".format(bytes / 1_048_576.0),
                 color = tint.copy(alpha = 0.75f), fontSize = 12.sp, fontWeight = FontWeight.Bold,
                 maxLines = 1, softWrap = false, modifier = Modifier.padding(start = 6.dp),
             )
@@ -392,5 +392,33 @@ fun MaRecorderReadout(level: Float, elapsedMs: Long, bytes: Long, recording: Boo
                 drawRoundRect(color = maDbColour(peakDb, tint).copy(alpha = 0.9f), topLeft = Offset(peakX, 0f), size = Size(2f, h), cornerRadius = CornerRadius(1f, 1f))
             }
         }
+    }
+}
+
+/**
+ * WHILE SENDING (Marko, 14.11.2026): the original size, the size really going up, and when the words should be back,
+ * stacked beside the clock: "48.2 MB → 1.6 MB" over "ready ~4 s" ("+3 s" once the estimate has passed).
+ * Fed by [dev.patrickgold.florisboard.dictate.MaSendProgress], which every sender fills, so the keyboard strip and
+ * the RE window say the same thing.
+ */
+@Composable
+fun MaSendFigures(tint: Color) {
+    val info by dev.patrickgold.florisboard.dictate.MaSendProgress.state.collectAsState()
+    val i = info ?: return
+    var now by remember { mutableLongStateOf(System.currentTimeMillis()) }
+    LaunchedEffect(i.startedAt) {
+        while (true) { now = System.currentTimeMillis(); delay(250L) }
+    }
+    Column(horizontalAlignment = Alignment.Start) {
+        Text(
+            text = dev.patrickgold.florisboard.dictate.MaSendProgress.sizes(i),
+            color = tint.copy(alpha = 0.75f), fontSize = 11.sp, fontWeight = FontWeight.Bold,
+            maxLines = 1, softWrap = false,
+        )
+        Text(
+            text = "ready " + dev.patrickgold.florisboard.dictate.MaSendProgress.eta(i, now),
+            color = tint, fontSize = 12.sp, fontWeight = FontWeight.Bold,
+            maxLines = 1, softWrap = false,
+        )
     }
 }

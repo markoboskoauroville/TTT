@@ -64,6 +64,7 @@ import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.DeleteSweep
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Keyboard
 import androidx.compose.material.icons.filled.Mic
 import androidx.compose.material.icons.filled.People
@@ -77,6 +78,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableFloatStateOf
@@ -133,8 +135,10 @@ import dev.patrickgold.jetpref.datastore.model.collectAsState as collectPrefAsSt
  * - **Balloons**: his on the right, RE's on the left; under every RE answer its own keys: Accept (into the app behind),
  *   Edit (change it, then Accept; the change is a lesson), Copy, Speak, Retry, Wrong (the next thing he says is how it
  *   should be, and that becomes a lesson at once).
- * - **Voice**: the keyboard's recorder: language badge, trash, the red-ringed recorder key with lamp, clock, MB and
- *   meter ([MaRecorderReadout], the same drawing as the keyboard strip), send. Transcribed with his H/E engine only.
+ * - **Voice**: the keyboard's recorder: language badge, (trash while recording), the keyboard's own E/H engine key
+ *   (red dot, letter, "Groq turbo 6/8", minutes left; tap to record, tap again to send) with History NEXT to it
+ *   (14.11.2026). Recording shows lamp, clock, MB and meter ([MaRecorderReadout]); sending shows original size →
+ *   sent size and the expected time until the text is back ([MaSendProgress]). Transcribed with his H/E engine only.
  * - **Keys row**: Text, Voice, Sound (green ring when on), People (summaries per person), Clear (RE writes its memory,
  *   then the chat goes), Close.
  * - RE's spoken answer lights the sentence and the word in the balloon (the Reader's index); with Reader subtitles on,
@@ -457,7 +461,13 @@ private fun ChatScreen(
                 val res = runCatching {
                     withContext(Dispatchers.IO) {
                         val w = MaResample.toTargetRate(mine) ?: mine
-                        try { EngineAdapters.run(app, engine, w, l, EngineChain.names()) } finally { if (w !== mine) w.delete() }
+                        // Original size, the size that goes up, and when the words should be back (14.11.2026).
+                        val sec = (w.length() - 44L).coerceAtLeast(0L) / 32_000.0
+                        MaSendProgress.begin(app, engine, mine.length(), w.length(), sec,
+                            EngineCatalog.byId(engine)?.kind == dev.patrickgold.florisboard.dictate.engines.EngineKind.LOCAL)
+                        var ok = false
+                        try { EngineAdapters.run(app, engine, w, l, EngineChain.names()).also { ok = true } }
+                        finally { MaSendProgress.end(app, ok); if (w !== mine) w.delete() }
                     }
                 }
                 res.onSuccess { words = it.trim() }
@@ -706,7 +716,9 @@ private fun ChatScreen(
             }
         }
 
-        // ---- the composer, as the keyboard's strip: language badge, (trash), field or recorder, send
+        // ---- the composer, IDENTICAL to the keyboard (Marko, 14.11.2026: "I want to have the same identical interface"):
+        // the H/E engine key (red dot, letter, engine name with the key number, minutes left) is the record key: tap to
+        // record, tap again to send, exactly as on the keyboard. History sits NEXT to it, not under it.
         Row(
             modifier = Modifier.fillMaxWidth().height(64.dp).padding(horizontal = 3.dp),
             verticalAlignment = Alignment.CenterVertically,
@@ -717,7 +729,7 @@ private fun ChatScreen(
                 onClick = { MaLanguage.toggle(app); lang = MaLanguage.active() },
             )
             if (voice) {
-                MaHostKey(label = null, icon = Icons.Default.Delete, enabled = recording, onClick = { discardListening() })
+                if (recording) MaHostKey(label = null, icon = Icons.Default.Delete, onClick = { discardListening() })
                 val busy = transcribing || thinking
                 Box(
                     modifier = Modifier.weight(1f).fillMaxSize().padding(horizontal = 3.dp, vertical = 4.dp)
@@ -729,16 +741,9 @@ private fun ChatScreen(
                     if (recording || transcribing) {
                         MaRecorderReadout(level, elapsedMs, bytes, recording = recording, sending = transcribing, tint = MaHost.Ink)
                     } else {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Box(Modifier.size(11.dp).background(MaHost.RingRecord, CircleShape))
-                            Text(
-                                if (thinking) "RE is answering…" else "Tap and talk",
-                                color = MaHost.Ink, fontSize = 17.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(start = 8.dp),
-                            )
-                        }
+                        Box(Modifier.alpha(if (thinking) 0.45f else 1f)) { ReEngineKeyFace(lang = if (isWa) lang else MaLanguage.EN) }
                     }
                 }
-                MaHostKey(label = null, icon = Icons.AutoMirrored.Filled.Send, ink = MaHost.Gold, enabled = recording, onClick = { stopListening() })
             } else {
                 Box(
                     modifier = Modifier.weight(1f).fillMaxSize().padding(horizontal = 3.dp, vertical = 4.dp)
@@ -760,6 +765,10 @@ private fun ChatScreen(
                     onClick = { val t = input; input = ""; send(t) },
                 )
             }
+            // History, the keyboard's own key and the same full-screen History (view, copy, play, re-transcribe).
+            MaHostKey(label = null, icon = Icons.Default.History, onClick = {
+                MaHistoryActivity.open(context, null, 0)
+            })
         }
 
         // ---- one row of keys, like the feature row
@@ -1112,4 +1121,31 @@ private fun PeopleScreen(onBack: () -> Unit) {
             onDismiss = { asking = null },
         )
     }
+}
+
+/**
+ * The face of the keyboard's H/E key, for the RE window: red dot, letter, the engine's name with the active key
+ * number ("Groq turbo 6/8"), the minutes left ("478"). The same [MaEngineKeyContent] the keyboard draws.
+ */
+@Composable
+private fun ReEngineKeyFace(lang: String) {
+    val c = LocalContext.current
+    val l = if (lang == MaLanguage.EN) "en" else "hr"
+    val live by dev.patrickgold.florisboard.dictate.engines.EngineLive.state.collectAsState()
+    LaunchedEffect(Unit) { dev.patrickgold.florisboard.dictate.engines.EngineLive.load(c) }
+    val chosen = live.selected[l] ?: EngineStore.selected(c, l)
+    val answering = live.active[l]
+    val id = answering ?: chosen
+    val ringId = dev.patrickgold.florisboard.dictate.engines.EngineKeys.keyId(id)
+    val total = remember(ringId) {
+        runCatching { dev.patrickgold.florisboard.dictate.engines.EngineKeys.lines(c, ringId).size }.getOrDefault(0)
+    }
+    val act = (dev.patrickgold.florisboard.dictate.engines.KeyRing.active[ringId]
+        ?: (dev.patrickgold.florisboard.dictate.engines.KeyRing.cursor(c, ringId) + 1)).coerceAtMost(maxOf(total, 1))
+    val name = EngineCatalog.shortName(id) + (if (total > 1) " $act/$total" else "")
+    dev.patrickgold.florisboard.dictate.ui.MaEngineKeyContent(
+        if (l == "en") "E" else "H", dev.patrickgold.florisboard.dictate.ui.MaRecordRed, name,
+        answering != null && answering != chosen, MaHost.Ink,
+        dev.patrickgold.florisboard.dictate.ui.engineMinutesLabel(c, id),
+    )
 }
