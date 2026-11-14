@@ -648,6 +648,7 @@ class DictateBubbleController(private val service: DictateAccessibilityService) 
             }
         }
         view.setOnTouchListener { v, e ->
+            dev.patrickgold.florisboard.dictate.audio.MacMicLink.noteTouch(e)   // finger or Screen Copy, like the keyboard
             val lp = params ?: return@setOnTouchListener false
             when (e.action) {
                 MotionEvent.ACTION_DOWN -> {

@@ -145,6 +145,12 @@ class MaReChatActivity : ComponentActivity() {
     private var accepted = false
     private var recorder: RecordingController? = null
 
+    /** Who pressed record here: a finger (phone mic) or a click through Screen Copy (Mac mic), as on the keyboard. */
+    override fun dispatchTouchEvent(ev: android.view.MotionEvent): Boolean {
+        dev.patrickgold.florisboard.dictate.audio.MacMicLink.noteTouch(ev)
+        return super.dispatchTouchEvent(ev)
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         MaRemoteDb.attach(this)
@@ -404,7 +410,14 @@ private fun ChatScreen(
         }
         MaReader.stop()
         val r = RecordingController(app)
-        runCatching { r.start() }.onFailure { status = "Microphone busy: " + (it.message ?: ""); return }
+        // Same source rule as H/E (Marko, 14.11.2026: "there are more recording buttons ... It needs to behave the same"):
+        // a finger = phone mic; a click through Screen Copy, with Screen Copy in front, = Mac mic.
+        val fromMac = !prefs.dictate.maMicPhoneOnly.get() && dev.patrickgold.florisboard.dictate.audio.MacMicLink.pressCameFromMac()
+        runCatching {
+            r.start(allowMacMic = fromMac, onSourceLost = {
+                android.os.Handler(android.os.Looper.getMainLooper()).post { if (recorderHolder() === r) stopListening() }
+            })
+        }.onFailure { status = "Microphone busy: " + (it.message ?: ""); return }
         setRecorder(r)
         startedAt = SystemClock.elapsedRealtime()
         elapsedMs = 0L
