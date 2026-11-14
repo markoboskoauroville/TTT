@@ -609,3 +609,7 @@ voices. Stopped here: a further build plus a full suite (~1 h) would not finish 
 > "we need to continue working on my TTT application on the part which is re When I tap to talk, I am actually always talking in English. But re must understand: if the message is in Croatian, it needs to apply all my corrections in Croatian language. So solve this confusion with languages? Second of all re doesn't understand my style of writing. The GitHub repositories for my style of writing. And build it in this app so there is no question asked when he's writing." (Marko, 14.11.2026)
 
 **Status:** saved first. RE output language = language of the target text, never of the spoken instruction (hard system rule + detected-language hint, instruction transcribed as English); Marko's writing style (MANTRA_MANIFEST writing-styles.md, MARKO_COMMUNICATION, RE_MAGIC_DATABASE) distilled into assets/re_style.md, injected in every RE prompt; RE never asks, it writes.
+
+## 14.11.2026 (all TTT keys in one file, to the Pixel)
+
+> You need to go to my Nothing Phone and from TTT all API keys needs to be in one file and transfer it to the pixel in my folder download slash transfer. slash API and inside that folder create a file with all the keys in one file and the name of the file will be TTT underscore API keys underscore all.
