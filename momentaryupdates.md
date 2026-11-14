@@ -605,3 +605,7 @@ voices. Stopped here: a further build plus a full suite (~1 h) would not finish 
 **Status:** saved first. TTT's own settings screen gets a scratch text box at the top (kept between visits); tapping it opens the TTT keyboard, so RE Magic and its WhatsApp tab work with no other app open. Also a launcher shortcut straight to that box and, if simple, a Quick Settings tile "TTT RE".
 
 > "send the band a screenshot of our live stream with the message ..." (Marko, 13.11.2026, first real use of the WhatsApp tab: the Santoshi live-stream picture, with his text as caption, into the band's WhatsApp group as an unsent draft)
+
+> "we need to continue working on my TTT application on the part which is re When I tap to talk, I am actually always talking in English. But re must understand: if the message is in Croatian, it needs to apply all my corrections in Croatian language. So solve this confusion with languages? Second of all re doesn't understand my style of writing. The GitHub repositories for my style of writing. And build it in this app so there is no question asked when he's writing." (Marko, 14.11.2026)
+
+**Status:** saved first. RE output language = language of the target text, never of the spoken instruction (hard system rule + detected-language hint, instruction transcribed as English); Marko's writing style (MANTRA_MANIFEST writing-styles.md, MARKO_COMMUNICATION, RE_MAGIC_DATABASE) distilled into assets/re_style.md, injected in every RE prompt; RE never asks, it writes.
