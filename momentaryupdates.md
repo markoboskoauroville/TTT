@@ -625,3 +625,9 @@ voices. Stopped here: a further build plus a full suite (~1 h) would not finish 
 > "we are working on screen copy. First of all, rename the icon to be scrcpy In two lines. Fix remote sound. For example, right now I'm going to open my WhatsApp on my own account, where we can type freely without disturbing anybody. Now use DTT Mini to type something using the Adam speaker. Please try that, and if it lands in the message, let me know." (Marko, 14.11.2026; "DTT Mini" = TTT Mini)
 
 **Found:** Screen Copy's log showed four H presses at 10:26 where TTT connected to 127.0.0.1:8879 and closed after 0 bytes: the handshake over adb reverse through Tailscale (Nothing on mobile data, DERP Frankfurt, ping 80-120 ms) took 220-280 ms at rest, so TTT's 300 ms limit fell back to the phone mic. Fix: handshake read allowed 1.5 s (a missing link is still refused at once).
+
+## 14.11.2026, Marko, BUG: the Mac mic took over a dictation made on the phone itself (Screen Copy v27 + TTT)
+
+"Screen copy is taking the sound from this computer. But when I go to another, for example, I am now in my Pixel phone. I'm typing. I'm trying to record my audio on the Pixel phone, and it's connected to the microphone on the screen copy. I'm not able to write any messages. What a disaster! How can you not predict this? If I'm clicking on my Pixel phone to transcribe a message on my TTT, it should detect that I clicked on the phone, and it should take the microphone from the phone, not from the computer."
+
+**Rule:** the Mac microphone only when he drives that phone from the Mac (its Screen Copy tab in front with Mac input in the last seconds) and the H press came through Screen Copy; a finger on the glass always uses the phone microphone.
