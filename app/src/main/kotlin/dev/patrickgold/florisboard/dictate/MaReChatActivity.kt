@@ -403,6 +403,9 @@ private fun ChatScreen(
         ask()
     }
 
+    // The Mac link dropped mid-take: end it with what arrived (stopListening is declared below, so it is wired after it).
+    var onMacLinkLost: () -> Unit = {}
+
     fun startListening() {
         if (context.checkSelfPermission(Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
             status = "Microphone permission is off for TTT"
@@ -415,7 +418,7 @@ private fun ChatScreen(
         val fromMac = !prefs.dictate.maMicPhoneOnly.get() && dev.patrickgold.florisboard.dictate.audio.MacMicLink.pressCameFromMac()
         runCatching {
             r.start(allowMacMic = fromMac, onSourceLost = {
-                android.os.Handler(android.os.Looper.getMainLooper()).post { if (recorderHolder() === r) stopListening() }
+                android.os.Handler(android.os.Looper.getMainLooper()).post { if (recorderHolder() === r) onMacLinkLost() }
             })
         }.onFailure { status = "Microphone busy: " + (it.message ?: ""); return }
         setRecorder(r)
@@ -489,6 +492,8 @@ private fun ChatScreen(
         runCatching { wav.copyTo(mine, overwrite = true) }
         transcribe(mine)
     }
+
+    onMacLinkLost = { stopListening() }
 
     fun accept(m: MaReChat.Msg, text: String) {
         val asked = msgs.lastOrNull { it.me && it.at < m.at }?.text.orEmpty()
