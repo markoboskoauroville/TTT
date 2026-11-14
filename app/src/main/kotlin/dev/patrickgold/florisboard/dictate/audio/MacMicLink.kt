@@ -13,13 +13,18 @@ import java.net.Socket
  *
  * Contract with Screen Copy Mantra (fixed): Screen Copy runs `adb reverse tcp:8879 tcp:8879`, so 127.0.0.1:8879 on the
  * phone reaches the Mac. We send `TTT-MIC 1 <rate>\n`, read one line `OK <rate> 1 s16le\n`, then raw mono PCM16 LE
- * until we close the socket. `ERR <reason>\n` (or no answer in 300 ms) means: use the phone microphone.
+ * until we close the socket. `ERR <reason>\n` (or no answer in [HANDSHAKE_MS]) means: use the phone microphone.
+ *
+ * 14.11.2026: the answer travels over adb reverse, so on Tailscale through a relay (Nothing on mobile data, DERP
+ * Frankfurt, 80-120 ms ping) it took 220-280 ms at rest; the old 300 ms limit for the whole handshake made every H
+ * press fall back to the phone mic. Connect stays 300 ms (no reverse = refused at once), the answer may take 1.5 s.
  */
 object MacMicLink {
     private const val TAG = "TTT-MACMIC"
     const val HOST = "127.0.0.1"
     const val PORT = 8879
     const val TIMEOUT_MS = 300
+    const val HANDSHAKE_MS = 1500
 
     private val _active = MutableStateFlow(false)
     /** True while a take is being recorded from the Mac; the keyboard shows "MAC MIC". */
@@ -31,7 +36,7 @@ object MacMicLink {
 
     class Link(val socket: Socket, val input: InputStream, val rate: Int)
 
-    /** Connects and shakes hands within [TIMEOUT_MS] in total. Null = fall back to the phone mic. */
+    /** Connects within [TIMEOUT_MS] and shakes hands within [HANDSHAKE_MS]. Null = fall back to the phone mic. */
     fun open(rate: Int): Link? {
         lastError = null
         var result: Link? = null
@@ -40,7 +45,7 @@ object MacMicLink {
             try {
                 s.tcpNoDelay = true
                 s.connect(InetSocketAddress(HOST, PORT), TIMEOUT_MS)
-                s.soTimeout = TIMEOUT_MS
+                s.soTimeout = HANDSHAKE_MS
                 s.getOutputStream().apply { write("TTT-MIC 1 $rate\n".toByteArray()); flush() }
                 val inp = s.getInputStream()
                 val sb = StringBuilder()
@@ -66,7 +71,7 @@ object MacMicLink {
             runCatching { s.close() }
         }
         t.start()
-        t.join((TIMEOUT_MS + 150).toLong())
+        t.join((TIMEOUT_MS + HANDSHAKE_MS + 150).toLong())
         val r = result
         if (r == null && t.isAlive) runCatching { t.interrupt() }
         return r

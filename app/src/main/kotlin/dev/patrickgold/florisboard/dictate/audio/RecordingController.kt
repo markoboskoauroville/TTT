@@ -98,7 +98,7 @@ class RecordingController(private val context: Context) {
         onSourceLost: (() -> Unit)? = null,
     ) {
         if (recording) return
-        // MAC MIC (14.11.2026): Auto tries the Screen Copy link first (300 ms), the same file/peak/sink pipeline below
+        // MAC MIC (14.11.2026): Auto tries the Screen Copy link first (connect 300 ms, answer up to 1.5 s), the same file/peak/sink pipeline below
         // is fed from the socket; anything else falls through to AudioRecord exactly as before.
         if (allowMacMic) {
             val link = MacMicLink.open(MAC_RATE)

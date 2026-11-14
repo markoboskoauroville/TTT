@@ -1,7 +1,7 @@
 {
-  "version": 2,
-  "rows": "1~default row\u001cb\u001dzone1\u001d1\u001fb\u001dzone2\u001d1\u001fb\u001dzone3\u001d1\u001fb\u001dhistory\u001d1\u001fb\u001drow_2\u001d1\u001fb\u001dsettings\u001d1\u001e1~Talk to\u001cb\u001drecordhrnet\u001d1\u001fb\u001drow_1\u001d1\u001fb\u001drecorden\u001d1\u001fb\u001dreprompt\u001d1\u001e0~switch\u001cb\u001dundo\u001d1\u001fb\u001darrow_left\u001d1\u001fb\u001darrow_right\u001d1\u001fb\u001darrow_down\u001d1\u001fb\u001darrow_up\u001d1\u001fb\u001dspace\u001d1\u001fb\u001denter\u001d1\u001fb\u001dsend\u001d1\u001fb\u001dbackspace\u001d1\u001e0~buckets\u001cb\u001dcclear\u001d1\u001fc\u001d1\u001d1\u001fc\u001d2\u001d1\u001fc\u001d3\u001d1\u001fb\u001dautobucket\u001d1\u001fb\u001dtab\u001d1\u001e0~TTS\u001cb\u001dsubtitle\u001d1\u001fb\u001dread_faster\u001d1\u001fb\u001dread_slower\u001d1\u001fb\u001dread_watch\u001d1\u001fb\u001dread_stop\u001d1\u001fb\u001dread_next\u001d1\u001fb\u001dread_prev\u001d1\u001fb\u001dread_play\u001d1\u001fb\u001dreader\u001d1\u001e0\u001cb\u001darrow_left\u001d1\u001fb\u001darrow_right\u001d1\u001fb\u001darrow_up\u001d1\u001fb\u001darrow_down\u001d1\u001fb\u001dclip_history\u001d1\u001fb\u001dcopy\u001d1\u001fb\u001dbackspace\u001d1\u001fb\u001dpin\u001d1",
-  "key_widths": "RECORD_HR=40,RECORD_HR_LOCAL=40,RECORD_EN_NET=40,RECORD_EN_LOCAL=40,ROW_1=10,REPROMPT=10",
+  "version": 3,
+  "rows": "1~default row\u001cb\u001dzone1\u001d1\u001fb\u001dzone2\u001d1\u001fb\u001dzone3\u001d1\u001fb\u001dhistory\u001d1\u001fb\u001dsettings\u001d1\u001fb\u001drow_2\u001d1\u001fb\u001drow_3\u001d1\u001e1~Talk to\u001cb\u001drecordhrnet\u001d1\u001fb\u001drow_1\u001d1\u001fb\u001drecorden\u001d1\u001fb\u001dreprompt\u001d1\u001fb\u001denter\u001d1\u001fb\u001dbackspace\u001d1\u001e1~switch\u001cb\u001dundo\u001d1\u001fb\u001darrow_left\u001d1\u001fb\u001darrow_right\u001d1\u001fb\u001darrow_down\u001d1\u001fb\u001darrow_up\u001d1\u001fb\u001dspace\u001d1\u001fb\u001denter\u001d1\u001fb\u001dsend\u001d1\u001fb\u001dbackspace\u001d1\u001e0~buckets\u001cb\u001dcclear\u001d1\u001fc\u001d1\u001d1\u001fc\u001d2\u001d1\u001fc\u001d3\u001d1\u001fb\u001dautobucket\u001d1\u001fb\u001dtab\u001d1\u001e0~TTS\u001cb\u001dsubtitle\u001d1\u001fb\u001dread_faster\u001d1\u001fb\u001dread_slower\u001d1\u001fb\u001dread_watch\u001d1\u001fb\u001dread_stop\u001d1\u001fb\u001dread_next\u001d1\u001fb\u001dread_prev\u001d1\u001fb\u001dread_play\u001d1\u001fb\u001dreader\u001d1\u001e0\u001cb\u001darrow_left\u001d1\u001fb\u001darrow_right\u001d1\u001fb\u001darrow_up\u001d1\u001fb\u001darrow_down\u001d1\u001fb\u001dclip_history\u001d1\u001fb\u001dcopy\u001d1\u001fb\u001dbackspace\u001d1\u001fb\u001dpin\u001d1",
+  "key_widths": "RECORD_HR=40,RECORD_HR_LOCAL=40,RECORD_EN_NET=40,RECORD_EN_LOCAL=40,ROW_1=10,REPROMPT=10,ENTER=10,BACKSPACE=15",
   "key_colors": "n0=#FF5252 n1=#FF5252 n2=#FF5252 n3=#FF5252 n8=#FF5252 n5=#FF5252 n7=#FF5252 n4=#FF5252 n6=#FF5252 n9=#FF5252",
   "copy_row": "",
   "macro_slots": "pst\u001d {Ctrl+V}\u001eM2\u001d\u001eM3\u001d\u001eM4\u001d\u001eM5\u001d\u001eM6\u001d\u001eM7\u001d\u001eM8\u001d\u001eM9\u001d\u001eM10\u001d",
@@ -9,6 +9,6 @@
   "font_portrait": 100,
   "font_landscape": 100,
   "feature_row_shown": true,
-  "zone_keyboard": false,
+  "zone_keyboard": true,
   "smartbar_enabled": true
 }
