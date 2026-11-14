@@ -1,6 +1,9 @@
 package dev.patrickgold.florisboard.dictate.audio
 
+import android.os.SystemClock
 import android.util.Log
+import android.view.InputDevice
+import android.view.MotionEvent
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import java.io.InputStream
@@ -30,6 +33,34 @@ object MacMicLink {
     /** True while a take is being recorded from the Mac; the keyboard shows "MAC MIC". */
     val active: StateFlow<Boolean> = _active
     fun setActive(on: Boolean) { _active.value = on }
+
+    /*
+     * Who pressed (Marko, 14.11.2026: "If I'm clicking on my Pixel phone to transcribe a message on my TTT, it should detect
+     * that I clicked on the phone, and it should take the microphone from the phone, not from the computer.").
+     * A finger on this glass arrives from the real touchscreen: a device id > 0 whose InputDevice is not virtual and is a
+     * touchscreen. Screen Copy (scrcpy) injects with device id 0 / no real device. Every keyboard touch-down is noted here
+     * (ImeRootView.dispatchTouchEvent); the Mac link is asked only when the last one, under 3 s ago, was NOT a finger.
+     * Anything unknown (no touch seen, a volume key, a broadcast) = phone microphone.
+     */
+    @Volatile private var lastDownAt = 0L
+    @Volatile private var lastDownRemote = false
+
+    fun noteTouch(e: MotionEvent) {
+        if (e.actionMasked != MotionEvent.ACTION_DOWN) return
+        val dev = runCatching { InputDevice.getDevice(e.deviceId) }.getOrNull()
+        val finger = e.deviceId > 0 && dev != null && !dev.isVirtual && dev.supportsSource(InputDevice.SOURCE_TOUCHSCREEN)
+        lastDownAt = SystemClock.uptimeMillis()
+        lastDownRemote = !finger
+        Log.i(TAG, "touch down: device ${e.deviceId} source 0x${Integer.toHexString(e.source)} virtual ${dev?.isVirtual} " +
+            "name '${dev?.name}' -> ${if (finger) "FINGER (phone mic)" else "REMOTE (may ask the Mac)"}")
+    }
+
+    /** True only when the last keyboard touch-down (under 3 s ago) was injected, i.e. came through Screen Copy. */
+    fun pressCameFromMac(): Boolean {
+        val r = lastDownRemote && SystemClock.uptimeMillis() - lastDownAt < 3000
+        Log.i(TAG, "press from the Mac: $r")
+        return r
+    }
 
     /** Last reason the Mac mic was refused, shown briefly; null when it was simply not there. */
     @Volatile var lastError: String? = null
@@ -63,6 +94,7 @@ object MacMicLink {
                     Log.i(TAG, "linked: $line")
                     return@Thread
                 }
+                // "NO <reason>" (Screen Copy v27): he is not driving this phone from the Mac -> phone mic, no toast
                 if (line.startsWith("ERR")) lastError = line.removePrefix("ERR").trim().ifEmpty { "refused" }
                 Log.i(TAG, "not used: '$line'")
             } catch (e: Exception) {

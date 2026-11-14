@@ -66,6 +66,7 @@ class ImeRootView(val ims: FlorisImeService) : AbstractComposeView(ims) {
      * finger perfectly well until the genuine release. See [DictateHoldTouch].
      */
     override fun dispatchTouchEvent(event: MotionEvent): Boolean {
+        dev.patrickgold.florisboard.dictate.audio.MacMicLink.noteTouch(event)   // first: who pressed (finger or Screen Copy)
         DictateHoldTouch.dispatch(event)
         return super.dispatchTouchEvent(event)
     }

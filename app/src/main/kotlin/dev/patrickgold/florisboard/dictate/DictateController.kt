@@ -1386,7 +1386,9 @@ object DictateController {
                 recorder = RecordingController(appContext).also { rc ->
                     rc.start(
                         audioSource, pcmSink,
-                        allowMacMic = !prefs.dictate.maMicPhoneOnly.get(),
+                        // Only a press that came through Screen Copy (injected, not a finger on this glass) may use the
+                        // Mac microphone (Marko, 14.11.2026); Screen Copy v27 also refuses unless he drives this phone.
+                        allowMacMic = !prefs.dictate.maMicPhoneOnly.get() && MacMicLink.pressCameFromMac(),
                         onSourceLost = {
                             // The Mac link dropped mid-take: end it cleanly with what was received.
                             android.os.Handler(android.os.Looper.getMainLooper()).post {
