@@ -613,3 +613,9 @@ voices. Stopped here: a further build plus a full suite (~1 h) would not finish 
 ## 14.11.2026 (all TTT keys in one file, to the Pixel)
 
 > You need to go to my Nothing Phone and from TTT all API keys needs to be in one file and transfer it to the pixel in my folder download slash transfer. slash API and inside that folder create a file with all the keys in one file and the name of the file will be TTT underscore API keys underscore all.
+
+## 14.11.2026 – Mac microphone for TTT through Screen Copy Mantra (custom audio link)
+
+> "I opened my Nothing Phone in Screen Copy Mantra, and I tried to transcribe some of my comments with TTT, and the sound is not heard" → "yes, go ahead and build our custom audio link with TTT" (Marko, 14.11.2026)
+
+**Status:** saved first. Contract: Screen Copy runs `adb reverse tcp:8879 tcp:8879`; TTT connects to 127.0.0.1:8879, sends `TTT-MIC 1 <rate>\n`, reads `OK <rate> 1 s16le\n` then raw PCM until it closes; `ERR <reason>` = fall back to the phone mic. Setting "Microphone: Auto / Phone only", cue "MAC MIC" while recording.
