@@ -280,6 +280,15 @@ private fun MaReadings(sending: Boolean, tint: Color) {
             softWrap = false,
             modifier = Modifier.padding(start = 6.dp),
         )
+        // MAC MIC cue (14.11.2026): which microphone is live, only while the Mac's is.
+        val macMic by dev.patrickgold.florisboard.dictate.audio.MacMicLink.active.collectAsState()
+        if (macMic && !sending) {
+            Text(
+                text = "MAC MIC",
+                color = tint, fontSize = 12.sp, fontWeight = FontWeight.Bold,
+                maxLines = 1, softWrap = false, modifier = Modifier.padding(start = 8.dp),
+            )
+        }
         // No spacer at either end. A weight anywhere in this row would take the leftover space for
         // itself and shove the group off centre, which is exactly what the one that used to sit here
         // did.

@@ -94,8 +94,16 @@ class RecordingController(private val context: Context) {
     fun start(
         audioSource: Int = MediaRecorder.AudioSource.MIC,
         pcmSink: ((pcm16: ByteArray, len: Int) -> Unit)? = null,
+        allowMacMic: Boolean = false,
+        onSourceLost: (() -> Unit)? = null,
     ) {
         if (recording) return
+        // MAC MIC (14.11.2026): Auto tries the Screen Copy link first (300 ms), the same file/peak/sink pipeline below
+        // is fed from the socket; anything else falls through to AudioRecord exactly as before.
+        if (allowMacMic) {
+            val link = MacMicLink.open(MAC_RATE)
+            if (link != null && startFromMac(link, pcmSink, onSourceLost)) return
+        }
         // Capture at whatever this phone actually offers, best first, rather than asking for 16 kHz
         // and letting AudioRecord's own resampler do the reduction. That resampler is a plain
         // decimator on many devices and discards detail the recogniser could have used. Taking the
@@ -143,6 +151,56 @@ class RecordingController(private val context: Context) {
                 }
             }
         }.also { it.start() }
+    }
+
+    private var macLink: MacMicLink.Link? = null
+
+    /** True while this take is fed by the Mac microphone. */
+    val fromMac: Boolean get() = macLink != null
+
+    private fun startFromMac(link: MacMicLink.Link, pcmSink: ((ByteArray, Int) -> Unit)?, onLost: (() -> Unit)?): Boolean {
+        val file = File(context.cacheDir, AUDIO_FILE_NAME)
+        val out = try {
+            RandomAccessFile(file, "rw").apply { setLength(0); write(ByteArray(WAV_HEADER_SIZE)) }
+        } catch (t: Throwable) {
+            runCatching { link.socket.close() }
+            return false
+        }
+        activeSampleRate = link.rate
+        macLink = link
+        raf = out
+        outputFile = file
+        pcmBytes = 0
+        peak = 0
+        paused = false
+        recording = true
+        MacMicLink.setActive(true)
+        thread = Thread {
+            val buf = ByteArray(link.rate / 5 * 2 + 2) // ~200 ms, even length
+            var carry = 0
+            var dropped = false
+            while (recording) {
+                val n = try { link.input.read(buf, carry, buf.size - carry) } catch (_: Exception) { -1 }
+                if (n < 0) { dropped = true; break }
+                var len = carry + n
+                carry = len and 1                 // keep a lone odd byte for the next read
+                len -= carry
+                if (len > 0 && !paused) {
+                    synchronized(fileLock) {
+                        runCatching { raf?.write(buf, 0, len) }
+                        pcmBytes += len
+                    }
+                    updatePeak(buf, len)
+                    if (pcmSink != null) runCatching { pcmSink(buf, len) }
+                }
+                if (carry == 1) buf[0] = buf[len]
+            }
+            if (dropped && recording) {
+                android.util.Log.i("TTT-MACMIC", "link dropped, ending the take with ${pcmBytes} bytes")
+                runCatching { onLost?.invoke() }
+            }
+        }.also { it.start() }
+        return true
     }
 
     /**
@@ -193,6 +251,9 @@ class RecordingController(private val context: Context) {
         // AudioRecord.read(byte[], …) is blocking. Stop the native recorder first so a read waiting for
         // microphone frames returns before we join the capture thread. On the normal path, release only
         // after the reader exits; if stop fails, release early so the microphone still cannot leak.
+        val mac = macLink
+        macLink = null
+        if (mac != null) { MacMicLink.setActive(false); runCatching { mac.socket.close() } }
         val rec = record
         record = null
         val stopped = rec != null && runCatching { rec.stop() }.isSuccess
@@ -278,6 +339,7 @@ class RecordingController(private val context: Context) {
         private val PREFERRED_RATES = intArrayOf(48_000, 44_100, 32_000, 16_000)
 
         private const val SAMPLE_RATE = 16_000
+        private const val MAC_RATE = 16_000
         private const val CHANNEL = AudioFormat.CHANNEL_IN_MONO
         private const val ENCODING = AudioFormat.ENCODING_PCM_16BIT
         private const val CHANNELS = 1

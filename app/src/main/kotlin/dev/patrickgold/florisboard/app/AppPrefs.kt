@@ -1252,6 +1252,8 @@ abstract class FlorisPreferenceModel : PreferenceModel() {
         // Marko, 9.11.2026: "I don't need the correction, remove this automatic correction." The master switch for EVERY
         // model call made on a dictation after it was transcribed (style pass, Croatian spell check, auto-formatting,
         // auto-apply prompts). Off, and nothing here runs; the local whole-word spelling table is not behind it.
+        // Marko, 14.11.2026: record the Mac's microphone through Screen Copy Mantra. Default Auto (false here).
+        val maMicPhoneOnly = boolean(key = "dictate__ma_mic_phone_only", default = false)
         val maAiCorrectDictation = boolean(key = "dictate__ma_ai_correct_dictation", default = false)
         val maSpellcheckEnabled = boolean(
             key = "dictate__ma_spellcheck_enabled",

@@ -40,6 +40,7 @@ import dev.patrickgold.florisboard.dictate.audio.BluetoothMicRouter
 import dev.patrickgold.florisboard.dictate.audio.LiveSpeechSplitter
 import dev.patrickgold.florisboard.dictate.audio.SmartTurnModel
 import dev.patrickgold.florisboard.dictate.audio.Pcm16Resampler
+import dev.patrickgold.florisboard.dictate.audio.MacMicLink
 import dev.patrickgold.florisboard.dictate.audio.RecordingController
 import dev.patrickgold.florisboard.dictate.audio.SpeechGate
 import dev.patrickgold.florisboard.dictate.data.prompts.DictatePromptDefaults
@@ -1382,7 +1383,28 @@ object DictateController {
                     segmentVad != null -> { val v = segmentVad!!; { pcm, len -> v.feed(pcm, len) } }
                     else -> null
                 }
-                recorder = RecordingController(appContext).also { it.start(audioSource, pcmSink) }
+                recorder = RecordingController(appContext).also { rc ->
+                    rc.start(
+                        audioSource, pcmSink,
+                        allowMacMic = !prefs.dictate.maMicPhoneOnly.get(),
+                        onSourceLost = {
+                            // The Mac link dropped mid-take: end it cleanly with what was received.
+                            android.os.Handler(android.os.Looper.getMainLooper()).post {
+                                if (recorder === rc && _state.value is UiState.Recording) {
+                                    android.widget.Toast.makeText(appContext, "Mac mic lost, take ended", android.widget.Toast.LENGTH_SHORT).show()
+                                    stopAndTranscribe(appContext)
+                                }
+                            }
+                        },
+                    )
+                    if (rc.fromMac) android.util.Log.i("TTT-MACMIC", "recording from the MAC microphone")
+                    else {
+                        MacMicLink.lastError?.let {
+                            android.widget.Toast.makeText(appContext, "Mac mic: $it", android.widget.Toast.LENGTH_SHORT).show()
+                        }
+                        android.util.Log.i("TTT-MACMIC", "recording from the PHONE microphone")
+                    }
+                }
                 // Take the microphone foreground before anything else can take the screen. From here
                 // the recording belongs to a service rather than to the keyboard window, so switching
                 // apps, locking, or anything else coming to the front no longer ends it.

@@ -79,6 +79,11 @@ fun MaAutoScreen() = FlorisScreen {
 
         PreferenceGroup(title = "On dictation") {
             SwitchPreference(
+                prefs.dictate.maMicPhoneOnly,
+                title = "Microphone: Phone only",
+                summary = "Off = Auto: the Mac's microphone when Screen Copy Mantra links it (the key shows MAC MIC), else the phone's. On = always the phone's.",
+            )
+            SwitchPreference(
                 prefs.dictate.maSpokenFixups,
                 title = "Spoken fix-ups",
                 summary = "Croatian letters and spelling, your name with a k, a dictated e-mail address or time put together.",

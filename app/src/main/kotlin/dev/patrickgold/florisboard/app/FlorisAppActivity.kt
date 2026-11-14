@@ -89,6 +89,11 @@ class FlorisAppActivity : ComponentActivity() {
     private var resourcesContext by mutableStateOf(this as Context)
     private var intentToBeHandled by mutableStateOf<Intent?>(null)
 
+    override fun onResume() {
+        super.onResume()
+        AppUpdater.resume(this)
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         // Splash screen should be installed before calling super.onCreate()
         installSplashScreen().apply {
@@ -96,6 +101,8 @@ class FlorisAppActivity : ComponentActivity() {
         }
         super.onCreate(savedInstanceState)
         WindowCompat.setDecorFitsSystemWindows(window, false)
+        // Update at start (Marko, 14.11.2026, MANTRA_MANIFEST kits/android-updater): asks "Do you want to update?".
+        AppUpdater.checkAtStart(this)
 
         prefs.other.settingsTheme.asFlow().collectIn(lifecycleScope) {
             appTheme = it
