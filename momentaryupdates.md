@@ -643,3 +643,10 @@ voices. Stopped here: a further build plus a full suite (~1 h) would not finish 
 **Status:** saved first.
 
 **Status (14.11.2026):** built: FrankfurtRelay.kt + Settings switch "Frankfurt relay" (on by default) + FRA chip on the H/E panel; relay ttt-relay in vm-chromium (tests 7/7 on fake providers, real 401 answers classified). Not yet installed on chromium-vm (cloud session cannot reach its SSH) nor on the Nothing.
+
+## 14.11.2026 — microphone selector on the long press (Mac session MAC_SES2_14-NOV)
+
+> "Before I, there is another issue now. And this is that I connected my Sony camera to my phone and it took away our audio device. So I discovered that my my application TTT doesn't have audio device router or selector. So the same thing, long press, there is Frankfurt at the top. It should be all available audio devices and it should be persistent on the microphone from the phone. If I connect any sound card or anything it takes audio from the phone microphone. But anything what comes new it is registered when I long press and then I can change the settings. and this setting is changed for all languages. So it will be pop-up, there will be phone, phone microphone, make microphone icon phone, and then for example if I connect everything over USB, some audio device, you put microphone USB and then I can select it. Now I am not able to do things."
+> "I'm not basically able to record any audio and test it. Please update this microphone selector and then I'm going to test as you said. Frankfurt is there but there is no sound at the moment."
+
+**Status:** saved first.
