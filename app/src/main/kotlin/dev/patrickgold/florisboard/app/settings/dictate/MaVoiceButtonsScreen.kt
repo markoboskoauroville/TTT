@@ -29,6 +29,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -100,8 +101,33 @@ fun MaVoiceButtonsScreen() = FlorisScreen {
         var result by remember { mutableStateOf<String?>(null) }
         var lastKeys by remember { mutableStateOf(EngineStore.lastKeys(c)) }
         var keysTick by remember { mutableStateOf(0) }
+        // FRANKFURT RELAY (Marko, 14.11.2026): on by default; the transcription runs on chromium-vm with a copy of these keys.
+        var fraOn by remember { mutableStateOf(dev.patrickgold.florisboard.dictate.engines.FrankfurtRelay.on(c)) }
+        var fraState by remember { mutableStateOf(dev.patrickgold.florisboard.dictate.engines.FrankfurtRelay.lastState(c) ?: "not checked yet") }
+        fun fraCheck() {
+            fraState = "checking\u2026"
+            scope.launch { fraState = dev.patrickgold.florisboard.dictate.engines.FrankfurtRelay.check(c) }
+        }
+        LaunchedEffect(Unit) { if (fraOn) fraCheck() }
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Column(modifier = Modifier.weight(1f).clickable { fraCheck() }) {
+                Text("Frankfurt relay", style = MaterialTheme.typography.bodyLarge)
+                Text(
+                    if (fraOn) "Transcription runs in Frankfurt (keys, rotation, retries there). $fraState" else "Off: this phone sends to the engine directly.",
+                    style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+            Switch(checked = fraOn, onCheckedChange = {
+                fraOn = it; dev.patrickgold.florisboard.dictate.engines.FrankfurtRelay.setOn(c, it); if (it) fraCheck()
+            })
+        }
         fun finish(text: String) {
             EngineStore.setLastKeys(c, text); lastKeys = text; result = text; busy = ""; keysTick++
+            // New keys go to Frankfurt at once (write only; Frankfurt never shows them).
+            if (fraOn) scope.launch { fraState = runCatching { dev.patrickgold.florisboard.dictate.engines.FrankfurtRelay.syncKeys(c, force = true) }.getOrElse { "keys not sent yet (Frankfurt not answering)" } }
         }
         val picker = rememberLauncherForActivityResult(ActivityResultContracts.OpenMultipleDocuments()) { uris ->
             if (uris.isNotEmpty()) {

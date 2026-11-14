@@ -457,7 +457,7 @@ private fun ChatScreen(
                 val res = runCatching {
                     withContext(Dispatchers.IO) {
                         val w = MaResample.toTargetRate(mine) ?: mine
-                        try { EngineAdapters.run(app, engine, w, l, EngineChain.names()) } finally { if (w !== mine) w.delete() }
+                        try { dev.patrickgold.florisboard.dictate.engines.FrankfurtRelay.runOrDirect(app, engine, w, l, EngineChain.names()) } finally { if (w !== mine) w.delete() }
                     }
                 }
                 res.onSuccess { words = it.trim() }

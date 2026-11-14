@@ -6,6 +6,9 @@
         <domain includeSubdomains="false">100.79.251.19</domain>
         <domain includeSubdomains="false">macbook-pro</domain>
         <domain includeSubdomains="true">ts.net</domain>
+        <!-- ttt-relay on chromium-vm (Frankfurt), inside Tailscale (FrankfurtRelay, 14.11.2026) -->
+        <domain includeSubdomains="false">100.102.86.30</domain>
+        <domain includeSubdomains="false">chromium-vm</domain>
         <domain includeSubdomains="false">127.0.0.1</domain>
         <domain includeSubdomains="false">localhost</domain>
     </domain-config>

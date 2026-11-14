@@ -89,6 +89,22 @@ object EngineChain {
         // state on the key line. A key that is out of quota or refused moves the ring to the next key of the SAME provider
         // (KeyRing); when every key of it is out the dictation stops and says so. The audio is kept by the caller.
         val id = ids.first()
+        // FRANKFURT (Marko, 14.11.2026): the same engine, the same rules, but the call, the key ring and the retries run
+        // on chromium-vm; the phone only sends the audio and shows Frankfurt's status. Off = everything below, direct.
+        if (FrankfurtRelay.on(c) && FrankfurtRelay.handles(id)) {
+            val name = EngineCatalog.shortName(id)
+            val t0 = System.currentTimeMillis()
+            try {
+                EngineLive.setActive(l, id)
+                val text = FrankfurtRelay.transcribe(c, id, wav, l, names()) { m -> onStatus("$letter · $m") }
+                EngineStore.addUsage(c, id, sec)
+                val ms = System.currentTimeMillis() - t0
+                onStatus("done ($name via Frankfurt, ${FallbackRunner.seconds(ms)} s)")
+                return ChainResult(text, id, name, ms, listOf(Attempt(id, true, null, ms)))
+            } finally {
+                EngineLive.setActive(l, null)
+            }
+        }
         val cand = candidate(c, id, wav, l)
         KeyRing.statusSink = { m -> onStatus("$letter \u00b7 $m") }
         val t0 = System.currentTimeMillis()

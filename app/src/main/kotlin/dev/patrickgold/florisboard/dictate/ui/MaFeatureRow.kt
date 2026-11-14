@@ -2604,6 +2604,20 @@ private fun MaEngineMenu(lang: String, anchor: androidx.compose.ui.geometry.Rect
         ) {
             Row(modifier = Modifier.fillMaxWidth().height(rowDp).padding(horizontal = 10.dp), verticalAlignment = Alignment.CenterVertically) {
                 Text(text = if (lang == "hr") "H" else "E", color = red, fontSize = 17.sp, fontWeight = FontWeight.Bold)
+                // FRA (Marko, 14.11.2026): the Frankfurt relay switch at the nose; lit = through Frankfurt, dim = direct.
+                val fra by dev.patrickgold.florisboard.dictate.engines.FrankfurtRelay.onFlow(context).collectAsState()
+                val fraLit = fra != false
+                Text(
+                    text = if (fraLit) "FRA \u25cf" else "FRA \u25cb direct",
+                    color = if (fraLit) MaPanelInk else MaPanelSub, fontSize = 14.sp,
+                    fontWeight = if (fraLit) FontWeight.Bold else FontWeight.Normal, maxLines = 1,
+                    modifier = Modifier
+                        .padding(start = 12.dp)
+                        .clip(RoundedCornerShape(8.dp))
+                        .border(1.dp, if (fraLit) red else MaPanelEdge, RoundedCornerShape(8.dp))
+                        .clickable { dev.patrickgold.florisboard.dictate.engines.FrankfurtRelay.setOn(context, !fraLit) }
+                        .padding(horizontal = 8.dp, vertical = 2.dp),
+                )
                 Spacer(Modifier.weight(1f))
                 Text(
                     text = "\u2715", color = Color(0xFFECEAE3), fontSize = 18.sp,

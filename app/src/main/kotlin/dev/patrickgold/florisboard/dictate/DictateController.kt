@@ -1821,7 +1821,10 @@ object DictateController {
                     try {
                         stageWav = File(appContext.cacheDir, "engine_stage.wav")
                         runCatching { engWav.copyTo(stageWav, overwrite = true) }
-                        if (engChain && engSelected != "assemblyai") {
+                        // Frankfurt on: AssemblyAI goes there too (the relay runs it like every other engine), not the old path.
+                        val engFra = dev.patrickgold.florisboard.dictate.engines.FrankfurtRelay.on(appContext) &&
+                            dev.patrickgold.florisboard.dictate.engines.FrankfurtRelay.handles(engSelected)
+                        if (engChain && (engSelected != "assemblyai" || engFra)) {
                             engineOutcome = dev.patrickgold.florisboard.dictate.engines.EngineChain.dictate(
                                 appContext, engWav, engLang, first = engSelected, skip = emptySet(), legacyFailed = null,
                                 onStatus = { _maStatus.value = it },

@@ -108,8 +108,8 @@ internal fun RetranscribeDialog(
                     src.copyTo(tmp, overwrite = true)
                     val wav = MaResample.toTargetRate(tmp) ?: tmp
                     val t0 = System.currentTimeMillis()
-                    val text = withTimeout(if (spec.kind == dev.patrickgold.florisboard.dictate.engines.EngineKind.LOCAL) 60_000L else 45_000L) {
-                        EngineAdapters.run(c, id, wav, lang, EngineChain.names())
+                    val text = withTimeout(if (spec.kind == dev.patrickgold.florisboard.dictate.engines.EngineKind.LOCAL) 60_000L else if (dev.patrickgold.florisboard.dictate.engines.FrankfurtRelay.on(c)) 180_000L else 45_000L) {
+                        dev.patrickgold.florisboard.dictate.engines.FrankfurtRelay.runOrDirect(c, id, wav, lang, EngineChain.names())
                     }
                     val ms = System.currentTimeMillis() - t0
                     if (wav !== tmp) runCatching { wav.delete() }
