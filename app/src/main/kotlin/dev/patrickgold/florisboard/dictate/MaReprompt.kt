@@ -154,10 +154,8 @@ object MaReprompt {
      */
     fun message(instruction: String, text: String?): String {
         if (text.isNullOrBlank()) return instruction
-        val language = MaRewordPrompt.languageOf(text)
-        val keep = if (language != null) "The text is in $language; answer in $language unless the instruction asks for another language."
-        else "Answer in the language of the text unless the instruction asks for another language."
-        return instruction.trim() + "\n\n<text>\n" + text + "\n</text>\n\n" + keep +
+        // The language rule goes last (MaReStyle.rule): his instruction is always English and never decides the language.
+        return instruction.trim() + "\n\n<text>\n" + text + "\n</text>\n\n" + MaReStyle.rule(text) +
             " Return only the resulting text, nothing before or after it, no tags. Paragraphs are " +
             "separated by a single line break."
     }
@@ -165,11 +163,9 @@ object MaReprompt {
     /** The prompt mode: a new message from his instruction, nothing to reshape. */
     fun writeInstructionFor(words: String, screen: MaScreenRead.Screen? = null): String {
         val w = words.trim()
-        // The language is named, not left to "the language of the instruction": this wrapper is
-        // English, and a Croatian request must not come back English (the E|H lesson, 3.11.2026).
-        val language = MaRewordPrompt.languageOf(w)
-        val inLanguage = if (language != null) " Write it in $language unless the request names another language."
-        else " Write it in the language of the request unless the request names another language."
+        // The language is named, not left to "the language of the instruction": his request is English by habit, and the
+        // message goes in the language of the chat on the screen (MaReStyle.rule, 14.11.2026; the E|H lesson, 3.11.2026).
+        val inLanguage = " " + MaReStyle.rule(screen?.text)
         return MaCodeWords.expand(
             MaReSkill.preamble() + "Write the message the user asks for between the <request> tags. Write it as the user, " +
                 "ready to send.$inLanguage Return only the message, nothing before or after it.\n\n" +

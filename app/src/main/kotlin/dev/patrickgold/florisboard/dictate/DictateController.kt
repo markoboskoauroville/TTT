@@ -747,6 +747,10 @@ object DictateController {
 
     fun isRepromptRecording(): Boolean = repromptRecording
 
+    /** True while an RE / WhatsApp instruction is being recorded or transcribed: it is English, whatever the badge (14.11.2026). */
+    fun instructionInFlight(): Boolean =
+        (repromptRecording || whatsappRecording) && _state.value.let { it is UiState.Recording || it is UiState.Transcribing }
+
     /** True while the recording in hand was started by the WA key (7.11.2026): its transcript goes to MaWhatsApp. */
     @Volatile
     private var whatsappRecording = false

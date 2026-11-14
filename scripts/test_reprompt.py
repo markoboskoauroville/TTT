@@ -55,7 +55,7 @@ check("the field decides when it is back", "val write = content.text.isBlank() &
       and "MaReprompt.prompt(words, write, screen)" in ime)
 check("write mode inserts, reshape mode replaces", "requiresSelection = !write," in rp)
 check("write mode: the request fenced, its language named",
-      "<request>" in rp and "MaRewordPrompt.languageOf(w)" in rp)
+      "<request>" in rp and "MaReStyle.rule(screen?.text)" in rp)
 check("the window asks the right question", "The field is empty: what message should Claude write?" in act)
 
 # The window
@@ -72,7 +72,7 @@ check("through the Ctrl+P / Ctrl+F path, with Ctrl+F's model, sent bare",
       "MaReprompt.prompt(words, write, screen), model = MaFlow.model(), allowGrowth = true, bare = true" in ime)
 # Mac emulator, build 440: "make it shorter" came back only proofread. Sent bare, no proofreading system prompt.
 check("bare skips the rewording system prompt", "requestRewordRaw(MaReprompt.message(raw, input), modelOverride = model" in ctrl)
-check("his text fenced, its language kept", "<text>" in rp and "MaRewordPrompt.languageOf(text)" in rp)
+check("his text fenced, its language kept", "<text>" in rp and "MaReStyle.rule(text)" in rp)
 check("told not to just proofread", "Do not just proofread." in rp)
 check("buttons before the list, above the navigation bar",
       act.find('Text("Apply")') < act.find("for (r in recent)") and "navigationBarsPadding()" in act)

@@ -28,6 +28,7 @@ description: TTT, Talk to Type Advanced Keyboard (repo TTT, folder TTT_MINI): Ma
 21. SHARING THE PHONE (MANTRA_MANIFEST phone-lock.md): `ttt_remote.py lock "what"` before touching the screen, `done` (unlock + his Claude chat in front) as soon as it is not needed, tidy first; after LET ME USE IT never touch it until he says so.
 22. THE SOLUTION AT THE NOSE (13.11.2026, MANTRA_MANIFEST solution-at-the-nose.md): a message about a missing key/permission/failed step IS the fix (file picker in Download/Api, the permission request, Retry/Resend). Never send him to Settings. First ask whether the gate is needed at all.
 ## Run log
+- 14.11.2026: RE language rule (result = language of the message edited, instruction always English; MaReStyle.rule last in every RE prompt, MaLanguage.active()=EN during an instruction) and Marko style guide assets/re_style.md (also RE_MAGIC_DATABASE re_style.md) in every RE prompt; test scripts/test_re_language_style.py.
 - 13.11.2026: RE engines Auto/Opus/Sonnet/Qwen, RE Qwen key picker with per-key test, per-key results in the main picker, MaReCompare harness.
 - 13.11.2026: RE chat redesigned in the host look (ttt-design skill, MaHost/MaKeyPanel/MaRecorderReadout), per-answer keys, lessons at once, re/ synced to GitHub, token and KLIPY key only from files, CI test_host_rules.py.
 - 13.11.2026: build 635 (audio-only history, full-screen History, RE Magic chat with memory, per-person People screen); compiled, not yet installed (no adb in the cloud session, Pixel 7 offline).

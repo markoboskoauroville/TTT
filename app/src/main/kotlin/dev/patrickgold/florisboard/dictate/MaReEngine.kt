@@ -164,7 +164,7 @@ object MaReEngine {
 
     /** Qwen's own instructions on top of RE's system prompt (the Flask lessons: name the mistakes, show an example). */
     const val QWEN_RULES = "\n\nHow to answer (follow exactly):\n" +
-        "1. Write in the language Marko used in his last message (Croatian stays Croatian, English stays English), unless he asks for another.\n" +
+        "1. A DRAFT is in the language of the message it answers or edits (the newest [left] message on the screen, else the text he gave you); he speaks English to you always, so his request language never decides it. A Croatian message gets a Croatian draft with č ć š ž đ. Only an explicit translate / in English / na hrvatski changes it. Never ask which language or style.\n" +
         "2. A message he could send goes inside <draft></draft>, ONE draft, only the message text, nothing else inside it.\n" +
         "3. Outside the draft at most one short sentence to him. No headings, no lists, no markdown, no emojis he did not use.\n" +
         "4. Use only facts from the screen and his words. Never invent names, times, places or promises.\n" +

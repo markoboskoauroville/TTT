@@ -331,6 +331,7 @@ class FlorisImeService : LifecycleInputMethodService() {
     override fun onCreate() {
         super.onCreate()
         dev.patrickgold.florisboard.dictate.MaReSkill.attach(this)
+        dev.patrickgold.florisboard.dictate.MaReStyle.attach(this)
         dev.patrickgold.florisboard.dictate.MaSpelling.attach(this)
         dev.patrickgold.florisboard.dictate.MaRemoteDb.attach(this)
         dev.patrickgold.florisboard.dictate.MaRemoteDb.maybePull()

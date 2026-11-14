@@ -143,7 +143,7 @@ object MaRemoteDb {
 
     /** Paths that belong in the repository (relative to Documents/TTTmini). */
     fun synced(path: String): Boolean =
-        path.startsWith("re_ttt_skill") || path.startsWith("dictation_corrections") || path.startsWith("dictation_learned") ||
+        path.startsWith("re_ttt_skill") || path.startsWith("re_style") || path.startsWith("dictation_corrections") || path.startsWith("dictation_learned") ||
             path.startsWith("re_corrections") || (path.startsWith("skills/") && (path.endsWith(".md"))) ||
             // The RE chat's memory (13.11.2026): TAKEOVER, LESSONS, SKILLS, people/ and notes/; never the chat itself.
             (path.startsWith("re/") && path.endsWith(".md"))

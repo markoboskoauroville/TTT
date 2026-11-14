@@ -1,5 +1,7 @@
 # TTT takeover (state 10.11.2026, build 590)
 
+**RE language and style (14.11.2026).** RE's output language = language of the message being edited/answered (field text, else newest [left] message on screen), never of the spoken instruction (always English). `MaReStyle.rule(target)` is the last paragraph of every RE prompt (reprompt, write mode, RE chat; Qwen rule 1 too) and names Croatian/English from `MaWordLanguage.detectPassage`; `MaLanguage.active()` returns EN while an RE/WhatsApp instruction is recorded (`DictateController.instructionInFlight`), the RE chat mic is always EN (WhatsApp tab unchanged). Style: `assets/re_style.md` (Croatian, English, channels, never-list), injected by `MaReStyle.block()` in `MaReSkill.preamble()` and the RE chat prompt; Documents/TTTmini/re_style.md wins and is synced as `re_style.md` in RE_MAGIC_DATABASE. Per-person style still comes from people/ via MaSkills/MaReChat. RE never asks about style or language. CI: scripts/test_re_language_style.py.
+
 **What it is.** TTT, Talk to Type Advanced Keyboard: Marko's Android dictation keyboard (FlorisBoard/Dictate fork, package com.mantraproductions.tttlight). Repo markoboskoauroville/TTT (folder ~/Developer/TTT_MINI). Builds come only from GitHub Actions (releases build-NNN, Latest); install with `adb install -r`, never uninstall (it wipes keys and settings). Test phone: the Nothing; the Pixel 7 emulator is the default tester.
 
 **State at build 590.**

@@ -427,7 +427,8 @@ private fun ChatScreen(
         // To a Claude Code session he speaks English only (Marko, 13.11.2026: "I'm speaking in English only. I'm sending
         // messages to friends in Croatian ... English only everywhere"): language en and his E engine, whatever the badge.
         // The keyboard's Croatian dictation for friends is untouched.
-        val l = if (partner != null && !isWa) MaLanguage.EN else MaLanguage.active()
+        // RE's instructions are English always (Marko, 14.11.2026): the badge never tags them Croatian.
+        val l = if (isWa) MaLanguage.active() else MaLanguage.EN
         val engine = EngineStore.selected(app, l)
         scope.launch {
             // His H/E engine only, never another one; no answer or no internet: 3 s and the same engine again, 10 times.

@@ -139,7 +139,7 @@ object MaReSkill {
         val skill = read().let { if (it.length <= PROMPT_MAX_CHARS) it else it.take(PROMPT_MAX_CHARS / 2) + "\n...\n" + it.takeLast(PROMPT_MAX_CHARS / 2) }
         return "Before the task, this is the skill that says how Marko writes. Follow it exactly; its last " +
             "section (his corrections) outranks everything above it.\n<skill>\n" + skill.trim() + "\n</skill>\n\n" +
-            MaAssistant.appHint() +
+            MaReStyle.block() + MaAssistant.appHint() +
             "ANSWER FORMAT: your answer is shown to Marko in a pop-up before anything goes into a chat. If you can write " +
             "the message, return only the message. If you cannot (information is missing, the screen shows nothing to " +
             "answer, the request is a question, anything you would explain), return ONE line that starts with " +

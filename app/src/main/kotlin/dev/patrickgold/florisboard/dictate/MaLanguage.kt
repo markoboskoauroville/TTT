@@ -62,6 +62,9 @@ object MaLanguage {
      * than as itself, so a caller never has to handle a third case.
      */
     fun active(): String {
+        // An instruction for RE or WhatsApp is always spoken in English (Marko, 14.11.2026), whatever the badge says:
+        // the language of the instruction never decides the language of the result (MaReStyle).
+        if (DictateController.instructionInFlight()) return EN
         val prefs by FlorisPreferenceStore
         val code = prefs.dictate.activeInputLanguage.get().substringBefore('-').lowercase()
         return if (code == EN) EN else HR
