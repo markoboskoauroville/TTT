@@ -81,7 +81,9 @@ object EngineChain {
         val l = if (lang == "en") "en" else "hr"
         val letter = if (l == "en") "E" else "H"
         var ids = usableIds(c, l).filter { it !in skip }
-        if (first != null && first in ids) ids = listOf(first)
+        // FRA on + Frankfurt runs the key's engine: that engine, even if it is not "usable" here (its keys live in Frankfurt).
+        val fraFirst = first != null && first !in skip && FrankfurtRelay.on(c) && FrankfurtRelay.handles(first)
+        if (first != null && (first in ids || fraFirst)) ids = listOf(first)
         if (ids.isEmpty()) return null
         val sec = ClipBuffer.seconds(wav)
         // NEVER another engine by itself (Marko, 10.11.2026: "Change models. Automatically never do that."): the engine he chose is

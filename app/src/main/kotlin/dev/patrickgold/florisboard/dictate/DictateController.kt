@@ -1814,17 +1814,26 @@ object DictateController {
                 val engLetter = if (engLang == MaLanguage.EN) "E" else "H"
                 val engSelected = dev.patrickgold.florisboard.dictate.engines.EngineStore.selected(appContext, engLang)
                 val engForced = MaProviders.engineOverride != null
-                val engChain = !chatAudio && !engForced && dev.patrickgold.florisboard.dictate.engines.EngineStore.chainOn(appContext)
+                val engChainOn = dev.patrickgold.florisboard.dictate.engines.EngineStore.chainOn(appContext)
+                val engChain = !chatAudio && !engForced && engChainOn
+                // FRANKFURT ALWAYS (Marko, 14.11.2026): FRA on + an engine Frankfurt runs = the transcription goes through
+                // Frankfurt whatever chain_on / clips_on say (an old UI config had chain_on false and every take went direct).
+                val engFraOn = dev.patrickgold.florisboard.dictate.engines.FrankfurtRelay.on(appContext)
+                val engFra = !chatAudio && !engForced && engFraOn &&
+                    dev.patrickgold.florisboard.dictate.engines.FrankfurtRelay.handles(engSelected)
+                android.util.Log.i(
+                    "TTT-FRA",
+                    "decide: fra ${if (engFraOn) "on" else "off"}, engine $engSelected, chainOn $engChainOn, chatAudio $chatAudio, " +
+                        "forced $engForced -> ${if (engFra) "FRANKFURT" else if (engChain && engSelected != "assemblyai") "chain direct" else "old direct path"}",
+                )
                 var stageWav: File? = null
-                if (!chatAudio && (engChain || dev.patrickgold.florisboard.dictate.engines.EngineStore.clipsOn(appContext))) {
+                if (!chatAudio && (engChain || engFra || dev.patrickgold.florisboard.dictate.engines.EngineStore.clipsOn(appContext))) {
                     val engWav = MaResample.toTargetRate(uploadFile) ?: uploadFile
                     try {
                         stageWav = File(appContext.cacheDir, "engine_stage.wav")
                         runCatching { engWav.copyTo(stageWav, overwrite = true) }
                         // Frankfurt on: AssemblyAI goes there too (the relay runs it like every other engine), not the old path.
-                        val engFra = dev.patrickgold.florisboard.dictate.engines.FrankfurtRelay.on(appContext) &&
-                            dev.patrickgold.florisboard.dictate.engines.FrankfurtRelay.handles(engSelected)
-                        if (engChain && (engSelected != "assemblyai" || engFra)) {
+                        if (engFra || (engChain && engSelected != "assemblyai")) {
                             engineOutcome = dev.patrickgold.florisboard.dictate.engines.EngineChain.dictate(
                                 appContext, engWav, engLang, first = engSelected, skip = emptySet(), legacyFailed = null,
                                 onStatus = { _maStatus.value = it },

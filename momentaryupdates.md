@@ -652,3 +652,5 @@ voices. Stopped here: a further build plus a full suite (~1 h) would not finish 
 **Status:** saved first.
 
 **Status (14.11.2026):** built. TTT pins every recording to the phone's own microphone by default (setPreferredDevice), a USB camera or sound card no longer takes it. Long press H or E: under the FRA header the microphones plugged in now, phone first (icon + name), one tap picks it for all languages; an unplugged choice falls back to the phone and comes back with the device. The recorder shows USB MIC / BT MIC only when it is not the phone mic. Build 684 (green), installed on the Pixel 7 (versionCode 1684). Seen on the Pixel: the Sony ILCE-7M5 is attached as "USB Device In"; waiting for Marko's test.
+
+**Status (14.11.2026, Frankfurt bypass):** on the Pixel (build 684) H went direct and Frankfurt never got a job: chain_on was false in its old config and the Frankfurt branch only ran inside the chain. Fixed: FRA on + an engine Frankfurt runs = Frankfurt, whatever chain_on / clips_on / the phone's own key list say; the decision is logged as TTT-FRA. Build: pending.
