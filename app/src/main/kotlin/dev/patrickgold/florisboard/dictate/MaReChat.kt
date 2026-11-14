@@ -67,6 +67,9 @@ object MaReChat {
     @Volatile var screen: MaScreenRead.Screen? = null
     /** Who he is talking to, from the chat title on the screen behind (null when it could not be told). */
     @Volatile var person: String? = null
+    /** The text already in the field when the RE key was tapped (14.11.2026: "correct this message" got "I don't see
+     *  the message": the screen read needs the accessibility service, the field text comes from the keyboard itself). */
+    @Volatile var fieldText: String? = null
 
     // ------------------------------------------------------------------ people (Marko, 13.11.2026)
     //
@@ -212,9 +215,9 @@ object MaReChat {
 
     /** Every memory file, for the prompt. */
     /** Where RE was opened: the app, the person, their notes, the screen. The live one, or an invented one (MaReCompare). */
-    data class Ctx(val pkg: String?, val person: String?, val screen: MaScreenRead.Screen?, val personNotes: String? = null, val older: Boolean = true)
+    data class Ctx(val pkg: String?, val person: String?, val screen: MaScreenRead.Screen?, val personNotes: String? = null, val older: Boolean = true, val field: String? = null)
 
-    fun current() = Ctx(pkg, person, screen)
+    fun current() = Ctx(pkg, person, screen, field = fieldText)
 
     private fun memoryBlock(ctx: Ctx = current()): String = buildString {
         // Lessons first and as rules (13.11.2026: "never repeat the same mistake twice").
@@ -263,11 +266,17 @@ object MaReChat {
             append("The screen behind, read just now (").append(it.how).append("). [left] is the other person, [right] is Marko, newest last:\n")
             append("<screen>\n").append(it.text.take(6000)).append("\n</screen>\n")
         }
+        ctx.field?.takeIf { it.isNotBlank() }?.let {
+            append("The message he is writing right now, not sent yet, in the field he opened you from. \"This message\", ")
+            append("\"correct it\", \"fix it\", \"make it better\" mean THIS text; never ask him to paste it. Accept REPLACES ")
+            append("this text with your draft, so a draft is always the whole message:\n")
+            append("<field>\n").append(it.take(6000)).append("\n</field>\n")
+        }
         append("\nToday is ").append(SimpleDateFormat("d.M.yyyy HH:mm", Locale.ROOT).format(Date())).append(".\n")
         append("\nThe chat so far (Marko: / RE:), answer his last message:\n")
         for (m in msgs.takeLast(40)) append(if (m.me) "Marko: " else "RE: ").append(m.text.trim()).append("\n")
         // The language rule last, named from the screen's messages when they say which language they are in.
-        append("\n").append(MaReStyle.rule(ctx.screen?.text)).append("\n")
+        append("\n").append(MaReStyle.rule(ctx.screen?.text ?: ctx.field)).append("\n")
         append("RE:")
     }
 

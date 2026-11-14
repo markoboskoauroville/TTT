@@ -1629,6 +1629,11 @@ fun MaFeatureRow(
                             if (rec == null && dev.patrickgold.florisboard.dictate.MaReChat.chatOn(context)) {
                                 dev.patrickgold.florisboard.dictate.MaReChatActivity.openFromKey(
                                     context, editorInstance.activeInfo.packageName, editorInstance.activeInfo.base.fieldId,
+                                    runCatching {
+                                        FlorisImeService.currentInputConnection()
+                                            ?.getExtractedText(android.view.inputmethod.ExtractedTextRequest().apply { hintMaxChars = 20000 }, 0)
+                                            ?.text?.toString()
+                                    }.getOrNull(),
                                 )
                             } else {
                             if (rec == null) {

@@ -163,7 +163,7 @@ class MaReChatActivity : ComponentActivity() {
                     ChatScreen(
                         onAccept = { text, words ->
                             accepted = true
-                            MaReResult.acceptFor(text, MaReChat.pkg, MaReChat.fieldId, words = words)
+                            MaReResult.acceptFor(text, MaReChat.pkg, MaReChat.fieldId, words = words, replace = MaReChat.fieldText != null)
                             finish()
                         },
                         onClose = { finish() },
@@ -201,9 +201,11 @@ class MaReChatActivity : ComponentActivity() {
         }
 
         /** The RE key: remember the field, read who he talks to and the screen behind, then open the chat over it. */
-        fun openFromKey(context: Context, pkg: String?, fieldId: Int) {
+        fun openFromKey(context: Context, pkg: String?, fieldId: Int, fieldText: String? = null) {
             MaReChat.pkg = pkg?.takeIf { it != context.packageName }
             MaReChat.fieldId = fieldId
+            MaReChat.fieldText = fieldText?.trim()?.takeIf { it.isNotEmpty() }
+            MaLog.add("re", "opened with ${MaReChat.fieldText?.length ?: 0} chars in the field")
             MaReprompt.noteField(pkg, fieldId)
             MaReChat.screen = null
             MaReChat.person = null
