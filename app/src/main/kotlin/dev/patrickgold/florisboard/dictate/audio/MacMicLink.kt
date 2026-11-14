@@ -38,7 +38,7 @@ object MacMicLink {
      * Who pressed (Marko, 14.11.2026: "If I'm clicking on my Pixel phone to transcribe a message on my TTT, it should detect
      * that I clicked on the phone, and it should take the microphone from the phone, not from the computer.").
      * A finger on this glass arrives from the real touchscreen: a device id > 0 whose InputDevice is not virtual and is a
-     * touchscreen. Screen Copy (scrcpy) injects with device id 0 / no real device. Every keyboard touch-down is noted here
+     * touchscreen. Screen Copy (scrcpy) and `adb shell input` inject with device id -1, the "Virtual" device (seen 14.11.2026). Every keyboard touch-down is noted here
      * (ImeRootView.dispatchTouchEvent); the Mac link is asked only when the last one, under 3 s ago, was NOT a finger.
      * Anything unknown (no touch seen, a volume key, a broadcast) = phone microphone.
      */
