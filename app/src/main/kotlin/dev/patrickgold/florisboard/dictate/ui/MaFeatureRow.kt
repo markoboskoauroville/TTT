@@ -47,6 +47,11 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.filled.Mic
+import androidx.compose.material.icons.filled.PhoneAndroid
+import androidx.compose.material.icons.filled.Usb
+import androidx.compose.material.icons.filled.Bluetooth
+import androidx.compose.material.icons.filled.Headset
+import androidx.compose.material.icons.filled.SettingsInputComponent
 import androidx.compose.material.icons.filled.ToggleOn
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.TouchApp
@@ -2548,6 +2553,16 @@ internal val MaEngineNetRed = androidx.compose.ui.graphics.Color(0xFFE53935)
 /** Talk to Parakeet: the dot of the phone's record keys (8.11.2026). */
 internal val MaEngineLocalAmber = androidx.compose.ui.graphics.Color(0xFFFFB300)
 
+/** The mark of a microphone row on the H/E panel: the phone for its own mic, then USB, Bluetooth, headset, line. */
+private fun maMicIcon(type: Int): androidx.compose.ui.graphics.vector.ImageVector = when (type) {
+    android.media.AudioDeviceInfo.TYPE_BUILTIN_MIC -> Icons.Default.PhoneAndroid
+    android.media.AudioDeviceInfo.TYPE_USB_DEVICE, android.media.AudioDeviceInfo.TYPE_USB_ACCESSORY -> Icons.Default.Usb
+    android.media.AudioDeviceInfo.TYPE_BLUETOOTH_SCO, 26 /* TYPE_BLE_HEADSET */ -> Icons.Default.Bluetooth
+    android.media.AudioDeviceInfo.TYPE_USB_HEADSET, android.media.AudioDeviceInfo.TYPE_WIRED_HEADSET -> Icons.Default.Headset
+    android.media.AudioDeviceInfo.TYPE_LINE_ANALOG, android.media.AudioDeviceInfo.TYPE_LINE_DIGITAL -> Icons.Default.SettingsInputComponent
+    else -> Icons.Default.Mic
+}
+
 private fun Modifier.androidx_onPlaced(f: (androidx.compose.ui.geometry.Rect) -> kotlin.Unit): Modifier =
     this.onGloballyPositioned { f(it.boundsInWindow()) }
 
@@ -2568,13 +2583,33 @@ private fun MaEngineMenu(lang: String, anchor: androidx.compose.ui.geometry.Rect
     val ids = dev.patrickgold.florisboard.dictate.engines.EngineCatalog.ALL.map { it.id }
         .filter { it == chosen || dev.patrickgold.florisboard.dictate.engines.EngineChain.available(context, it) }
     val red = Color(0xFFE53935)
+    // MIC CHOICE (Marko, 14.11.2026): every microphone plugged in right now, the phone's own first; re-read when the
+    // panel opens and whenever Android adds or removes an input while it is open. One setting for H and E.
+    var mics by remember { mutableStateOf(dev.patrickgold.florisboard.dictate.audio.MicChoice.options(context)) }
+    val micKey by dev.patrickgold.florisboard.dictate.audio.MicChoice.choiceFlow(context).collectAsState()
+    androidx.compose.runtime.DisposableEffect(Unit) {
+        val am = context.getSystemService(android.content.Context.AUDIO_SERVICE) as android.media.AudioManager
+        val cb = object : android.media.AudioDeviceCallback() {
+            override fun onAudioDevicesAdded(added: Array<out android.media.AudioDeviceInfo>?) {
+                mics = dev.patrickgold.florisboard.dictate.audio.MicChoice.options(context)
+            }
+            override fun onAudioDevicesRemoved(removed: Array<out android.media.AudioDeviceInfo>?) {
+                mics = dev.patrickgold.florisboard.dictate.audio.MicChoice.options(context)
+            }
+        }
+        runCatching { am.registerAudioDeviceCallback(cb, android.os.Handler(android.os.Looper.getMainLooper())) }
+        onDispose { runCatching { am.unregisterAudioDeviceCallback(cb) } }
+    }
+    // The lit row is the one recordings really use: the stored choice when plugged in, else the phone (fallback).
+    val micLit = mics.firstOrNull { it.key == micKey }?.key ?: dev.patrickgold.florisboard.dictate.audio.MicChoice.BUILTIN
+    val micAway = micKey != null && micKey != micLit
     val loc = IntArray(2).also { view.getLocationOnScreen(it) }
     val keyTop = anchor?.top ?: 0f
     val keyLeft = anchor?.left ?: 0f
     // Room above the key down from the status bar; header row + one row per provider share it.
     val statusPx = with(density) { 28.dp.toPx() }
     val availPx = (loc[1] + keyTop - statusPx).coerceAtLeast(with(density) { 120.dp.toPx() })
-    val rows = ids.size + 1
+    val rows = ids.size + 1 + mics.size
     val rowDp = with(density) { (availPx / rows).toDp() }.coerceIn(30.dp, 52.dp)
     val panelDp = rowDp * rows
     val panelPx = with(density) { panelDp.toPx() }.coerceAtMost(availPx)
@@ -2624,6 +2659,39 @@ private fun MaEngineMenu(lang: String, anchor: androidx.compose.ui.geometry.Rect
                     modifier = Modifier.clickable { onDismiss() }.padding(horizontal = 12.dp, vertical = 4.dp),
                 )
             }
+            for (m in mics) {
+                val sel = m.key == micLit
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(rowDp)
+                        .background(if (sel) red.copy(alpha = 0.22f) else Color.Transparent)
+                        .clickable {
+                            dev.patrickgold.florisboard.dictate.audio.MicChoice.set(context, m)
+                            onDismiss()
+                        }
+                        .padding(horizontal = 14.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Icon(
+                        imageVector = maMicIcon(m.type), contentDescription = null,
+                        tint = if (sel) red else MaPanelInk, modifier = Modifier.size(20.dp),
+                    )
+                    Text(
+                        text = m.label,
+                        color = if (sel) red else MaPanelInk, fontSize = 16.sp,
+                        fontWeight = if (sel) FontWeight.Bold else FontWeight.Normal, maxLines = 1,
+                        overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
+                        modifier = Modifier.weight(1f).padding(start = 10.dp),
+                    )
+                    if (sel && micAway && m.key == dev.patrickgold.florisboard.dictate.audio.MicChoice.BUILTIN) {
+                        // The chosen device is unplugged: the phone stands in until it is back.
+                        Text(text = "until it is back", color = MaPanelSub, fontSize = 13.sp, maxLines = 1)
+                    }
+                }
+            }
+            // Hairline between the microphones and the engines.
+            Box(Modifier.fillMaxWidth().height(1.dp).background(MaPanelEdge))
             for (id in ids.reversed()) {
                 val sel = id == chosen
                 Row(

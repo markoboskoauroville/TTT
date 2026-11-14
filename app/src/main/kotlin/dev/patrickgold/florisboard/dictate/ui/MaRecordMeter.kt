@@ -264,10 +264,13 @@ private fun MaReadings(sending: Boolean, tint: Color) {
         // MAC MIC cue (14.11.2026): which microphone is live. Stacked over the size so it takes no extra width
         // (a third sibling in the centred row was measured down to nothing).
         val macMic by dev.patrickgold.florisboard.dictate.audio.MacMicLink.active.collectAsState()
+        // MIC CHOICE (14.11.2026): a microphone other than the phone's own (USB MIC, BT MIC, WIRED MIC) shows the same way.
+        val extMic by dev.patrickgold.florisboard.dictate.audio.MicChoice.activeShort.collectAsState()
         Column(modifier = Modifier.padding(start = 6.dp), horizontalAlignment = Alignment.Start) {
-            if (macMic && !sending) {
+            val micCue = if (macMic) "MAC MIC" else extMic
+            if (micCue != null && !sending) {
                 Text(
-                    text = "MAC MIC", color = tint, fontSize = 11.sp, fontWeight = FontWeight.Bold,
+                    text = micCue, color = tint, fontSize = 11.sp, fontWeight = FontWeight.Bold,
                     maxLines = 1, softWrap = false,
                 )
             }

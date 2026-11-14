@@ -116,6 +116,10 @@ class RecordingController(private val context: Context) {
             runCatching { rec.release() }
             error("AudioRecord failed to initialize")
         }
+        // MIC CHOICE (Marko, 14.11.2026): pin the take to the microphone chosen on the H/E long press, the phone's own by
+        // default, so a USB camera / sound card plugged in never takes the recording. Absent choice = phone microphone.
+        val wantedMic = MicChoice.preferredDevice(context)
+        MicChoice.apply(rec, wantedMic)
         val file = File(context.cacheDir, AUDIO_FILE_NAME)
         val out = try {
             RandomAccessFile(file, "rw").apply {
@@ -136,8 +140,14 @@ class RecordingController(private val context: Context) {
         rec.startRecording()
         thread = Thread {
             val buf = ByteArray(bufferSize)
+            var routedNoted = false
             while (recording) {
                 val n = rec.read(buf, 0, buf.size)
+                if (!routedNoted && n > 0) {
+                    // The route is known once frames flow: log it under the recorder line and light the readout.
+                    routedNoted = true
+                    runCatching { MicChoice.noteRouted(wantedMic, rec.routedDevice) }
+                }
                 // Keep reading while paused (so the mic buffer never overflows) but drop the samples.
                 if (n > 0 && !paused) {
                     // Write under the lock so a concurrent rotate() sees a consistent raf/pcmBytes and the
@@ -254,6 +264,7 @@ class RecordingController(private val context: Context) {
         val mac = macLink
         macLink = null
         if (mac != null) { MacMicLink.setActive(false); runCatching { mac.socket.close() } }
+        MicChoice.clearActive()
         val rec = record
         record = null
         val stopped = rec != null && runCatching { rec.stop() }.isSuccess

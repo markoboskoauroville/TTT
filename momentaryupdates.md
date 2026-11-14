@@ -650,3 +650,5 @@ voices. Stopped here: a further build plus a full suite (~1 h) would not finish 
 > "I'm not basically able to record any audio and test it. Please update this microphone selector and then I'm going to test as you said. Frankfurt is there but there is no sound at the moment."
 
 **Status:** saved first.
+
+**Status (14.11.2026):** built. TTT pins every recording to the phone's own microphone by default (setPreferredDevice), a USB camera or sound card no longer takes it. Long press H or E: under the FRA header the microphones plugged in now, phone first (icon + name), one tap picks it for all languages; an unplugged choice falls back to the phone and comes back with the device. The recorder shows USB MIC / BT MIC only when it is not the phone mic. Build: pending.

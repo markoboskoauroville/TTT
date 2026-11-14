@@ -4664,7 +4664,10 @@ object DictateController {
         // Non-Bluetooth path uses the user's chosen audio source (issue #62); Bluetooth SCO always needs
         // VOICE_COMMUNICATION. If BT is requested but can't be activated, fall back to the chosen source.
         val localSource = prefs.dictate.audioInputSource.get().resolve(context)
-        if (!prefs.dictate.useBluetoothMic.get()) return localSource
+        // MIC CHOICE (14.11.2026): the microphone picked on the H/E long press is the authority. Bluetooth SCO is
+        // switched on only when a connected Bluetooth headset is the choice; the phone microphone (default) never
+        // opens SCO, whatever the older "use Bluetooth mic" switch says.
+        if (!dev.patrickgold.florisboard.dictate.audio.MicChoice.wantsBluetoothSco(context)) return localSource
         val router = BluetoothMicRouter(context).also { btRouter = it }
         return if (router.activate()) {
             MediaRecorder.AudioSource.VOICE_COMMUNICATION
