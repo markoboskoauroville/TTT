@@ -31,6 +31,7 @@ Colour means STATE, never decoration. No blue, no purple, no gradients, no new r
 - Bottom row of keys with weights, 44 dp minimum height, 3 dp gaps.
 - Text: 17 sp body, bold labels, 13 sp secondary. Numbers in gold.
 - Chat: iPhone Messages layout (his balloons right, RE's left, 18 dp corners with a 4 dp tail corner), in host colours; the keys for each answer under the balloon.
+- Pop-up above the keyboard (RE, 15.11.2026): bottom sheet in MaHost.Bg with 16 dp top corners, content above an ordinary entry box (key face, sand ring), one row of MaHostKey at the end; the app behind stays visible, a tap above closes.
 - Dialogs: key-face background, keys as buttons (`HostDialog` in MaReChatActivity.kt).
 - Pressable things highlight on press; nothing breathes or blinks.
 

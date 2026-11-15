@@ -50,12 +50,12 @@ callers = [f for f in SRC.rglob("*.kt") if re.search(r"isSecret\s*=\s*true", cod
 check("no caller asks for a secret field", not callers, ", ".join(str(c.relative_to(SRC)) for c in callers))
 
 # 2. host look on the new screens
-HOST = ["dictate/MaReChatActivity.kt", "dictate/MaHistoryActivity.kt", "dictate/ui/MaKeyPanel.kt"]
+HOST = ["dictate/MaReChatActivity.kt", "dictate/MaHistoryActivity.kt", "dictate/ui/MaKeyPanel.kt", "dictate/MaRePopup.kt"]
 for rel in HOST:
     t = code(SRC / rel)
     for bad in ["FilledTonalButton(", "FloatingActionButton(", "DropdownMenu(", "TopAppBar(", "Brush.linearGradient"]:
         check(f"{rel} has no {bad}", bad not in t)
-for rel in ["dictate/MaReChatActivity.kt", "dictate/MaHistoryActivity.kt"]:
+for rel in ["dictate/MaReChatActivity.kt", "dictate/MaHistoryActivity.kt", "dictate/MaRePopup.kt"]:
     t = code(SRC / rel)
     check(f"{rel} uses MaHost", "MaHost." in t)
     stray = [c for c in re.findall(r"Color\(0x[0-9A-Fa-f]{8}\)", t) if c not in ("Color(0x33E8B15C)", "Color(0x1FFFFFFF)")]
@@ -66,6 +66,9 @@ check("RE chat recorder is the keyboard readout", "MaRecorderReadout(" in chat)
 row = code(SRC / "dictate/ui/MaFeatureRow.kt")
 i = row.find("MaFeatureKey.REPROMPT ->")
 j = row.find("MaFeatureKey.WHATSAPP ->", i)
+pop = code(SRC / "dictate/MaRePopup.kt")
+check("RE pop-up: ordinary entry box, Accept and Reprompt keys", "BasicTextField(" in pop and '"Accept"' in pop and '"Reprompt"' in pop and "TextField(" not in pop.replace("BasicTextField(", ""))
+check("RE pop-up opens from the RE key", "popup = MaReChat.popupOn(context)" in chat)
 check("RE long press is the key panel", "MaKeyPanel(" in row[i:j] and "DropdownMenu" not in row[i:j])
 
 # 3. the GitHub token and the GIF key come from files

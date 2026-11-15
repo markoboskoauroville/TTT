@@ -157,15 +157,26 @@ class MaReChatActivity : ComponentActivity() {
         MaReChat.ensureMemory()
         // A notification from a Claude Code session opens the chat on that thread (MaClaudeLink).
         intent?.getStringExtra(MaClaudeLink.EXTRA_PARTNER)?.let { MaClaudeLink.setPartner(this, it) }
+        // The RE key opens the pop-up above the keyboard (Marko, 15.11.2026); its Chat key, a notification or the
+        // setting off open the full chat.
+        val startPopup = intent?.getBooleanExtra(EXTRA_POPUP, false) == true
         setContent {
             MaterialTheme(colorScheme = darkColorScheme(background = MaHost.Bg, surface = MaHost.Bg)) {
-                Surface(modifier = Modifier.fillMaxSize(), color = MaHost.Bg) {
+                var popup by remember { mutableStateOf(startPopup) }
+                val acceptIt: (String, String) -> Unit = { text, words ->
+                    accepted = true
+                    MaReResult.acceptFor(text, MaReChat.pkg, MaReChat.fieldId, words = words, replace = MaReChat.fieldText != null)
+                    finish()
+                }
+                androidx.compose.runtime.DisposableEffect(popup) {
+                    MaRePopup.open = popup
+                    onDispose { MaRePopup.open = false }
+                }
+                if (popup) {
+                    RePopupScreen(onAccept = acceptIt, onClose = { finish() }, onOpenChat = { popup = false })
+                } else Surface(modifier = Modifier.fillMaxSize(), color = MaHost.Bg) {
                     ChatScreen(
-                        onAccept = { text, words ->
-                            accepted = true
-                            MaReResult.acceptFor(text, MaReChat.pkg, MaReChat.fieldId, words = words, replace = MaReChat.fieldText != null)
-                            finish()
-                        },
+                        onAccept = acceptIt,
                         onClose = { finish() },
                         recorderHolder = { recorder },
                         setRecorder = { recorder = it },
@@ -193,9 +204,12 @@ class MaReChatActivity : ComponentActivity() {
     }
 
     companion object {
-        fun open(context: Context) {
+        const val EXTRA_POPUP = "re_popup"
+
+        fun open(context: Context, popup: Boolean = false) {
             context.startActivity(
                 Intent(context.applicationContext, MaReChatActivity::class.java)
+                    .putExtra(EXTRA_POPUP, popup)
                     .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_NO_ANIMATION),
             )
         }
@@ -212,7 +226,7 @@ class MaReChatActivity : ComponentActivity() {
             MaReChat.scope.launch {
                 if (MaReChat.pkg != null) MaReChat.person = runCatching { MaSkills.chatTitle() }.getOrNull()?.trim()?.takeIf { it.length in 2..60 }
                 if (MaScreenRead.on()) MaReChat.screen = withTimeoutOrNull(3_000L) { MaScreenRead.read() }
-                withContext(Dispatchers.Main) { open(context) }
+                withContext(Dispatchers.Main) { open(context, popup = MaReChat.popupOn(context)) }
             }
         }
     }

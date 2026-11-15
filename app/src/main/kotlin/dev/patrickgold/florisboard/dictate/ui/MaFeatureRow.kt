@@ -1631,7 +1631,10 @@ fun MaFeatureRow(
                         onClick = {
                             // RE Magic is a chat now (Marko, 13.11.2026): a tap opens the Messenger-style window over
                             // the app; its Accept writes into this field. The spoken-instruction RE is in the long press.
-                            if (rec == null && dev.patrickgold.florisboard.dictate.MaReChat.chatOn(context)) {
+                            // The RE pop-up is open and he types in its box: RE sends that box (15.11.2026), no second pop-up.
+                            if (rec == null && dev.patrickgold.florisboard.dictate.MaRePopup.open) {
+                                dev.patrickgold.florisboard.dictate.MaRePopup.sendNow.tryEmit(Unit)
+                            } else if (rec == null && dev.patrickgold.florisboard.dictate.MaReChat.chatOn(context)) {
                                 dev.patrickgold.florisboard.dictate.MaReChatActivity.openFromKey(
                                     context, editorInstance.activeInfo.packageName, editorInstance.activeInfo.base.fieldId,
                                     runCatching {
@@ -1697,6 +1700,13 @@ fun MaFeatureRow(
                             },
                             MaPanelItem("Tap opens the chat", if (dev.patrickgold.florisboard.dictate.MaReChat.chatOn(context)) "on" else "off", dev.patrickgold.florisboard.dictate.MaReChat.chatOn(context)) {
                                 dev.patrickgold.florisboard.dictate.MaReChat.setChatOn(context, !dev.patrickgold.florisboard.dictate.MaReChat.chatOn(context))
+                            },
+                            MaPanelItem(
+                                "Pop-up above the keyboard",
+                                if (dev.patrickgold.florisboard.dictate.MaReChat.popupOn(context)) "on · off = the full chat" else "off · the full chat",
+                                dev.patrickgold.florisboard.dictate.MaReChat.popupOn(context),
+                            ) {
+                                dev.patrickgold.florisboard.dictate.MaReChat.setPopupOn(context, !dev.patrickgold.florisboard.dictate.MaReChat.popupOn(context))
                             },
                             MaPanelItem("Speak an instruction", "no chat") {
                                 MaLanguage.set(context, MaLanguage.EN)

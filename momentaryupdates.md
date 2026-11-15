@@ -662,3 +662,6 @@ voices. Stopped here: a further build plus a full suite (~1 h) would not finish 
 > "Let's continue building TTT by working on RE part. So, please make the experience of typing in RE very similar to typing in any other software with a keyboard layout. So, I need to have the same entry box. I need to click with the finger to the entry box. Then I press the buttons. So, RE actually is something when I click it just pop up above my keyboard and I interact as usual. So, there is no special interface. Only at the end of the pop up I have button accept, changes which already exist both and to re-prompt, meaning write starting from the scratch and do one more try for the same question. and add other action button you find useful" (Marko, 15.11.2026)
 
 **Status:** saved first.
+
+**Status (15.11.2026):** built: RE opens as a pop-up above the keyboard (ordinary entry box, answer above, keys Accept / Reprompt / Edit / Copy / Speak / Chat / Close, tries kept with ‹ ›); full chat one key away and in the RE long press. Not yet installed or seen on a phone.
+

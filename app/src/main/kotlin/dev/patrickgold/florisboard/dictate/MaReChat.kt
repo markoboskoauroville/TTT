@@ -386,4 +386,7 @@ object MaReChat {
     /** The RE key opens the chat (on by default); off brings back the old spoken-instruction RE. */
     fun chatOn(c: Context) = p(c).getBoolean("chat_on", true)
     fun setChatOn(c: Context, v: Boolean) = p(c).edit().putBoolean("chat_on", v).apply()
+    /** RE opens as a pop-up above the keyboard (Marko, 15.11.2026: "no special interface"); off = the full chat. */
+    fun popupOn(c: Context) = p(c).getBoolean("popup_on", true)
+    fun setPopupOn(c: Context, v: Boolean) = p(c).edit().putBoolean("popup_on", v).apply()
 }
