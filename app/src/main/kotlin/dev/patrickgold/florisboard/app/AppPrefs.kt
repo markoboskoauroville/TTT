@@ -915,8 +915,9 @@ abstract class FlorisPreferenceModel : PreferenceModel() {
         // Spelling (MaSpelling, 9.11.2026): the names his speech-to-text mishears. On by default: he asked for it.
         val maReSpeaks = boolean(key = "dictate__ma_re_speaks", default = true)
         val maReSkills = boolean(key = "dictate__ma_re_skills", default = true)
-        /** Screenshot + OCR fallback for apps whose accessibility tree is empty (off by default; never for WhatsApp). */
-        val maReScreenshot = boolean(key = "dictate__ma_re_screenshot", default = false)
+        /** Screenshot + OCR fallback for apps whose accessibility tree is empty. ON by default since 15.11.2026 (Marko: "screenshots
+         *  needs to be read with the free SDK from Google"): ML Kit on the phone, free, offline; never for WhatsApp (its tree is complete). */
+        val maReScreenshot = boolean(key = "dictate__ma_re_screenshot", default = true)
         val maReScreen = boolean(key = "dictate__ma_re_screen", default = true)
         val maSpelling = boolean(key = "dictate__ma_spelling", default = true)
         val maSpellingTerms = boolean(key = "dictate__ma_spelling_terms", default = true)

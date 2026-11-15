@@ -76,7 +76,7 @@ fun MaReScreen() = FlorisScreen {
         SwitchPreference(
             prefs.dictate.maReScreenshot,
             title = "Screenshot fallback",
-            summary = "Off. For apps whose accessibility text is empty: take a screenshot and read it on the phone (OCR). Never used in WhatsApp.",
+            summary = "For apps whose accessibility text is empty: a screenshot read on the phone by Google's free ML Kit OCR, offline. The picture is never saved or sent; only the text goes to RE. Never used in WhatsApp (accessibility reads it fully).",
         )
         SwitchPreference(
             prefs.dictate.maReSpeaks,
