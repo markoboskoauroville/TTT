@@ -49,6 +49,8 @@ object MaReResult {
         val words: String,
         val at: Long = System.currentTimeMillis(),
         val viaAssistant: Boolean = false,
+        /** How long it waits for him to come back to the field: 60 s after Accept, 30 min for RE's background answer. */
+        val waitMs: Long = WAIT_MS,
     )
 
     @Volatile
@@ -132,6 +134,18 @@ object MaReResult {
         accepted = Result(text.trim(), false, replace, pkg, fieldId, words)
     }
 
+    /**
+     * RE finished in the background after the pop-up was closed (Marko, 15.11.2026: "I close it and it's supposed to work in
+     * background and then paste the message into the WhatsApp"): the draft goes into that field now if the keyboard is on
+     * it, else the next time he opens it (within 30 minutes). Nothing is ever sent.
+     */
+    fun deliverInBackground(text: String, pkg: String?, fieldId: Int, words: String, replace: Boolean): Boolean {
+        if (text.isBlank() || pkg == null) return false
+        accepted = Result(text.trim(), false, replace, pkg, fieldId, words, waitMs = 30 * 60_000L)
+        dev.patrickgold.florisboard.FlorisImeService.maDeliverReNow()
+        return true
+    }
+
     /** One of the full-screen windows closed without inserting: the keyboard comes back. */
     fun closedWithoutInsert() {
         markClosed()
@@ -164,7 +178,7 @@ object MaReResult {
         val r = accepted ?: return null
         if (packageName == null) return null
         if (r.pkg != packageName) return null
-        if (now - r.at > WAIT_MS) { accepted = null; return null }
+        if (now - r.at > r.waitMs) { accepted = null; return null }
         if (r.fieldId != 0 && fieldId != 0 && r.fieldId != fieldId) return null
         accepted = null
         return r

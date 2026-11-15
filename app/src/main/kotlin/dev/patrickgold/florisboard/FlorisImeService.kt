@@ -117,6 +117,18 @@ class FlorisImeService : LifecycleInputMethodService() {
             return FlorisImeServiceReference.get()?.currentInputConnection
         }
 
+        /** RE's background answer (MaReResult.deliverInBackground): into the field at once if the keyboard is on it now. */
+        fun maDeliverReNow() {
+            val ims = FlorisImeServiceReference.get() ?: return
+            android.os.Handler(android.os.Looper.getMainLooper()).post {
+                val info = ims.currentInputEditorInfo ?: return@post
+                if (ims.currentInputConnection == null) return@post
+                dev.patrickgold.florisboard.dictate.MaReResult.takeInsert(info.packageName, info.fieldId)?.let { r ->
+                    DictateController.insertReResult(ims, r)
+                }
+            }
+        }
+
         /**
          * Whether the keyboard is on screen and taking the volume keys itself.
          *

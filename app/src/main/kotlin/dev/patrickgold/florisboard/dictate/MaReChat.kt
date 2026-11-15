@@ -340,8 +340,11 @@ object MaReChat {
             "Keep everything still true from the old files, add what is new, drop nothing important, stay under 6000 characters " +
             "each. You may also keep extra notes files about his writing habits under notes/ (lowercase name, .md). Answer ONLY " +
             "with the files, each starting with a line '=== NAME ===' (for example === TAKEOVER.md === or === notes/habits.md ===)." +
-            personPart + " Today is " + SimpleDateFormat("d.M.yyyy", Locale.ROOT).format(Date()) + ".\n\n" +
-            memoryBlock() + seen + "\n<chat>\n" + chat + "\n</chat>"
+            personPart + " Also keep notes/usage-habits.md from <usage_habits> (how Marko USES RE: when, in which apps, to whom, " +
+            "how long his instructions are, how often he reprompts, edits or accepts, which try he keeps, whether he waits or lets " +
+            "RE work in the background), so RE fits his habits without asking." +
+            " Today is " + SimpleDateFormat("d.M.yyyy", Locale.ROOT).format(Date()) + ".\n\n" +
+            memoryBlock() + seen + "\n<usage_habits>\n" + MaReHabits.tail() + "\n</usage_habits>" + "\n<chat>\n" + chat + "\n</chat>"
         val answer = runCatching {
             if (MaReEngine.isQwen()) MaReEngine.groqAsk(context, "You maintain memory files. Output only the files.", p) { }
             else DictateController.reChatAnthropic(context, p, memoryWork = true)
