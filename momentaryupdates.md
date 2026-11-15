@@ -689,3 +689,5 @@ voices. Stopped here: a further build plus a full suite (~1 h) would not finish 
 > "In RE, I need another feature. So, for any message from the history, I can long press to the buffer, clipboard, so called" (Marko, 15.11.2026)
 
 **Status:** saved first.
+
+**Status (15.11.2026):** built: long press on any message (his or RE's, pop-up and full chat) copies it; RE answers copy the draft. Not yet on a phone.

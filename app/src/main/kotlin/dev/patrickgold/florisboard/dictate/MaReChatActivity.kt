@@ -845,7 +845,7 @@ private fun MineBalloon(m: MaReChat.Msg) {
         Text(
             m.text, color = MaHost.Ink, fontSize = 17.sp, lineHeight = 23.sp,
             modifier = Modifier.widthIn(max = 310.dp).padding(start = 48.dp).clip(BalloonMine).background(MaHost.Mine)
-                .padding(horizontal = 14.dp, vertical = 9.dp),
+                .maCopyOnLongPress(m.text).padding(horizontal = 14.dp, vertical = 9.dp),
         )
     }
 }
@@ -856,6 +856,7 @@ private fun ReBalloon(m: MaReChat.Msg, speaking: Boolean, editing: Boolean, edit
         Column(
             modifier = Modifier.widthIn(max = 320.dp).padding(end = 40.dp).clip(BalloonRe).background(MaHost.Theirs)
                 .border(1.dp, if (wrong) MaHost.DangerInk else MaHost.RingSwitch.copy(alpha = 0.35f), BalloonRe)
+                .let { if (editing) it else it.maCopyOnLongPress(m.draft ?: m.shown) }
                 .padding(horizontal = 14.dp, vertical = 9.dp),
         ) {
             m.image?.let { MsgImage(it) }

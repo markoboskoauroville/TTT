@@ -18,6 +18,7 @@ import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -423,13 +424,37 @@ internal fun RePopupScreen(
     }
 }
 
+/**
+ * Long press on any message in RE's history copies it to the clipboard (Marko, 15.11.2026: "for any message from the
+ * history, I can long press to the buffer, clipboard"). An RE answer copies its draft when it has one, else its text.
+ * A short buzz and "Copied" say it worked. Used by the pop-up and the full chat.
+ */
+@OptIn(androidx.compose.foundation.ExperimentalFoundationApi::class)
+@Composable
+internal fun Modifier.maCopyOnLongPress(text: String): Modifier {
+    val context = LocalContext.current
+    val haptic = androidx.compose.ui.platform.LocalHapticFeedback.current
+    return this.combinedClickable(
+        interactionSource = remember { MutableInteractionSource() }, indication = null,
+        onClick = {},
+        onLongClick = {
+            if (text.isBlank()) return@combinedClickable
+            haptic.performHapticFeedback(androidx.compose.ui.hapticfeedback.HapticFeedbackType.LongPress)
+            val cm = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+            cm.setPrimaryClip(ClipData.newPlainText("RE", text))
+            MaReHabits.note("copied from history", "${text.length} chars")
+            Toast.makeText(context, "Copied", Toast.LENGTH_SHORT).show()
+        },
+    )
+}
+
 /** His message: a rounded box on the right (the Claude app's user turn), in the keyboard's colours. */
 @Composable
 private fun MineBox(text: String) {
     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
         Box(
             modifier = Modifier.widthIn(max = 320.dp).padding(start = 40.dp)
-                .clip(RoundedCornerShape(18.dp)).background(MaHost.Mine).padding(horizontal = 14.dp, vertical = 10.dp),
+                .clip(RoundedCornerShape(18.dp)).background(MaHost.Mine).maCopyOnLongPress(text).padding(horizontal = 14.dp, vertical = 10.dp),
         ) { Text(text, color = MaHost.Ink, fontSize = 16.sp) }
     }
 }
@@ -439,7 +464,7 @@ private fun MineBox(text: String) {
 private fun ReText(m: MaReChat.Msg, editing: Boolean, editText: String, onEditText: (String) -> Unit) {
     val d = m.draft
     val talk = if (d != null) m.shown.replace(d, "").trim() else m.shown
-    Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 6.dp)) {
+    Column(modifier = Modifier.fillMaxWidth().let { if (editing) it else it.maCopyOnLongPress(d ?: m.shown) }.padding(horizontal = 6.dp)) {
         if (talk.isNotEmpty() && !(d == null && editing)) Text(talk, color = MaHost.Ink, fontSize = 16.sp, modifier = Modifier.padding(bottom = if (d != null) 6.dp else 0.dp))
         if (d != null || editing) {
             Box(
