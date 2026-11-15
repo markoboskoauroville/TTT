@@ -697,3 +697,5 @@ voices. Stopped here: a further build plus a full suite (~1 h) would not finish 
 > "Please test accuracy between AAC and Wave. The virtual machine has all API codes and all engines. Build the test for virtual machine, see the differences. If there is a difference, keep wave, is there is the same, we go with AAC." (Marko, 15.11.2026)
 
 **Status:** saved first.
+
+**Status (15.11.2026):** built: the button / broadcast sends the clips as WAV + the phone's own AAC to Frankfurt, which compares every engine (vm-chromium ttt-relay/aac_bench.py). Not run yet: needs the relay update on the VM and this build on the Nothing.

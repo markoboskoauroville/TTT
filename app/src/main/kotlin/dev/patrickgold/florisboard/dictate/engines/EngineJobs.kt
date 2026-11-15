@@ -254,6 +254,11 @@ class EngineDebugReceiver : BroadcastReceiver() {
                         out("HR\n" + EngineBenchmark.table(r.rows, "hr")); out("EN\n" + EngineBenchmark.table(r.rows, "en"))
                         r.skipped.forEach { out("note: $it") }
                     }
+                    "dev.ttt.engines.AAC_BENCH" -> {
+                        // AAC against WAV in Frankfurt (15.11.2026); long: release the broadcast at once.
+                        pending.finish()
+                        out(FrankfurtRelay.aacBench(app) { out("aac " + it) })
+                    }
                     "dev.ttt.engines.REPORT" -> {
                         for (s in EngineCatalog.ALL) {
                             val left = EngineChain.quotaLeft(app, s)

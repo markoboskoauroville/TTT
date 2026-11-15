@@ -220,6 +220,63 @@ object FrankfurtRelay {
         }
     }
 
+    // ------------------------------------------------------------------ AAC against WAV, tested in Frankfurt (15.11.2026)
+
+    /**
+     * Marko, 15.11.2026: "Please test accuracy between AAC and Wave ... If there is a difference, keep wave, if there is the
+     * same, we go with AAC." Sends every kept clip (ClipBuffer: his dictations with the text he sent) twice, as the 16 kHz
+     * WAV and as the AAC 32 kbit/s this phone's own encoder makes (MaEncoder, the file History would keep), then starts
+     * the comparison in Frankfurt (ttt-relay aac_bench.py) and waits for the verdict. Returns the report as text.
+     */
+    suspend fun aacBench(c: Context, onStatus: (String) -> Unit): String = withContext(Dispatchers.IO) {
+        val clips = ClipBuffer.list(c, "hr") + ClipBuffer.list(c, "en")
+        val usable = clips.filter { it.reference.isNotBlank() && it.wav.exists() }
+        if (usable.isEmpty()) return@withContext "No kept dictations with their sent text yet: dictate a few messages in HR and ENG first."
+        syncKeys(c)
+        call(Request.Builder().url(url(c) + "/bench/clear").post(ByteArray(0).toRequestBody(null)).build())
+        var sent = 0
+        for (clip in usable) {
+            val tmp = File(c.cacheDir, "bench_${clip.id}.wav")
+            clip.wav.copyTo(tmp, overwrite = true)
+            val aac = dev.patrickgold.florisboard.dictate.audio.MaEncoder.encode(tmp)
+            try {
+                if (aac == null) continue
+                val ref = Base64.encodeToString(clip.reference.toByteArray(), Base64.NO_WRAP)
+                call(Request.Builder().url(url(c) + "/bench/clip?id=${clip.id}&lang=${clip.lang}&kind=wav").header("X-TTT-Ref", ref)
+                    .post(tmp.asRequestBody(WAV)).build())
+                call(Request.Builder().url(url(c) + "/bench/clip?id=${clip.id}&lang=${clip.lang}&kind=aac")
+                    .post(aac.asRequestBody("audio/mp4".toMediaType())).build())
+                sent++
+                onStatus("Sent $sent/${usable.size} clips to Frankfurt (WAV ${tmp.length() / 1024} KB, AAC ${aac.length() / 1024} KB)")
+            } finally {
+                tmp.delete(); aac?.delete()
+            }
+        }
+        call(Request.Builder().url(url(c) + "/bench/run").post(ByteArray(0).toRequestBody(null)).build())
+        while (true) {
+            delay(5000)
+            val st = runCatching { call(Request.Builder().url(url(c) + "/bench").get().build()) }.getOrNull() ?: continue
+            when (st.optString("state")) {
+                "done" -> {
+                    val rep = st.optJSONObject("report") ?: return@withContext "Frankfurt finished without a report"
+                    val out = StringBuilder("AAC 32 kbit/s against WAV, ${rep.optInt("clips")} of your dictations (${rep.optInt("hr")} HR, ${rep.optInt("en")} ENG)\n")
+                    val eng = rep.optJSONObject("engines") ?: JSONObject()
+                    eng.keys().forEach { e ->
+                        val r = eng.getJSONObject(e)
+                        out.append(if (r.optInt("clips") == 0) "$e: not tested\n"
+                        else "$e: WAV ${r.optDouble("wer_wav")}%  AAC ${r.optDouble("wer_aac")}%  noise ${r.optDouble("noise")}  -> ${r.optString("verdict")}\n")
+                    }
+                    out.append("DECISION: ${rep.optString("decision")}")
+                    runCatching { File(c.getExternalFilesDir(null), "aac_bench.txt").writeText(out.toString()) }
+                    return@withContext out.toString()
+                }
+                "failed" -> return@withContext "Frankfurt test failed: " + st.optString("note")
+                else -> onStatus("Frankfurt is testing: ${st.optInt("done")}/${st.optInt("total")} engine x clip")
+            }
+        }
+        ""
+    }
+
     /** For History re-transcribe and the RE chat voice: Frankfurt when on and the engine runs there, else direct. */
     suspend fun runOrDirect(c: Context, id: String, wav: File, lang: String, names: List<String>, onStatus: (String) -> Unit = {}): String =
         if (on(c) && handles(id)) transcribe(c, id, wav, lang, names, onStatus) else EngineAdapters.run(c, id, wav, lang, names)

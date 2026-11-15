@@ -114,6 +114,23 @@ fun MaEnginesScreen() = FlorisScreen {
             OutlinedButton(onClick = { ClipBuffer.clear(c); tick++ }) { Text("Delete clips") }
         }
 
+        // AAC against WAV, tested in Frankfurt with its keys (Marko, 15.11.2026).
+        var aacNote by remember { mutableStateOf("") }
+        var aacBusy by remember { mutableStateOf(false) }
+        OutlinedButton(
+            enabled = !aacBusy,
+            onClick = {
+                aacBusy = true; aacNote = "Sending clips to Frankfurt\u2026"
+                scope.launch {
+                    aacNote = runCatching { dev.patrickgold.florisboard.dictate.engines.FrankfurtRelay.aacBench(c) { aacNote = it } }
+                        .getOrElse { "Frankfurt not answering: " + (it.message ?: "") }
+                    aacBusy = false
+                }
+            },
+            modifier = Modifier.padding(horizontal = 16.dp),
+        ) { Text("Test AAC against WAV in Frankfurt") }
+        if (aacNote.isNotBlank()) Text(aacNote, style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp))
+
         Text("Order", style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(start = 16.dp, top = 16.dp, bottom = 4.dp))
         Row(modifier = Modifier.padding(horizontal = 16.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             OutlinedButton(onClick = { lang = "hr" }) { Text(if (lang == "hr") "● HR" else "HR") }

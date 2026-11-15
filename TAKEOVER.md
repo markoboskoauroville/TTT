@@ -1,3 +1,5 @@
+**AAC against WAV test (15.11.2026).** Settings > Voice transcription buttons > Advanced > "Test AAC against WAV in Frankfurt" (or adb broadcast `dev.ttt.engines.AAC_BENCH`, result also in Android/data/<pkg>/files/aac_bench.txt): FrankfurtRelay.aacBench sends every ClipBuffer clip with its sent text as WAV and as this phone's own MaEncoder AAC 32 kbit/s to ttt-relay /bench, starts aac_bench.py there and polls GET /bench. Decision rule (Marko): any engine WORSE than its own WAV-to-WAV noise + 1 point = keep WAV; all SAME = History (and clips) go AAC. Not run yet: relay update and this build must be installed first.
+
 **Local first, free first (15.11.2026).** Screen reading for RE stays: accessibility tree, then screenshot + ML Kit Text Recognition on the phone (MaScreenRead), never a picture to any API. The OCR fallback (pref maReScreenshot) is now ON by default (was off), still never in WhatsApp. Rule and catalogue of free on-device kits: skill local-first, MANTRA_MANIFEST modules/local-first-free-sdks.md. Candidates offered: ML Kit Language ID (RE HR/EN), ML Kit on-device Translation.
 
 # TTT takeover (state 10.11.2026, build 590)
