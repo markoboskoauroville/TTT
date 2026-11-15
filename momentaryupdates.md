@@ -691,3 +691,9 @@ voices. Stopped here: a further build plus a full suite (~1 h) would not finish 
 **Status:** saved first.
 
 **Status (15.11.2026):** built: long press on any message (his or RE's, pop-up and full chat) copies it; RE answers copy the draft. Not yet on a phone.
+
+## 15.11.2026, Marko: test AAC against WAV on the VM before switching
+
+> "Please test accuracy between AAC and Wave. The virtual machine has all API codes and all engines. Build the test for virtual machine, see the differences. If there is a difference, keep wave, is there is the same, we go with AAC." (Marko, 15.11.2026)
+
+**Status:** saved first.
