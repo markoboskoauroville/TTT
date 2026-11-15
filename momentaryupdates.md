@@ -699,3 +699,8 @@ voices. Stopped here: a further build plus a full suite (~1 h) would not finish 
 **Status:** saved first.
 
 **Status (15.11.2026):** built: the button / broadcast sends the clips as WAV + the phone's own AAC to Frankfurt, which compares every engine (vm-chromium ttt-relay/aac_bench.py). Not run yet: needs the relay update on the VM and this build on the Nothing.
+
+## 15.11.2026, cannot switch from USB microphone to the phone microphone (Marko, word for word)
+"Fix the error in TTT, please. I cannot switch from USB microphone to the phone microphone. I was trying inside my Pixel phone, and it's not possible. It's stuck on the USB."
+
+**Status:** saved first (15.11.2026); diagnosing.
