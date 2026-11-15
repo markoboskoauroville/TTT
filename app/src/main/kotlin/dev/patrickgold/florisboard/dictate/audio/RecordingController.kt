@@ -111,15 +111,14 @@ class RecordingController(private val context: Context) {
         val (rate, minBuf) = bestRate()
         activeSampleRate = rate
         val bufferSize = minBuf * 2
-        val rec = AudioRecord(audioSource, rate, CHANNEL, ENCODING, bufferSize)
-        if (rec.state != AudioRecord.STATE_INITIALIZED) {
-            runCatching { rec.release() }
-            error("AudioRecord failed to initialize")
-        }
         // MIC CHOICE (Marko, 14.11.2026): pin the take to the microphone chosen on the H/E long press, the phone's own by
         // default, so a USB camera / sound card plugged in never takes the recording. Absent choice = phone microphone.
+        // 15.11.2026 (stuck on USB): setPreferredDevice returns true but Android may still route the take to the USB input
+        // (another app, e.g. Manual Camera, already holds it open, and the policy reuses that input). So the route is read
+        // back at once and, when it is not the wanted device, the take is reopened with another audio source (a different
+        // source cannot reuse the USB input), then logged either way.
         val wantedMic = MicChoice.preferredDevice(context)
-        MicChoice.apply(rec, wantedMic)
+        val rec = openPinned(audioSource, rate, bufferSize, wantedMic)
         val file = File(context.cacheDir, AUDIO_FILE_NAME)
         val out = try {
             RandomAccessFile(file, "rw").apply {
@@ -137,17 +136,11 @@ class RecordingController(private val context: Context) {
         peak = 0
         paused = false
         recording = true
-        rec.startRecording()
+        if (rec.recordingState != AudioRecord.RECORDSTATE_RECORDING) rec.startRecording()
         thread = Thread {
             val buf = ByteArray(bufferSize)
-            var routedNoted = false
             while (recording) {
                 val n = rec.read(buf, 0, buf.size)
-                if (!routedNoted && n > 0) {
-                    // The route is known once frames flow: log it under the recorder line and light the readout.
-                    routedNoted = true
-                    runCatching { MicChoice.noteRouted(wantedMic, rec.routedDevice) }
-                }
                 // Keep reading while paused (so the mic buffer never overflows) but drop the samples.
                 if (n > 0 && !paused) {
                     // Write under the lock so a concurrent rotate() sees a consistent raf/pcmBytes and the
@@ -161,6 +154,55 @@ class RecordingController(private val context: Context) {
                 }
             }
         }.also { it.start() }
+    }
+
+    /**
+     * Opens an AudioRecord pinned to [wanted], started, with its route read back. Tries [first] source, then the others, until
+     * Android really routes it to [wanted]; if none does, the first source is reopened unpinned-by-result and the mismatch is
+     * reported (MicChoice.noteRouted) so the panel says what is really in use.
+     */
+    private fun openPinned(first: Int, rate: Int, bufferSize: Int, wanted: android.media.AudioDeviceInfo?): AudioRecord {
+        val sources = listOf(
+            first,
+            MediaRecorder.AudioSource.VOICE_RECOGNITION,
+            MediaRecorder.AudioSource.CAMCORDER,
+            MediaRecorder.AudioSource.UNPROCESSED,
+            MediaRecorder.AudioSource.VOICE_COMMUNICATION,
+        ).distinct()
+        var firstRec: AudioRecord? = null
+        for ((i, src) in sources.withIndex()) {
+            val r = runCatching { AudioRecord(src, rate, CHANNEL, ENCODING, bufferSize) }.getOrNull()
+            if (r == null || r.state != AudioRecord.STATE_INITIALIZED) { runCatching { r?.release() }; continue }
+            MicChoice.apply(r, wanted)
+            if (wanted == null) { MicChoice.noteRouted(null, null); return r }
+            val started = runCatching { r.startRecording() }.isSuccess
+            var routed: android.media.AudioDeviceInfo? = null
+            if (started) {
+                for (t in 0 until 8) { // up to ~400 ms for the route to settle
+                    routed = runCatching { r.routedDevice }.getOrNull()
+                    if (routed != null) break
+                    try { Thread.sleep(50) } catch (_: InterruptedException) {}
+                }
+            }
+            if (routed != null && routed.id == wanted.id) {
+                MicChoice.noteRouted(wanted, routed, source = src)
+                firstRec?.let { runCatching { it.release() } }
+                return r
+            }
+            MicChoice.noteRouted(wanted, routed, source = src, retrying = i < sources.size - 1)
+            if (i == 0) {
+                firstRec = r
+                runCatching { r.stop() }
+            } else runCatching { r.release() }
+        }
+        // Nothing honoured the pin: use the first source as it routes (reported in the panel).
+        val fr = firstRec
+        if (fr != null) {
+            runCatching { fr.startRecording() }
+            MicChoice.noteRouted(wanted, runCatching { fr.routedDevice }.getOrNull(), source = first, giveUp = true)
+            return fr
+        }
+        error("AudioRecord failed to initialize")
     }
 
     private var macLink: MacMicLink.Link? = null

@@ -98,12 +98,20 @@ object MicChoice {
         if (!ok) MaLog.add("mic", "setPreferredDevice refused for ${describe(device)}")
     }
 
-    /** Called once the take is running: logs where Android really routed it and sets the readout. */
-    fun noteRouted(wanted: AudioDeviceInfo?, routed: AudioDeviceInfo?) {
-        val line = "recording from ${routed?.let { describe(it) } ?: "unknown"}" +
-            if (wanted != null && routed != null && routed.id != wanted.id) " (wanted ${describe(wanted)})" else ""
+    private val _lastNote = MutableStateFlow<String?>(null)
+    /** What the last take really used when Android did not honour the choice ("USB-Audio - ILCE-7M5 took it"); null when it did. */
+    val lastNote: StateFlow<String?> = _lastNote
+
+    /** Called once the take is routed: logs where Android really put it and sets the readout. */
+    fun noteRouted(wanted: AudioDeviceInfo?, routed: AudioDeviceInfo?, source: Int = -1, retrying: Boolean = false, giveUp: Boolean = false) {
+        val honoured = wanted == null || (routed != null && routed.id == wanted.id)
+        val line = "recording from ${routed?.let { describe(it) } ?: "unknown"} (source $source)" +
+            (if (!honoured && wanted != null) " (wanted ${describe(wanted)})" else "") +
+            (if (retrying) ", trying another source" else "") + (if (giveUp) ", no source honoured the pin" else "")
         Log.i(TAG, line)
         MaLog.add("mic", line)
+        if (retrying) return
+        _lastNote.value = if (honoured || routed == null) null else "${product(routed).ifEmpty { shortOf(routed.type) }} took it, not the choice"
         _activeShort.value = when (routed?.type) {
             null, AudioDeviceInfo.TYPE_BUILTIN_MIC -> null
             else -> shortOf(routed.type)

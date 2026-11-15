@@ -2619,7 +2619,8 @@ private fun MaEngineMenu(lang: String, anchor: androidx.compose.ui.geometry.Rect
     // Room above the key down from the status bar; header row + one row per provider share it.
     val statusPx = with(density) { 28.dp.toPx() }
     val availPx = (loc[1] + keyTop - statusPx).coerceAtLeast(with(density) { 120.dp.toPx() })
-    val rows = ids.size + 1 + mics.size
+    val micNote by dev.patrickgold.florisboard.dictate.audio.MicChoice.lastNote.collectAsState()
+    val rows = ids.size + 1 + mics.size + (if (micNote != null) 1 else 0)
     val rowDp = with(density) { (availPx / rows).toDp() }.coerceIn(30.dp, 52.dp)
     val panelDp = rowDp * rows
     val panelPx = with(density) { panelDp.toPx() }.coerceAtMost(availPx)
@@ -2698,6 +2699,15 @@ private fun MaEngineMenu(lang: String, anchor: androidx.compose.ui.geometry.Rect
                         // The chosen device is unplugged: the phone stands in until it is back.
                         Text(text = "until it is back", color = MaPanelSub, fontSize = 13.sp, maxLines = 1)
                     }
+                }
+            }
+            micNote?.let { note ->
+                // The truth line: Android put the last take on another input than the chosen one.
+                Row(modifier = Modifier.fillMaxWidth().height(rowDp).padding(horizontal = 14.dp), verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        text = "last take: $note", color = red, fontSize = 13.sp, maxLines = 1,
+                        overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
+                    )
                 }
             }
             // Hairline between the microphones and the engines.
