@@ -683,3 +683,9 @@ voices. Stopped here: a further build plus a full suite (~1 h) would not finish 
 
 **Status (15.11.2026):** built: RE (Reply) works in the background (MaReSession): close the pop-up, the draft lands in the field by itself (not sent) or waits 30 min for him to come back; the pop-up is the whole chat, Claude-app style, foldable; habits logged to re/HABITS_LOG.md and learned into notes/usage-habits.md. Not yet installed or seen on a phone.
 
+
+## 15.11.2026, Marko: long press on any RE message copies it to the clipboard
+
+> "In RE, I need another feature. So, for any message from the history, I can long press to the buffer, clipboard, so called" (Marko, 15.11.2026)
+
+**Status:** saved first.
