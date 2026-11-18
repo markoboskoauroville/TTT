@@ -368,8 +368,9 @@ object MaReChat {
             " Today is " + SimpleDateFormat("d.M.yyyy", Locale.ROOT).format(Date()) + ".\n\n" +
             memoryBlock() + seen + "\n<usage_habits>\n" + MaReHabits.tail() + "\n</usage_habits>" + "\n<chat>\n" + chat + "\n</chat>"
         val answer = runCatching {
-            if (MaReEngine.isQwen()) MaReEngine.groqAsk(context, "You maintain memory files. Output only the files.", p) { }
-            else DictateController.reChatAnthropic(context, p, memoryWork = true)
+            // Memory rewriting always uses Anthropic Opus (memoryWork=true), regardless of the active engine.
+            // Qwen is for real-time drafts; TAKEOVER, LESSONS and SKILLS are too important to route elsewhere.
+            DictateController.reChatAnthropic(context, p, memoryWork = true)
         }.getOrNull() ?: return 0
         return writeFiles(answer)
     }

@@ -177,6 +177,22 @@ object MaReSession {
         run(app, FROM_SCRATCH)
     }
 
+    /**
+     * Re-asks the last question with a specific model override (H / S / O / Q buttons under the answer).
+     * [engine] is one of MaReEngine.AUTO / SONNET / OPUS / QWEN.
+     * The override is set before the call and cleared by [run] after the answer arrives.
+     */
+    fun retryWith(app: Context, engine: String) {
+        val c = latestAnswer() ?: return
+        if (thinking) return
+        MaReader.stop()
+        MaReEngine.override = engine
+        if (tries.isEmpty()) { tries.add(c); shown = 0 } else tries.add(c)
+        msgs.removeAll { it.at == c.at }; persist()
+        MaReHabits.note("retry with $engine")
+        run(app, null)
+    }
+
     /** The arrows: the chosen try becomes the answer in the thread. */
     fun showTry(i: Int) {
         if (i !in tries.indices || thinking) return
@@ -194,6 +210,8 @@ object MaReSession {
         // MaReChat.scope, not the window's: closing the pop-up does not stop RE.
         MaReChat.scope.launch {
             val r = runCatching { MaReChat.ask(app, sofar) { s -> MaReChat.scope.launch(Dispatchers.Main) { status = s } } }
+            // Clear any per-request model override now that the answer arrived.
+            MaReEngine.override = null
             withContext(Dispatchers.Main) {
                 thinking = false
                 r.onSuccess { a ->
@@ -381,6 +399,27 @@ internal fun RePopupScreen(
                     )
                 }
                 MaHostKey(null, icon = Icons.AutoMirrored.Filled.Send, ink = MaHost.Gold, enabled = input.isNotBlank() && !s.thinking) { send() }
+            }
+            // ---- model selector: H / S / O / Q (tap to regenerate last answer with that model)
+            if (current != null && !s.thinking) {
+                val currentEngine = MaReEngine.engine()
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.End,
+                ) {
+                    Text(
+                        "ask with:", color = MaHost.Muted, fontSize = 12.sp,
+                        modifier = Modifier.align(Alignment.CenterVertically).padding(end = 4.dp),
+                    )
+                    for ((label, engine) in listOf("H" to MaReEngine.AUTO, "S" to MaReEngine.SONNET, "O" to MaReEngine.OPUS, "Q" to MaReEngine.QWEN)) {
+                        MaHostKey(
+                            label, fontSize = 13, padH = 8,
+                            ring = if (engine == currentEngine) MaHost.Gold else null,
+                            ink = if (engine == currentEngine) MaHost.Gold else MaHost.Muted,
+                            lit = engine == currentEngine,
+                        ) { editing = false; s.retryWith(app, engine) }
+                    }
+                }
             }
             // ---- the keys at the end
             Row(modifier = Modifier.fillMaxWidth()) {
