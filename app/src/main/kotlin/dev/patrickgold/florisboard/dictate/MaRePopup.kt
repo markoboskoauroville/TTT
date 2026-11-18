@@ -51,6 +51,7 @@ import androidx.compose.material.icons.automirrored.filled.VolumeUp
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.ContentCopy
+import androidx.compose.material.icons.filled.DeleteSweep
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.UnfoldLess
@@ -155,6 +156,8 @@ object MaReSession {
         MaReader.stop()
         val last = latestAnswer()
         if (last != null && MaReChat.looksLikeCorrection(t)) {
+            // Echo the original RE message as a ME bubble before the correction so Marko sees what he is correcting.
+            msgs.add(MaReChat.Msg(true, "\u21a9 correcting: " + last.shown.take(300)))
             MaReChat.scope.launch { MaReChat.lesson(app, last.shown, t, "corrected RE in the pop-up") }
         }
         asked = t
@@ -417,6 +420,17 @@ internal fun RePopupScreen(
                     expanded = !expanded
                     prefs(app).edit().putBoolean("popup_expanded", expanded).apply()
                     MaReHabits.note(if (expanded) "history opened" else "history folded")
+                }
+                // Reset: wipe only the visible thread; memory files (TAKEOVER, LESSONS, SKILLS) are kept.
+                MaHostKey(
+                    null, Modifier.weight(0.8f), icon = Icons.Default.DeleteSweep,
+                    ink = MaHost.DangerInk, enabled = s.msgs.isNotEmpty() && !s.thinking,
+                ) {
+                    s.msgs.clear()
+                    s.tries.clear()
+                    s.shown = -1
+                    MaReChat.resetSession()
+                    MaReHabits.note("chat reset from popup")
                 }
                 MaHostKey(null, Modifier.weight(0.8f), icon = Icons.Default.Close) { close() }
             }

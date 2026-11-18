@@ -408,6 +408,9 @@ private fun ChatScreen(
             else -> null
         }
         if (cue != null) {
+            // Echo the original RE message as a ME bubble before the correction so Marko sees what he was correcting.
+            msgs.add(MaReChat.Msg(true, "\u21a9 correcting: " + cue.first.shown.take(300)))
+            persist()
             MaReChat.scope.launch {
                 val rule = MaReChat.lesson(app, cue.first.shown, t, cue.second)
                 if (rule != null) withContext(Dispatchers.Main) { status = "Lesson kept: " + rule.take(90) }

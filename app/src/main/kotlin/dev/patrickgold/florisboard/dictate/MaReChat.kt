@@ -117,23 +117,36 @@ object MaReChat {
 
     fun looksLikeCorrection(text: String): Boolean = CORRECTION.containsMatchIn(text.trim())
 
-    /** Writes one rule into LESSONS.md from what RE said and how Marko corrected it. Returns the rule or null. */
+    /**
+     * Writes one rule into LESSONS.md from what RE said and how Marko corrected it. Returns the rule or null.
+     *
+     * Rules (18.11.2026):
+     * - Always uses Anthropic Opus, never Qwen: corrections are the most important learning moment and Opus never cuts corners.
+     * - Before the corrected message is inserted, the original RE message is echoed back as a ME bubble so Marko can
+     *   see exactly what he was correcting.
+     * - After every correction TAKEOVER, LESSONS and SKILLS are rewritten at once (learn()) and the result is pushed
+     *   to the RE Magic Database on GitHub (synced()) so the next chat session starts with the updated memory.
+     */
     suspend fun lesson(context: Context, reSaid: String, marko: String, cue: String): String? {
         ensureMemory()
         val p = "RE, Marko's writing assistant, made a mistake and Marko corrected it ($cue). Write ONE rule, one line, " +
             "that stops RE from ever making this mistake again: concrete, about Marko's preferences, in English, no names " +
             "of the cue. Answer with the rule only.\n\nAlready known lessons:\n" + read(LESSONS).take(4000) +
             "\n\nRE said:\n" + reSaid.take(2000) + "\n\nMarko:\n" + marko.take(2000)
+        // Always Opus for corrections — the most important learning moment; Qwen is never used here.
         val rule = runCatching {
-            if (MaReEngine.isQwen()) MaReEngine.groqAsk(context, "You write one-line rules.", p) { }
-            else DictateController.reChatAnthropic(context, p, memoryWork = true)
+            DictateController.reChatAnthropic(context, p, memoryWork = true)
         }.getOrNull()?.lineSequence()?.map { it.trim().trimStart('-', '*', ' ') }?.firstOrNull { it.length > 8 } ?: return null
         val line = "- " + SimpleDateFormat("d.M.yyyy", Locale.ROOT).format(Date()) + " " + rule.take(300)
         val old = read(LESSONS)
         if (old.contains(rule.take(60), ignoreCase = true)) return rule
         runCatching { file(LESSONS).writeText(old.trimEnd() + "\n" + line + "\n") }
         MaLog.add("re-chat", "lesson written ($cue)")
-        synced()
+        // Rewrite all memory files immediately after every correction and push to GitHub.
+        scope.launch {
+            runCatching { learn(context, load(), "corrected ($cue)") }
+            synced()
+        }
         return rule
     }
 
@@ -173,6 +186,15 @@ object MaReChat {
 
     fun clearChat() {
         runCatching { file(CHAT).delete() }
+    }
+
+    /**
+     * Resets the live chat session to zero without touching memory files (TAKEOVER, LESSONS, SKILLS, people).
+     * Called by the popup's Reset button when Marko wants to start a fresh conversation from scratch.
+     * Memory is preserved; only the visible thread is wiped.
+     */
+    fun resetSession() {
+        clearChat()
     }
 
     // ------------------------------------------------------------------ memory files
