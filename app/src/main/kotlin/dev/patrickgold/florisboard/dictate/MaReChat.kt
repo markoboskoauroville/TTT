@@ -18,6 +18,7 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 import kotlin.jvm.Volatile
+import kotlinx.coroutines.launch
 
 /**
  * RE MAGIC AS A CHAT (Marko, 13.11.2026): "RE has become a live chat bot inside ... the history of the chat is stored
