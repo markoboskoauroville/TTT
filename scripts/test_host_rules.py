@@ -71,6 +71,14 @@ check("RE pop-up: ordinary entry box, Accept and Reprompt keys", "BasicTextField
 check("RE pop-up works in the background (MaReSession on MaReChat.scope, delivered when closed)", "object MaReSession" in pop and "MaReChat.scope.launch {" in pop and "deliverInBackground(" in pop and "rememberCoroutineScope" not in pop)
 check("RE pop-up shows the whole chat, foldable", "LazyColumn(" in pop and "UnfoldMore" in pop and "MaReChat.load()" in pop)
 check("RE: long press on any message copies it (pop-up and full chat)", pop.count("maCopyOnLongPress(") >= 3 and chat.count("maCopyOnLongPress(") >= 2 and "onLongClick" in pop)
+# NO DOWNGRADES (Marko, 21.11.2026): features he uses that a UI rewrite once dropped are pinned here.
+retx = code(SRC / "app/settings/dictate/HistoryRetranscribe.kt")
+check("History re-transcribe: HR/ENG switch at the top, the kept text saves its language",
+      '"HR  Croatian"' in retx and '"ENG  English"' in retx and "onKeep(result!!.text.trim(), result!!.lang)" in retx
+      and "DictateHistoryStore.setLanguage(" in code(SRC / "dictate/MaHistoryActivity.kt"))
+check("RE reads the whole message in the field (select all + copy as the last way) and shows it as 'Your message'",
+      "readWholeField(" in row and "android.R.id.selectAll" in code(SRC / "dictate/MaReChat.kt")
+      and "showFieldText(MaReChat.fieldText)" in pop and "FieldBox(" in pop)
 check("RE usage habits are logged", "MaReHabits.note(" in pop and "usage_habits" in code(SRC / "dictate/MaReChat.kt"))
 check("RE pop-up opens from the RE key", "popup = MaReChat.popupOn(context)" in chat)
 check("RE long press is the key panel", "MaKeyPanel(" in row[i:j] and "DropdownMenu" not in row[i:j])

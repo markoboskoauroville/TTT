@@ -160,6 +160,36 @@ object MaReChat {
         }
     }
 
+    /**
+     * The whole message in the field RE was opened from (Marko, 21.11.2026: "Our RE chat is not able to read what I type in
+     * the WhatsApp message ... when I click RE, then automatically before it opens, it selects the whole message and copy it
+     * ... and then paste it into the chat"). WhatsApp's box does not always answer the extracted-text request, so the ways
+     * are tried in order: extracted text; the text before and after the cursor; the keyboard's own copy of the field; and
+     * last, exactly his idea: select all, copy, read the clipboard. Only the length is logged, never the words.
+     */
+    fun readWholeField(context: Context, keyboardCopy: String?): String? {
+        val ic = dev.patrickgold.florisboard.FlorisImeService.currentInputConnection() ?: return keyboardCopy?.takeIf { it.isNotBlank() }
+        fun ok(t: CharSequence?) = t?.toString()?.takeIf { it.isNotBlank() }
+        runCatching { ok(ic.getExtractedText(android.view.inputmethod.ExtractedTextRequest().apply { hintMaxChars = 20000 }, 0)?.text) }
+            .getOrNull()?.let { MaLog.add("re", "field read: extracted ${it.length}"); return it }
+        runCatching {
+            val before = ic.getTextBeforeCursor(20000, 0)?.toString().orEmpty()
+            val sel = ic.getSelectedText(0)?.toString().orEmpty()
+            val after = ic.getTextAfterCursor(20000, 0)?.toString().orEmpty()
+            ok(before + sel + after)
+        }.getOrNull()?.let { MaLog.add("re", "field read: around the cursor ${it.length}"); return it }
+        ok(keyboardCopy)?.let { MaLog.add("re", "field read: keyboard copy ${it.length}"); return it }
+        return runCatching {
+            ic.performContextMenuAction(android.R.id.selectAll)
+            ok(ic.getSelectedText(0)) ?: run {
+                ic.performContextMenuAction(android.R.id.copy)
+                Thread.sleep(150)
+                val cm = context.getSystemService(Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
+                ok(cm.primaryClip?.takeIf { it.itemCount > 0 }?.getItemAt(0)?.coerceToText(context))
+            }
+        }.getOrNull()?.also { MaLog.add("re", "field read: select all ${it.length}") }
+    }
+
     fun dir(): File = File(MaVault.dir(), "re").apply { mkdirs() }
     private fun file(name: String) = File(dir(), name)
     fun notesDir(): File = File(dir(), "notes")

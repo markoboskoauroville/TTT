@@ -11,6 +11,7 @@
 package dev.patrickgold.florisboard.app.settings.dictate
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -79,7 +80,8 @@ private fun highlighted(toks: List<WordDiff.Tok>): AnnotatedString = buildAnnota
 internal fun RetranscribeDialog(
     entry: DictateHistoryEntry,
     // Writes the new text into the entry (full-screen History, 13.11.2026): an audio-only entry becomes a normal one.
-    onKeep: ((String) -> Unit)? = null,
+    // The second value is the language it was transcribed in, saved with it (21.11.2026).
+    onKeep: ((String, String) -> Unit)? = null,
     onDismiss: () -> Unit,
 ) {
     val c = LocalContext.current
@@ -88,11 +90,16 @@ internal fun RetranscribeDialog(
     var result by remember { mutableStateOf<Retx?>(null) }
     var error by remember { mutableStateOf<String?>(null) }
     val own = if (entry.language.lowercase().startsWith("en")) "en" else "hr"
+    // THE LANGUAGE FIRST (Marko, 21.11.2026: "I pick the wrong language and then I want to re-transcribe again the audio file
+    // with a different language. And I am not able to do it. I was able before."). Two big keys, HR and ENG, at the top;
+    // the engines below are asked in that language. It opens on the OTHER language than the entry has, because the usual
+    // reason to re-transcribe is that the language was wrong; one tap goes back.
+    var lang by remember(entry.id) { mutableStateOf(if (own == "en") "hr" else "en") }
 
-    val rows = remember(entry.id) {
-        val ids = EngineCatalog.ALL.map { it.id }.filter { EngineChain.available(c, it) }
-        val all = ids.flatMap { id -> listOf("hr", "en").map { id to it } }
-        all.sortedWith(compareBy<Pair<String, String>> { it.second != own }.thenByDescending { EngineScores.get(c, it.first, it.second) ?: -1 })
+    val rows = remember(entry.id, lang) {
+        val ids = EngineCatalog.ALL.map { it.id }.filter { EngineChain.available(c, it) || dev.patrickgold.florisboard.dictate.engines.FrankfurtRelay.on(c) && dev.patrickgold.florisboard.dictate.engines.FrankfurtRelay.handles(it) }
+        val mine = dev.patrickgold.florisboard.dictate.engines.EngineStore.selected(c, lang)
+        ids.sortedWith(compareBy<String> { it != mine }.thenByDescending { EngineScores.get(c, it, lang) ?: -1 }).map { it to lang }
     }
 
     fun run(id: String, lang: String) {
@@ -150,8 +157,22 @@ internal fun RetranscribeDialog(
                     }
                     if (same == a.size && a.size == b.size) Text("identical", style = MaterialTheme.typography.labelSmall, modifier = Modifier.padding(top = 6.dp))
                 } else {
+                    Row(modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp), horizontalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(8.dp)) {
+                        for ((l, label) in listOf("hr" to "HR  Croatian", "en" to "ENG  English")) {
+                            val sel = lang == l
+                            Text(
+                                label, fontSize = 16.sp, fontWeight = FontWeight.Bold,
+                                color = if (sel) Color.White else MaterialTheme.colorScheme.onSurface,
+                                textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                                modifier = Modifier.weight(1f)
+                                    .background(if (sel) (if (l == "hr") Color(0xFFB3261E) else Color(0xFF1565C0)) else Color.Transparent, RoundedCornerShape(10.dp))
+                                    .border(1.5.dp, if (l == "hr") Color(0xFFB3261E) else Color(0xFF1565C0), RoundedCornerShape(10.dp))
+                                    .clickable { lang = l }.padding(vertical = 10.dp),
+                            )
+                        }
+                    }
                     Text(
-                        "HR = asked as Croatian, EN = asked as English. The percentage is the engine's accuracy on your last dictations.",
+                        "Recorded as " + (if (own == "en") "English" else "Croatian") + ". Pick the language, then the engine. The percentage is the engine's accuracy on your last dictations.",
                         style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.padding(bottom = 6.dp),
                     )
@@ -179,7 +200,7 @@ internal fun RetranscribeDialog(
             if (result != null && busy == null) Row {
                 TextButton(onClick = { result = null }) { Text("Another engine") }
                 if (onKeep != null && result!!.text.isNotBlank()) {
-                    TextButton(onClick = { onKeep(result!!.text.trim()); onDismiss() }) { Text("Keep this text", fontWeight = FontWeight.Bold) }
+                    TextButton(onClick = { onKeep(result!!.text.trim(), result!!.lang); onDismiss() }) { Text("Keep this text", fontWeight = FontWeight.Bold) }
                 }
             }
         },

@@ -136,6 +136,22 @@ object MaReSession {
     private data class Target(val pkg: String?, val fieldId: Int, val replace: Boolean)
     private var target: Target? = null
 
+    /** The prefix of the message that shows the field's text in the chat ("before"), so his instruction follows it. */
+    const val FIELD_PREFIX = "Message in the field:\n"
+
+    /**
+     * RE opened over a message (Marko, 21.11.2026: "beginning is the message and then I need to prompt after the message what
+     * to change"): the field's text becomes his first line of this exchange, so the chat shows before (his message),
+     * his instruction, and after (RE's draft). Not added twice for the same text.
+     */
+    fun showFieldText(text: String?) {
+        val t = text?.trim().orEmpty()
+        if (t.isEmpty() || thinking) return
+        val last = msgs.lastOrNull { it.me && it.text.startsWith(FIELD_PREFIX) }
+        if (last != null && last.text == FIELD_PREFIX + t && msgs.lastOrNull() == last) return
+        msgs.add(MaReChat.Msg(true, FIELD_PREFIX + t)); persist()
+    }
+
     /** Reads the thread from the phone when RE is idle (the full chat may have changed it); a running request keeps its list. */
     fun ensureLoaded() {
         if (loaded && thinking) return
@@ -268,7 +284,7 @@ internal fun RePopupScreen(
     val context = LocalContext.current
     val app = context.applicationContext
     val s = MaReSession
-    remember { s.ensureLoaded(); 0 }
+    remember { s.ensureLoaded(); s.showFieldText(MaReChat.fieldText); 0 }
     var input by remember { mutableStateOf("") }
     var editing by remember { mutableStateOf(false) }
     var editText by remember { mutableStateOf("") }
@@ -311,7 +327,9 @@ internal fun RePopupScreen(
 
     val listState = rememberLazyListState()
     // Folded: the last exchange only. Unfolded: the whole chat.
-    val showFrom = if (expanded) 0 else (s.msgs.indexOfLast { it.me }.takeIf { it >= 0 } ?: 0)
+    // Folded: from his message in the field (the "before") when it leads the newest exchange.
+    val lastMe = s.msgs.indexOfLast { it.me }.takeIf { it >= 0 } ?: 0
+    val showFrom = if (expanded) 0 else if (lastMe > 0 && s.msgs[lastMe - 1].me && s.msgs[lastMe - 1].text.startsWith(MaReSession.FIELD_PREFIX)) lastMe - 1 else lastMe
     val visibleMsgs = s.msgs.drop(showFrom)
     LaunchedEffect(visibleMsgs.size, s.thinking, expanded) {
         val n = visibleMsgs.size + (if (s.thinking) 1 else 0)
@@ -354,7 +372,8 @@ internal fun RePopupScreen(
                 ) {
                     itemsIndexed(visibleMsgs, key = { _, m -> m.at.toString() + m.me }) { i, m ->
                         val newest = i == visibleMsgs.lastIndex && !m.me
-                        if (m.me) MineBox(m.text) else ReText(m, editing = editing && newest, editText = editText, onEditText = { editText = it })
+                        if (m.me && m.text.startsWith(MaReSession.FIELD_PREFIX)) FieldBox(m.text.removePrefix(MaReSession.FIELD_PREFIX))
+                        else if (m.me) MineBox(m.text) else ReText(m, editing = editing && newest, editText = editText, onEditText = { editText = it })
                     }
                     if (s.thinking) item { Text("RE is writing…  (you can close this; RE goes on)", color = MaHost.Muted, fontSize = 15.sp, modifier = Modifier.padding(horizontal = 8.dp)) }
                 }
@@ -499,6 +518,19 @@ internal fun Modifier.maCopyOnLongPress(text: String): Modifier {
             Toast.makeText(context, "Copied", Toast.LENGTH_SHORT).show()
         },
     )
+}
+
+/** The message he had written in the field when he opened RE: the "before", labelled, across the width. */
+@Composable
+private fun FieldBox(text: String) {
+    Column(
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 6.dp)
+            .clip(MaHost.KeyShape).background(MaHost.Key).border(1.dp, MaHost.RingSwitch, MaHost.KeyShape)
+            .maCopyOnLongPress(text).padding(horizontal = 14.dp, vertical = 10.dp),
+    ) {
+        Text("Your message", color = MaHost.Muted, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+        Text(text, color = MaHost.Ink, fontSize = 16.sp)
+    }
 }
 
 /** His message: a rounded box on the right (the Claude app's user turn), in the keyboard's colours. */

@@ -225,7 +225,7 @@ private fun HistoryScreen(canInsert: Boolean, onInsert: (String) -> Unit, onClos
     retx?.let { e ->
         RetranscribeDialog(
             entry = e,
-            onKeep = { text -> scope.launch(Dispatchers.IO) { DictateHistoryStore.updateText(context, e.id, text) } },
+            onKeep = { text, lang -> scope.launch(Dispatchers.IO) { DictateHistoryStore.updateText(context, e.id, text); DictateHistoryStore.setLanguage(context, e.id, lang) } },
             onDismiss = { retx = null },
         )
     }

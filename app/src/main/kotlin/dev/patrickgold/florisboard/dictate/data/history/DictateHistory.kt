@@ -141,6 +141,10 @@ interface DictateHistoryDao {
     )
     suspend fun updateText(id: Long, text: String, originalText: String)
 
+    // Re-transcribed in the other language and kept (Marko, 21.11.2026): the entry carries the language it really is.
+    @Query("UPDATE $DICTATE_HISTORY_TABLE SET language = :language WHERE ${BaseColumns._ID} = :id")
+    suspend fun setLanguage(id: Long, language: String)
+
     // "Delete text, keep audio" (Marko, 13.11.2026): the row becomes an audio-only entry again.
     @Query("UPDATE $DICTATE_HISTORY_TABLE SET text = :placeholder, originalText = '', failed = 1 WHERE ${BaseColumns._ID} = :id")
     suspend fun markAudioOnly(id: Long, placeholder: String)
@@ -299,6 +303,11 @@ object DictateHistoryStore {
     suspend fun updateText(context: Context, id: Long, text: String, originalText: String = "") {
         if (text.isBlank()) return
         db(context).dao().updateText(id, text, originalText)
+    }
+
+    /** The language the entry really is (after a re-transcribe in the other language was kept). */
+    suspend fun setLanguage(context: Context, id: Long, language: String) {
+        db(context).dao().setLanguage(id, language)
     }
 
     /** Deletes only the transcript of an entry that has audio: it stays as "audio only", ready to re-transcribe. */
