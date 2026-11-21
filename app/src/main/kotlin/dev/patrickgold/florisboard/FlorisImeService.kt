@@ -485,6 +485,8 @@ class FlorisImeService : LifecycleInputMethodService() {
         super.onStartInputView(info, restarting)
         // Settings from his other phones (MaSettingsSync, off unless he switched it on), at most once a minute.
         dev.patrickgold.florisboard.dictate.MaSettingsSync.maybePull()
+        // Shared corrections from the Mac and the other phone (MANTRA_CORRECTIONS), at most every 5 minutes.
+        dev.patrickgold.florisboard.dictate.nlp.MaCorrectionsSync.maybePull()
         if (info == null) return
         val editorInfo = FlorisEditorInfo.wrap(info)
         // REPROMPT (MaReprompt): the field the key was pressed in is back from the instruction

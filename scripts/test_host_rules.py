@@ -79,6 +79,14 @@ check("History re-transcribe: HR/ENG switch at the top, the kept text saves its 
 check("RE reads the whole message in the field (select all + copy as the last way) and shows it as 'Your message'",
       "readWholeField(" in row and "android.R.id.selectAll" in code(SRC / "dictate/MaReChat.kt")
       and "showFieldText(MaReChat.fieldText)" in pop and "FieldBox(" in pop)
+fixhr = code(SRC / "dictate/nlp/MaCroatianFix.kt")
+check("Croatian fix never swaps a known word for another (21.11.2026: opciji, stvarom stay)", "known < RARE" not in fixhr and "RARE_MARGIN" not in fixhr)
+sync = code(SRC / "dictate/nlp/MaCorrectionsSync.kt")
+dc = code(SRC / "dictate/nlp/MaDictationCorrections.kt")
+check("Shared corrections: MANTRA_CORRECTIONS, own device file only, union merge, applied rules are the union",
+      "MANTRA_CORRECTIONS" in sync and "learned/${own.name}" in sync and "fun merge(" in sync and "sumOf { it.count }" in sync
+      and "MaCorrectionsSync.recordLocal(" in dc and "_effective.value, MaLanguage.active()" in dc
+      and "MaCorrectionsSync.offerTokens(" in code(SRC / "dictate/engines/KeyImporter.kt"))
 check("RE usage habits are logged", "MaReHabits.note(" in pop and "usage_habits" in code(SRC / "dictate/MaReChat.kt"))
 check("RE pop-up opens from the RE key", "popup = MaReChat.popupOn(context)" in chat)
 check("RE long press is the key panel", "MaKeyPanel(" in row[i:j] and "DropdownMenu" not in row[i:j])

@@ -49,10 +49,22 @@ object MaDictationCorrections {
 
     private var file: File? = null
 
+    /** This phone's own rules (the .tsv): what it learned and what he typed in here. */
     private val _rules = MutableStateFlow<List<MaCorrectionRules.Rule>>(emptyList())
 
-    /** Every rule, learned and his own. The settings screen draws from this. */
-    val rules: StateFlow<List<MaCorrectionRules.Rule>> = _rules.asStateFlow()
+    /**
+     * What is applied and listed: the union of this phone's rules and the other devices' (MANTRA_CORRECTIONS, 21.11.2026,
+     * [MaCorrectionsSync]). Without a token or before the first sync it is just this phone's rules.
+     */
+    private val _effective = MutableStateFlow<List<MaCorrectionRules.Rule>>(emptyList())
+
+    /** Every rule, learned and his own, from every device. The settings screen draws from this. */
+    val rules: StateFlow<List<MaCorrectionRules.Rule>> = _effective.asStateFlow()
+
+    private fun recompute() {
+        val local = _rules.value
+        scope.launch { _effective.value = runCatching { MaCorrectionsSync.effective(local) }.getOrDefault(local) }
+    }
 
     /** A dictation as it went into the field, and where. */
     private class Pending(
@@ -76,8 +88,15 @@ object MaDictationCorrections {
         appCtx = context.applicationContext
         val f = File(context.filesDir, FILE)
         file = f
+        MaCorrectionsSync.attach(context)
+        MaCorrectionsSync.onRemoteChanged = { recompute() }
         scope.launch {
             _rules.value = MaCorrectionRules.parse(runCatching { f.readText() }.getOrNull())
+            _effective.value = _rules.value
+            // The first time: every rule this phone already learned goes to the shared file (one line each).
+            runCatching { MaCorrectionsSync.recordLocal(_rules.value) }
+            recompute()
+            MaCorrectionsSync.maybePull()
         }
     }
 
@@ -171,20 +190,29 @@ object MaDictationCorrections {
     /** [text] with his corrections applied, in the language being written. */
     fun apply(text: String): String {
         if (!enabled()) return text
-        return MaCorrectionRules.apply(text, _rules.value, MaLanguage.active())
+        return MaCorrectionRules.apply(text, _effective.value, MaLanguage.active())
     }
 
     /** The right forms, for the speech model's word list. */
     fun glossary(): List<String> =
-        if (enabled()) MaCorrectionRules.glossary(_rules.value, MaLanguage.active()) else emptyList()
+        if (enabled()) MaCorrectionRules.glossary(_effective.value, MaLanguage.active()) else emptyList()
 
     // ---------------------------------------------------------------- edited from the settings screen
 
+    /** A rule from another device that this phone does not have yet is copied here with count 0, so the switch is his. */
     fun setEnabled(rule: MaCorrectionRules.Rule, on: Boolean) = update { list ->
-        list.map { if (it.key() == rule.key()) it.copy(enabled = on) else it }
+        if (list.any { it.key() == rule.key() }) list.map { if (it.key() == rule.key()) it.copy(enabled = on) else it }
+        else list + rule.copy(count = 0, enabled = on)
     }
 
-    fun delete(rule: MaCorrectionRules.Rule) = update { list -> list.filter { it.key() != rule.key() } }
+    /**
+     * Deleted here = switched off on every device (the shared file keeps a line with enabled false; the newest decides).
+     * A rule only another device had is kept here switched off, so the deletion travels.
+     */
+    fun delete(rule: MaCorrectionRules.Rule) = update { list ->
+        if (list.any { it.key() == rule.key() }) list.filter { it.key() != rule.key() }
+        else list + rule.copy(count = 0, enabled = false)
+    }
 
     /** Adds a rule of his own, applied at once, for every language. */
     fun add(wrong: String, right: String) {
@@ -206,8 +234,12 @@ object MaDictationCorrections {
 
     private fun save() {
         val f = file ?: return
-        val text = MaCorrectionRules.serialize(_rules.value)
+        val snapshot = _rules.value
+        val text = MaCorrectionRules.serialize(snapshot)
         scope.launch {
+            // Shared corrections: the change becomes lines of this phone's file and is sent in a few seconds.
+            runCatching { MaCorrectionsSync.recordLocal(snapshot) }
+            _effective.value = runCatching { MaCorrectionsSync.effective(snapshot) }.getOrDefault(snapshot)
             runCatching {
                 val tmp = File(f.path + ".tmp")
                 tmp.writeText(text)

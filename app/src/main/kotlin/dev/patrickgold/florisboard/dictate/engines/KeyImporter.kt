@@ -104,8 +104,13 @@ object KeyImporter {
         val syncLine = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
             dev.patrickgold.florisboard.dictate.MaSettingsSync.offerTokens(toks)
         }
+        // Shared corrections (MANTRA_CORRECTIONS, 21.11.2026): the first token that can write there is kept for it.
+        dev.patrickgold.florisboard.dictate.nlp.MaCorrectionsSync.attach(c)
+        val corrLine = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+            dev.patrickgold.florisboard.dictate.nlp.MaCorrectionsSync.offerTokens(toks)
+        }
         val readLine = "GitHub (RE reads your repositories): " + reads.joinToString(", ") + (if (bestRead != null) "; kept" else "; none kept") +
-            (syncLine?.let { "\n$it" } ?: "")
+            (syncLine?.let { "\n$it" } ?: "") + "\n" + corrLine
         for ((i, t) in toks.withIndex()) {
             onProgress("Testing GitHub token ${i + 1} of ${toks.size}…")
             val ok = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) { dev.patrickgold.florisboard.dictate.MaRemoteDb.tokenWorks(t) }

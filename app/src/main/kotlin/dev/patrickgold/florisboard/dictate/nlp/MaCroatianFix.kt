@@ -37,8 +37,8 @@ import kotlin.math.log10
  * - **missing diacritics** ("mozes", "rucku", "doci"): the form with diacritics;
  * - **a known plain word far rarer than its diacritic twin** ("kuci" 178 vs "kući" 209) when the
  *   context does not prefer the plain one;
- * - **a rare word with a far commoner twin** one letter away and the context behind the twin
- *   ("žal mi je" → "žao mi je");
+ * - (21.11.2026) a known word is NEVER replaced by a different word: valid case and verb forms ("opciji",
+ *   "stvarom") stay exactly as dictated; only its missing diacritics may be restored;
  * - **an unknown word** of four or more letters ("kavo", "bozji"): the commonest Croatian word one edit
  *   away (or with "ije" for an ikavian "i": "mliko" → "mlijeko"), scored by frequency plus how often it follows the words before it ("idemo na kavu"); a change
  *   of length costs extra, so "kavo" becomes "kavu" rather than "kao";
@@ -54,8 +54,6 @@ object MaCroatianFix {
 
     private const val MIN_FREQ = 170
     private const val MIN_FREQ_SAME_LENGTH = 150
-    private const val RARE = 140
-    private const val RARE_MARGIN = 60
     private const val COMMON = 200
     private const val DIACRITIC_MARGIN = 30
     private const val LENGTH_CHANGE_COST = 30.0
@@ -175,21 +173,10 @@ object MaCroatianFix {
         val l = w.lowercase()
         val f = fold(l)
         val known = h[l]
-        if (known != null && known < RARE && f.length >= 3) {
-            // A rare known word with a far commoner twin one letter away: "žal mi je" → "žao mi je".
-            val here = ctx(prev2, prev, next, l)
-            var best: String? = null
-            var bestScore = Double.NEGATIVE_INFINITY
-            for (c in edits(f)) {
-                if (c.length != f.length) continue
-                val (d, df) = folded[c] ?: continue
-                if (df < known + RARE_MARGIN) continue
-                val there = ctx(prev2, prev, next, d)
-                if (there <= here) continue
-                if (df + there > bestScore) { best = d; bestScore = df + there }
-            }
-            if (best != null) return best
-        }
+        // A KNOWN WORD IS NEVER SWAPPED FOR ANOTHER WORD (Marko, 21.11.2026, from the Mac's Vox to Txt test on his takes: about a
+        // third of the changes turned valid forms into others, "opciji" -> "opcija", "stvarom" -> "stvaram"). The old "rare word
+        // with a commoner twin one letter away" rule ("žal mi je" -> "žao mi je") is gone: Croatian case and verb endings are one
+        // letter apart by nature, so that rule broke correct grammar. Only missing diacritics are restored on a known word below.
         if (known != null) {
             val (d, df) = folded[f] ?: return l
             if (d == l || df < known + DIACRITIC_MARGIN) return l

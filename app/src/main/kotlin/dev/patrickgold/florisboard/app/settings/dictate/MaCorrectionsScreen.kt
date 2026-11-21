@@ -37,6 +37,7 @@ import dev.patrickgold.florisboard.dictate.nlp.MaDictationCorrections
 import dev.patrickgold.florisboard.R
 import dev.patrickgold.florisboard.lib.compose.FlorisScreen
 import org.florisboard.lib.compose.stringRes
+import kotlinx.coroutines.launch
 
 /**
  * My corrections: the fixes the keyboard learned from him, and his own replace list.
@@ -54,6 +55,20 @@ fun MaCorrectionsScreen() = FlorisScreen {
 
         // The switch is on Auto prediction, with every other prediction switch (27.10.2026); this
         // screen is reached from there.
+
+        // ---------------------------------------------------------------- shared with the Mac and the other phone (21.11.2026)
+        var shared by remember { mutableStateOf(dev.patrickgold.florisboard.dictate.nlp.MaCorrectionsSync.status) }
+        val syncScope = androidx.compose.runtime.rememberCoroutineScope()
+        Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp), verticalAlignment = Alignment.CenterVertically) {
+            Text(
+                shared + "  ·  " + (dev.patrickgold.florisboard.dictate.nlp.MaCorrectionsSync.source()?.let { "this phone writes learned/$it.jsonl" } ?: "this device only reads"),
+                style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.weight(1f),
+            )
+            TextButton(onClick = {
+                shared = "Syncing\u2026"
+                syncScope.launch { shared = dev.patrickgold.florisboard.dictate.nlp.MaCorrectionsSync.syncNow() }
+            }) { Text("Sync now") }
+        }
 
         // ---------------------------------------------------------------- add one
         Text(
@@ -121,7 +136,7 @@ fun MaCorrectionsScreen() = FlorisScreen {
                 AlertDialog(
                     onDismissRequest = { confirm = false },
                     title = { Text("Delete every correction?") },
-                    text = { Text("All ${rules.size} fixes, learned and added, are deleted. This cannot be undone.") },
+                    text = { Text("All ${rules.size} fixes, learned and added, are deleted here and switched off on the Mac and the other phone too (shared corrections).") },
                     confirmButton = {
                         TextButton(onClick = { MaDictationCorrections.deleteAll(); confirm = false }) { Text("Delete all") }
                     },

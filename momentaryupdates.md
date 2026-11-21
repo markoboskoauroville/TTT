@@ -719,3 +719,6 @@ voices. Stopped here: a further build plus a full suite (~1 h) would not finish 
 > "please build that" (Marko, 21.11.2026, after the explanation: TTT reads and writes MANTRA_CORRECTIONS like Vox to Txt on the Mac, uploads the rules each phone already learned, and the Croatian dictionary fix never changes a valid Croatian word form such as opciji or stvarom)
 
 **Status:** saved first.
+
+**Status (21.11.2026):** built: TTT syncs MANTRA_CORRECTIONS (own device file, union merge, first sync uploads the phone's existing rules, status + Sync now on My corrections; token from the key file); the Croatian fix no longer swaps a valid word for another (opciji, stvarom stay), only diacritics. CI-pinned. Not yet on a phone; needs a GitHub token that can write to MANTRA_CORRECTIONS in the key file (or RE's token with access to it).
+
