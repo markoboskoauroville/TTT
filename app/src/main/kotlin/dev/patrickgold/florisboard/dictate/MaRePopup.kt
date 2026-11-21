@@ -370,7 +370,7 @@ internal fun RePopupScreen(
                     contentPadding = PaddingValues(horizontal = 6.dp, vertical = 6.dp),
                     verticalArrangement = Arrangement.spacedBy(10.dp),
                 ) {
-                    itemsIndexed(visibleMsgs, key = { _, m -> m.at.toString() + m.me }) { i, m ->
+                    itemsIndexed(visibleMsgs, key = { i, m -> "$i:${m.at}${m.me}" }) { i, m ->
                         val newest = i == visibleMsgs.lastIndex && !m.me
                         if (m.me && m.text.startsWith(MaReSession.FIELD_PREFIX)) FieldBox(m.text.removePrefix(MaReSession.FIELD_PREFIX))
                         else if (m.me) MineBox(m.text) else ReText(m, editing = editing && newest, editText = editText, onEditText = { editText = it })

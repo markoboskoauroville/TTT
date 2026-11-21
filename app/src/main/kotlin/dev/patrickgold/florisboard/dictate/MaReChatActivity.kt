@@ -583,7 +583,7 @@ private fun ChatScreen(
                     )
                 }
             }
-            itemsIndexed(msgs, key = { _, m -> m.at.toString() + m.me }) { _, m ->
+            itemsIndexed(msgs, key = { i, m -> "$i:${m.at}${m.me}" }) { _, m ->
                 if (m.me) Column {
                     MineBalloon(m)
                     // In a session thread: what happened to it (13.11.2026: "I don't know what's going on").

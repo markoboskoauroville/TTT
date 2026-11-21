@@ -4,6 +4,13 @@ Every request word for word, saved and pushed before any code (MANTRA_MANIFEST r
 
 
 
+## 21.11.2026: RE crashes on open in Messenger (build 697)
+
+> "Please open re and see it's crashing and then solve this crashing." (Marko, 21.11.2026, Pixel session testing the Nothing over Tailscale adb)
+
+**Cause (logcat):** `IllegalArgumentException: Key "1795284157910true" was already used` in MaReChatActivity's LazyColumn. Since ef638859 the field text is saved as its own "me" message right before the instruction; both get the same millisecond `at`, and the list key was `at + me`. The duplicate is persisted, so every open crashed.
+**Status:** fixed; both lists (MaReChatActivity, MaRePopup) key by index + at + me.
+
 ## 9.11.2026: RE Magic as an assistant, a GitHub token, the RE Magic Database, the pop-up, the flexibility tests
 
 > "RE Magic should actually become an accessibility service. It can do anything I ask. I can ask 'read me the last messages'. It's like a Siri for WhatsApp, or email, or whatever is in front." / "TTT should also be able to load a GitHub token, and then if I ask RE something related to GitHub, or to find some history on GitHub to fill the chat, it can do it." / "RE has its own repository on GitHub called RE Magic Database and stores its data there, in a private repo." / "Teach TTT not to write its replies to me into the chat. There must be a pop-up window: I read its reply and I say OK. Only messages go into the chat." / "Write a test for TTT. Also test the corrections: changing the style, taking out certain words, adding punctuation, anything. Imagine what a user can ask: delete this message and create a new one. Just test the flexibility of the system." (Marko, 9.11.2026, relayed by the master session; plan in RE_ASSISTANT_PLAN.md.)
