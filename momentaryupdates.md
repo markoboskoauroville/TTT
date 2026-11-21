@@ -713,3 +713,9 @@ voices. Stopped here: a further build plus a full suite (~1 h) would not finish 
 
 **Status (21.11.2026):** fixed: History re-transcribe has HR / ENG keys at the top (opens on the other language) and keeping the text saves the language; RE reads the whole WhatsApp message (four ways, last select all + copy) and shows it as "Your message" before his instruction and RE's draft. Pinned by CI; manifest rule modules/no-downgrades.md. Not yet on a phone.
 
+
+## 21.11.2026, Marko: build the shared corrections (MANTRA_CORRECTIONS) and make the Croatian fix leave valid words alone
+
+> "please build that" (Marko, 21.11.2026, after the explanation: TTT reads and writes MANTRA_CORRECTIONS like Vox to Txt on the Mac, uploads the rules each phone already learned, and the Croatian dictionary fix never changes a valid Croatian word form such as opciji or stvarom)
+
+**Status:** saved first.
