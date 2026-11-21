@@ -704,3 +704,9 @@ voices. Stopped here: a further build plus a full suite (~1 h) would not finish 
 "Fix the error in TTT, please. I cannot switch from USB microphone to the phone microphone. I was trying inside my Pixel phone, and it's not possible. It's stuck on the USB."
 
 **Status:** saved first (15.11.2026); diagnosing.
+
+## 21.11.2026, Marko: two downgrades to fix now (History re-transcribe language; RE does not read the WhatsApp message)
+
+> "This was the downgrade. Please write in the manifest that this should not happen. See, we changed the user interface and the option to change the language from the history of files. What I usually do, I pick the wrong language and then I want to re-transcribe again the audio file with a different language. And I am not able to do it. I was able before. Please fix this mistake right now. and fix another mistake, RE. Our RE chat is not able to read what I type in the WhatsApp message. Total nonsense. I want to always, workflow is open WhatsApp, type the message, ask RE to modify the message. So, what is my proposal for solution is when I click IE, RE, sorry, RE, then automatically before it opens, it selects the whole message and copy it to keyboard and then paste it into the chat. So, I can see before and after. So, beginning is the message and then I need to prompt after the message what to change." (Marko, 21.11.2026, with a screenshot of the full-screen History: Insert, Copy, Play, Re-transcribe, Delete text, Delete audio, Delete; no language choice)
+
+**Status:** saved first.
