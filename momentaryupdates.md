@@ -729,3 +729,9 @@ voices. Stopped here: a further build plus a full suite (~1 h) would not finish 
 
 **Status (21.11.2026):** built: TTT syncs MANTRA_CORRECTIONS (own device file, union merge, first sync uploads the phone's existing rules, status + Sync now on My corrections; token from the key file); the Croatian fix no longer swaps a valid word for another (opciji, stvarom stay), only diacritics. CI-pinned. Not yet on a phone; needs a GitHub token that can write to MANTRA_CORRECTIONS in the key file (or RE's token with access to it).
 
+
+## 22.11.2026, Marko: RE uses only Anthropic Sonnet; Groq only as the fallback
+
+> "Please upgrade the app. So it, RE works only with API from Anthropic model Sonnet. That's all. No more Grock in there. Grock is only fallback if Sonnet is not working with everything he learned so far, but Sonnet is the main." (Marko, 22.11.2026; "Grock" = Groq / Qwen)
+
+**Status:** saved first.
