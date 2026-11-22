@@ -419,27 +419,7 @@ internal fun RePopupScreen(
                 }
                 MaHostKey(null, icon = Icons.AutoMirrored.Filled.Send, ink = MaHost.Gold, enabled = input.isNotBlank() && !s.thinking) { send() }
             }
-            // ---- model selector: H / S / O / Q (tap to regenerate last answer with that model)
-            if (current != null && !s.thinking) {
-                val currentEngine = MaReEngine.engine()
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.End,
-                ) {
-                    Text(
-                        "ask with:", color = MaHost.Muted, fontSize = 12.sp,
-                        modifier = Modifier.align(Alignment.CenterVertically).padding(end = 4.dp),
-                    )
-                    for ((label, engine) in listOf("H" to MaReEngine.AUTO, "S" to MaReEngine.SONNET, "O" to MaReEngine.OPUS, "Q" to MaReEngine.QWEN)) {
-                        MaHostKey(
-                            label, fontSize = 13, padH = 8,
-                            ring = if (engine == currentEngine) MaHost.Gold else null,
-                            ink = if (engine == currentEngine) MaHost.Gold else MaHost.Muted,
-                            lit = engine == currentEngine,
-                        ) { editing = false; s.retryWith(app, engine) }
-                    }
-                }
-            }
+            // (22.11.2026) no model letters any more: RE is Sonnet only, Qwen only as the fallback.
             // ---- the keys at the end
             Row(modifier = Modifier.fillMaxWidth()) {
                 MaHostKey(

@@ -242,21 +242,10 @@ fun MaRowsScreen() = FlorisScreen {
 
         // The "Test: key 1 fails" switch is no longer shown (Marko, 10.11.2026: fallback has no on/off). The pref stays as a hidden debug flag.
 
-        // RE engine: exactly four choices (Marko, 13.11.2026), never switched automatically.
-        val reEngine by prefs.dictate.maReEngine.collectAsState()
+        // RE engine (Marko, 22.11.2026): Sonnet only; Groq's Qwen answers only when Sonnet fails. No choice to make.
         Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)) {
-            Text("RE engine", style = MaterialTheme.typography.bodyLarge)
-            Text("Which model RE uses. Long press the RE key for the same switch. Qwen uses its own Groq key (Settings, RE Magic).", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            listOf(
-                "Anthropic Auto (Sonnet or Opus by the task)" to "anthropic_auto",
-                "Opus" to "opus",
-                "Sonnet" to "sonnet",
-                "Qwen (Groq)" to "qwen",
-            ).forEach { (name, eng) ->
-                val cur = when (reEngine) { "groq" -> "qwen"; "anthropic", "" -> "anthropic_auto"; else -> reEngine }
-                val on = cur == eng
-                TextButton(onClick = { spacerScope.launch { prefs.dictate.maReEngine.set(eng) } }) { Text((if (on) "\u2713 " else "    ") + name) }
-            }
+            Text("RE engine: Anthropic Sonnet", style = MaterialTheme.typography.bodyLarge)
+            Text("Every RE answer, its memory and its lessons use Sonnet. Qwen (Groq, its own key in Settings, RE Magic) answers only when Sonnet does not, with the same memory.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
 
         // The "Row 2 becomes Row 1" buttons are gone. The tabs are dragged instead — see the strip

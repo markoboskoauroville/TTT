@@ -4430,10 +4430,18 @@ object DictateController {
      * One RE chat turn with Anthropic (13.11.2026): the model he chose for RE, once, no fallback to another model.
      * Throws on failure so the chat can say what went wrong.
      */
-    suspend fun reChatAnthropic(context: Context, userContent: String, memoryWork: Boolean = false): String {
+    suspend fun reChatAnthropic(context: Context, userContent: String, memoryWork: Boolean = false, status: (String) -> Unit = {}): String {
         maAppContext = context.applicationContext
         val model = MaReEngine.anthropicModel(context, userContent, memoryWork)
-        return reChatRaw(context, userContent, model)
+        return try {
+            reChatRaw(context, userContent, model)
+        } catch (t: Throwable) {
+            // Groq only as the fallback (Marko, 22.11.2026): the same prompt, so the same memory, lessons and people.
+            if (t is CancellationException || !MaReEngine.canFallBack(context)) throw t
+            MaLog.add("re", "Sonnet failed (${t.javaClass.simpleName}); Qwen answers")
+            status("Sonnet did not answer \u00b7 Qwen answers with the same memory")
+            MaReEngine.groqAsk(context, MaReEngine.FALLBACK_SYSTEM, userContent, status)
+        }
     }
 
     /** One Anthropic call on exactly [model] (RE: Opus, Sonnet, or the Haiku judge of Auto). */
@@ -4452,7 +4460,33 @@ object DictateController {
         return runCatching { requestRewordRaw(userContent, cheapest = true, purpose = purpose) }.getOrNull()?.trim()?.takeIf { it.isNotEmpty() }
     }
 
+    /**
+     * RE spoken or typed without the chat (the RE key's instruction path): Sonnet; when Sonnet fails and RE has a Groq key,
+     * Qwen answers the same prompt (Marko, 22.11.2026). Everything else goes straight through.
+     */
     private suspend fun requestRewordRaw(
+        userContent: String,
+        reasoning: DictateReasoningEffort? = null,
+        reasoningCustom: String? = null,
+        cheapest: Boolean = false,
+        modelOverride: String? = null,
+        purpose: String = if (cheapest) "Suggestion" else "Rewording",
+    ): String {
+        val ctx = maAppContext
+        if (!MaReEngine.inRe || ctx == null || !MaReEngine.canFallBack(ctx)) {
+            return requestRewordRawDirect(userContent, reasoning, reasoningCustom, cheapest, modelOverride, purpose)
+        }
+        return try {
+            requestRewordRawDirect(userContent, reasoning, reasoningCustom, cheapest, modelOverride, purpose)
+        } catch (t: Throwable) {
+            if (t is CancellationException) throw t
+            MaLog.add("re", "Sonnet failed (${t.javaClass.simpleName}); Qwen answers")
+            _maStatus.value = "RE: Sonnet did not answer \u00b7 Qwen answers"
+            MaReEngine.groq(ctx, userContent) { _maStatus.value = it }
+        }
+    }
+
+    private suspend fun requestRewordRawDirect(
         userContent: String,
         reasoning: DictateReasoningEffort? = null,
         reasoningCustom: String? = null,

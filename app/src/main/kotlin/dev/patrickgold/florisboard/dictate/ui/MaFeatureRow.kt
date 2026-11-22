@@ -1622,7 +1622,6 @@ fun MaFeatureRow(
                         DictateController.UiState.Recording
                     val recordingThis = rec != null && DictateController.isRepromptRecording()
                     var reMenu by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(false) }
-                    val reEngine by prefs.dictate.maReEngine.collectAsState()
                     Box(modifier = keyMod.androidx_onPlaced { reKeyRect[0] = it }) {
                     ThemedKey(
                         code = KeyCode.NOOP,
@@ -1657,7 +1656,7 @@ fun MaFeatureRow(
                     ) { fg ->
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Text(text = "re", color = fg, fontSize = 17.sp, fontWeight = FontWeight.Bold)
-                            Text(text = dev.patrickgold.florisboard.dictate.MaReEngine.letter(when (reEngine) { "groq" -> "qwen"; "anthropic", "" -> "anthropic_auto"; else -> reEngine }), color = fg, fontSize = 10.sp, modifier = Modifier.offset(x = 1.dp, y = 4.dp))
+                            Text(text = dev.patrickgold.florisboard.dictate.MaReEngine.letter(), color = fg, fontSize = 10.sp, modifier = Modifier.offset(x = 1.dp, y = 4.dp))
                             Icon(
                                 imageVector = Icons.Default.AutoAwesome,
                                 contentDescription = MaReprompt.NAME,
@@ -1670,14 +1669,12 @@ fun MaFeatureRow(
                     if (reMenu) MaKeyPanel(
                         title = "re", accent = MaRecordOutlineLive, anchor = reKeyRect[0], onDismiss = { reMenu = false },
                         items = listOf(
-                            // Exactly four (Marko, 13.11.2026): Anthropic Auto (the router), Opus, Sonnet, or Qwen on Groq.
-                            MaPanelItem("Anthropic Auto", "Sonnet or Opus", reEngine == "anthropic_auto" || reEngine == "anthropic" || reEngine.isBlank()) { dev.patrickgold.florisboard.dictate.MaClaudeLink.setPartner(context, null); scope.launch { prefs.dictate.maReEngine.set("anthropic_auto") } },
-                            MaPanelItem("Opus", "Anthropic", reEngine == "opus") { dev.patrickgold.florisboard.dictate.MaClaudeLink.setPartner(context, null); scope.launch { prefs.dictate.maReEngine.set("opus") } },
-                            MaPanelItem("Sonnet", "Anthropic", reEngine == "sonnet") { dev.patrickgold.florisboard.dictate.MaClaudeLink.setPartner(context, null); scope.launch { prefs.dictate.maReEngine.set("sonnet") } },
+                            // ONE model (Marko, 22.11.2026: "RE works only with API from Anthropic model Sonnet ... Groq is only
+                            // fallback"): no engine choice any more; the row says what RE uses.
                             MaPanelItem(
-                                "Qwen", if (dev.patrickgold.florisboard.dictate.MaReEngine.hasQwenKey(context)) "Groq, own key" else "no key yet",
-                                reEngine == "qwen" || reEngine == "groq",
-                            ) { dev.patrickgold.florisboard.dictate.MaClaudeLink.setPartner(context, null); scope.launch { prefs.dictate.maReEngine.set("qwen") } },
+                                "Sonnet", if (dev.patrickgold.florisboard.dictate.MaReEngine.hasQwenKey(context)) "Anthropic \u00b7 Qwen only if Sonnet fails" else "Anthropic \u00b7 no fallback key",
+                                true,
+                            ) { dev.patrickgold.florisboard.dictate.MaClaudeLink.setPartner(context, null) },
                             // Claude Code sessions on the Mac (MaClaudeLink, 13.11.2026): the same chat, one thread per session.
                             *dev.patrickgold.florisboard.dictate.MaClaudeLink.sessions(context).map { name ->
                                 MaPanelItem("Claude Code · $name", "chat on the Mac", dev.patrickgold.florisboard.dictate.MaClaudeLink.partner(context) == name) {
@@ -1685,15 +1682,6 @@ fun MaFeatureRow(
                                     dev.patrickgold.florisboard.dictate.MaReChatActivity.open(context)
                                 }
                             }.toTypedArray(),
-                            // Training mode (13.11.2026): Opus supervises Qwen on everything RE does; on by default.
-                            MaPanelItem(
-                                "Training mode",
-                                if (!dev.patrickgold.florisboard.dictate.MaReTraining.on(context)) "off"
-                                else if (dev.patrickgold.florisboard.dictate.MaReEngine.hasQwenKey(context)) "Opus teaches Qwen" else "on · no Qwen key yet",
-                                dev.patrickgold.florisboard.dictate.MaReTraining.on(context),
-                            ) {
-                                dev.patrickgold.florisboard.dictate.MaReTraining.setOn(context, !dev.patrickgold.florisboard.dictate.MaReTraining.on(context))
-                            },
                             MaPanelItem("Tap opens the chat", if (dev.patrickgold.florisboard.dictate.MaReChat.chatOn(context)) "on" else "off", dev.patrickgold.florisboard.dictate.MaReChat.chatOn(context)) {
                                 dev.patrickgold.florisboard.dictate.MaReChat.setChatOn(context, !dev.patrickgold.florisboard.dictate.MaReChat.chatOn(context))
                             },

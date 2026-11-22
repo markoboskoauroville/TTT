@@ -735,3 +735,6 @@ voices. Stopped here: a further build plus a full suite (~1 h) would not finish 
 > "Please upgrade the app. So it, RE works only with API from Anthropic model Sonnet. That's all. No more Grock in there. Grock is only fallback if Sonnet is not working with everything he learned so far, but Sonnet is the main." (Marko, 22.11.2026; "Grock" = Groq / Qwen)
 
 **Status:** saved first.
+
+**Status (22.11.2026):** built: every RE call (answers, memory, lessons, the RE-key instruction) uses Anthropic Sonnet; Qwen on Groq answers only when Sonnet fails, with the same prompt and memory; training mode off; the engine choices and H/S/O/Q letters removed (his words). Tests updated (test_re_training.py). Not yet on a phone.
+

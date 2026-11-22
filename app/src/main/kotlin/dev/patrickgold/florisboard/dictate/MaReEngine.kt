@@ -70,11 +70,15 @@ object MaReEngine {
     /** The comparison harness (MaReCompare, adb only) sets this for one run; nothing else does. */
     @Volatile var override: String? = null
 
-    fun engine(): String = override ?: when (val e = prefs.dictate.maReEngine.get()) {
-        AUTO, OPUS, SONNET, QWEN -> e
-        "groq" -> QWEN
-        else -> AUTO
-    }
+    /**
+     * SONNET ONLY (Marko, 22.11.2026: "RE works only with API from Anthropic model Sonnet. That's all. No more Groq in there.
+     * Groq is only fallback if Sonnet is not working with everything he learned so far, but Sonnet is the main.").
+     * The old choices (Auto, Opus, Qwen, training mode, the per-answer letters) no longer change anything: every RE call,
+     * memory and lessons included, goes to Sonnet; Qwen on Groq answers only when Sonnet failed
+     * (DictateController.reChatAnthropic / requestRewordRaw), with the same prompt, so the same memory and lessons.
+     * [override] is kept for old callers and ignored.
+     */
+    fun engine(): String = SONNET
 
     fun isQwen() = engine() == QWEN
 
@@ -100,16 +104,14 @@ object MaReEngine {
         "writing memory files. When unsure, pick opus. Reply with one word: sonnet or opus."
 
     /** The Anthropic model for this request: fixed, or (Auto) judged by Haiku from the request itself. */
-    suspend fun anthropicModel(c: Context, request: String, memoryWork: Boolean = false): String = when (engine()) {
-        OPUS -> OPUS_MODEL
-        SONNET -> SONNET_MODEL
-        else -> {
-            val tier = if (memoryWork) "opus" else runCatching {
-                DictateController.reChatRaw(c, JUDGE + "\n\n<request>\n" + request.takeLast(3000) + "\n</request>", JUDGE_MODEL)
-            }.getOrNull()?.lowercase().orEmpty()
-            (if (tier.contains("sonnet") && !tier.contains("opus")) SONNET_MODEL else OPUS_MODEL).also { lastChoice = it }
-        }
-    }
+    @Suppress("UNUSED_PARAMETER")
+    suspend fun anthropicModel(c: Context, request: String, memoryWork: Boolean = false): String = SONNET_MODEL.also { lastChoice = it }
+
+    /** Qwen answers instead of Sonnet only when Sonnet failed and RE has its own Groq key. */
+    fun canFallBack(c: Context) = hasQwenKey(c)
+
+    const val FALLBACK_SYSTEM = "You are RE, Marko's writing assistant. Sonnet could not answer, so you answer in its place. " +
+        "Follow everything in the message exactly: his memory, lessons, style and people notes are in it."
 
     // ------------------------------------------------------------------ Qwen on Groq, its own keys
 

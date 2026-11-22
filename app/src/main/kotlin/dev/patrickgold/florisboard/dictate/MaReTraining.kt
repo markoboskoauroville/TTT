@@ -52,7 +52,9 @@ object MaReTraining {
     fun setOn(c: Context, v: Boolean) = sp(c).edit().putBoolean("on", v).apply()
 
     /** Training runs RE's work when it is on and Qwen has a key. */
-    fun active(c: Context): Boolean = on(c) && MaReEngine.hasQwenKey(c)
+    /** Off for good (Marko, 22.11.2026: RE is Sonnet only; Groq only as the fallback). The files stay for reading. */
+    @Suppress("UNUSED_PARAMETER")
+    fun active(c: Context): Boolean = false
 
     private fun file(name: String) = File(MaReChat.dir(), name)
 

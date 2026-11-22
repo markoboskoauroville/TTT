@@ -349,14 +349,8 @@ object MaReChat {
                 head + MaReGithub.TOOLS.trim() + "\n" + (if (looks.isEmpty()) "" else "\nWhat you looked up so far:\n$looks\n") +
                     (if (round >= MaReGithub.MAX_LOOKS) "\nNo more looks: answer him now.\n" else "") + "RE:"
             }
-            val raw = if (MaReTraining.active(context)) {
-                // Training mode (13.11.2026): Opus briefs and checks, Qwen works and learns.
-                MaReTraining.run(context, SYSTEM + (if (github) MaReGithub.TOOLS else ""), p, status)
-            } else if (MaReEngine.isQwen()) {
-                MaReEngine.groqAsk(context, SYSTEM + (if (github) MaReGithub.TOOLS else ""), p, status)
-            } else {
-                DictateController.reChatAnthropic(context, p)
-            }
+            // Sonnet only; Qwen only when Sonnet failed (22.11.2026), inside reChatAnthropic.
+            val raw = DictateController.reChatAnthropic(context, p, status = status)
             val answer = raw.trim().removePrefix("RE:").trim()
             val req = if (github && round < MaReGithub.MAX_LOOKS) MaReGithub.request(answer) else null
             if (req == null) return answer
