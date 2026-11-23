@@ -311,6 +311,13 @@
             android:windowSoftInputMode="adjustResize|stateHidden"
             android:exported="false"/>
         <activity
+            android:name="dev.patrickgold.florisboard.dictate.MaStyleBoxActivity"
+            android:theme="@style/FlorisAppTheme.Transparent"
+            android:excludeFromRecents="true"
+            android:taskAffinity=""
+            android:windowSoftInputMode="adjustResize|stateHidden"
+            android:exported="false"/>
+        <activity
             android:name="dev.patrickgold.florisboard.dictate.MaRepromptActivity"
             android:theme="@style/FlorisAppTheme.Transparent"
             android:excludeFromRecents="true"

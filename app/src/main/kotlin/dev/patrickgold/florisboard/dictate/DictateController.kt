@@ -3024,6 +3024,17 @@ object DictateController {
         // before this one moves the field on; then the fixes he has taught are made in this one.
         if (outputTarget == OutputTarget.IME) settleCorrections(context)
         body = MaDictationCorrections.apply(body)
+        // THE BOX FIRST (Marko, 23.11.2026: "first we have our own box for text ... original and styling ... then I press
+        // button type and then it's typed inside the application wherever the cursor was"). With the Style badge on, a
+        // keyboard dictation is not typed here: MaStyleBox shows it and its Type key puts the chosen text in this field.
+        // Never from inside the box itself (a dictation there goes into the box's own field), nor with a pending press.
+        if (outputTarget == OutputTarget.IME && pendingPress == null && !MaStyleBox.visible && MaStyleBox.on(context)) {
+            val info = editor(context).activeInfo
+            if (info.packageName != null && info.packageName != context.packageName) {
+                MaStyleBox.openAfterDictation(context, body, info.packageName, info.base.fieldId)
+                return true
+            }
+        }
         val sink = sink(context)
         // A live prompt that worked on the whole field replaces it. commitText already replaces a
         // selection, so selecting everything first turns the insert into the rewrite that was asked
@@ -4432,6 +4443,10 @@ object DictateController {
      */
     suspend fun reChatAnthropic(context: Context, userContent: String, memoryWork: Boolean = false, status: (String) -> Unit = {}): String {
         maAppContext = context.applicationContext
+        // Groq chosen as the engine (23.11.2026): it answers itself, with the same prompt.
+        if (MaReEngine.isQwen() && MaReEngine.canFallBack(context)) {
+            return MaReEngine.groqAsk(context, MaReEngine.FALLBACK_SYSTEM, userContent, status)
+        }
         val model = MaReEngine.anthropicModel(context, userContent, memoryWork)
         return try {
             reChatRaw(context, userContent, model)

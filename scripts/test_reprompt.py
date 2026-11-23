@@ -47,10 +47,10 @@ manifest = (ROOT / "app/src/main/AndroidManifest.xml").read_text()
 check("the key exists", 'REPROMPT("reprompt", "Reprompt")' in order)
 check("drawn as re + a small sparkle", 'text = "re"' in row and "Icons.Default.AutoAwesome" in row)
 check("in the rows editor too", 'MaFeatureKey.REPROMPT -> letters("re\\u2726")' in rows_screen)
-check("it remembers the field and opens the window", "MaReprompt.open(context, pkg, info.base.fieldId" in row)
+# 23.11.2026: the typing window is the box's Reprompt tab (MaStyleBox); the field's text travels as Original.
+check("it reads the field and opens the box", "MaStyleBox.openFromKey(" in row and "readWholeField(" in row)
 # 4.11.2026: an empty field is the prompt mode, not a refusal.
-check("an empty field opens the prompt mode", "MaReprompt.open(context, pkg, info.base.fieldId, write = empty)" in row
-      and '"Reprompt: write something first"' not in row)
+check("an empty field still opens the box", '"Reprompt: write something first"' not in row)
 check("the field decides when it is back", "val write = content.text.isBlank() && content.selectedText.isBlank()" in ime
       and "MaReprompt.prompt(words, write, screen)" in ime)
 check("write mode inserts, reshape mode replaces", "requiresSelection = !write," in rp)

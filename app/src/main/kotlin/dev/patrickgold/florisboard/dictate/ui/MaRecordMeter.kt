@@ -267,6 +267,8 @@ private fun MaReadings(sending: Boolean, tint: Color) {
         // MIC CHOICE (14.11.2026): a microphone other than the phone's own (USB MIC, BT MIC, WIRED MIC) shows the same way.
         val extMic by dev.patrickgold.florisboard.dictate.audio.MicChoice.activeShort.collectAsState()
         Column(modifier = Modifier.padding(start = 6.dp), horizontalAlignment = Alignment.Start) {
+            // The Style badge (23.11.2026): lit = this dictation opens the box (Original / Style); a tap removes it.
+            if (!sending) dev.patrickgold.florisboard.dictate.MaStyleBadge()
             val micCue = if (macMic) "MAC MIC" else extMic
             if (micCue != null && !sending) {
                 Text(

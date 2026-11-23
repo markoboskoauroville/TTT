@@ -35,11 +35,45 @@ import kotlinx.coroutines.launch
  */
 @Composable
 fun MaAutoScreen() = FlorisScreen {
-    title = "AUTO corrections"
+    title = "Auto correction and AI"
 
     content {
         val prefs by FlorisPreferenceStore
         val scope = rememberCoroutineScope()
+
+        // AI: THE TWO OPTIONS (Marko, 23.11.2026: "there is only two options we need to have ... auto correction and AI ... I can
+        // choose which engine I'm using"). The Style badge and the engine; the same two are on the recorder and in the box.
+        val ctx = androidx.compose.ui.platform.LocalContext.current
+        var styleOn by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(dev.patrickgold.florisboard.dictate.MaStyleBox.on(ctx)) }
+        var engine by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(dev.patrickgold.florisboard.dictate.MaReEngine.engine()) }
+        PreferenceGroup(title = "AI") {
+            Preference(
+                title = (if (styleOn) "\u2713 " else "") + "Style box after dictation: " + (if (styleOn) "on" else "off"),
+                summary = "On: a dictation opens a box with Original and Style (your writing style); Type puts the one you choose into the app. " +
+                    "Reprompt and New message are in the same box (the RE key opens it). Off: dictation is typed at once. " +
+                    "The STYLE badge on the recorder is this same switch.",
+                onClick = { styleOn = !styleOn; dev.patrickgold.florisboard.dictate.MaStyleBox.setOn(ctx, styleOn) },
+            )
+            for (e in listOf("sonnet", "opus", "haiku", "qwen")) {
+                Preference(
+                    title = (if (engine == e) "\u25cf " else "\u25cb ") + dev.patrickgold.florisboard.dictate.MaReEngine.label(e) +
+                        (if (e == "sonnet") " (default)" else ""),
+                    summary = when (e) {
+                        "qwen" -> "Groq. Also the backup: it answers whenever the Anthropic model does not."
+                        "opus" -> "Anthropic, the strongest, slower and dearer."
+                        "haiku" -> "Anthropic, the fastest and cheapest."
+                        else -> "Anthropic. The engine for style, reprompt and what the keyboard learns."
+                    },
+                    onClick = { engine = e; dev.patrickgold.florisboard.dictate.MaReEngine.setEngine(e) },
+                )
+            }
+            val nav = dev.patrickgold.florisboard.app.LocalNavController.current
+            Preference(
+                title = "Memory, skill and screen reading",
+                summary = "What the AI learned about your writing, the Groq key for it, and the Read screen switches (the former RE Magic page).",
+                onClick = { nav.navigate(dev.patrickgold.florisboard.app.Routes.Settings.MaRe) },
+            )
+        }
 
         Preference(
             title = "Switch every typing correction off",

@@ -75,7 +75,7 @@ enum class MaSettingsEntry(val id: String, val title: String, val summary: Strin
     RECORDING("recording", "Recording", null),
     // Every setting about the suggestion row, the AI key's model and Learn my words (27.10.2026).
     // Every automatic change to text, one switch each (Marko, 9.11.2026). Its icon is the AUTO cut-out.
-    AUTO("auto", "AUTO corrections", "Every automatic text change, each its own switch, all off until you turn one on"),
+    AUTO("auto", "Auto correction and AI", "The Style box and its AI engine; every automatic text change, each its own switch"),
     PREDICTIONS("predictions", "Auto prediction", "Word prediction, the AI key's model, your corrections"),
     MAPPINGS("mappings", "Custom mappings", null),
     OUTPUT("output", "Output", null),
@@ -163,7 +163,8 @@ object MaSettingsOrder {
             .map { if (it == MaSettingsEntry.CORRECTIONS) MaSettingsEntry.PREDICTIONS else it }
             .distinct()
         // Hidden ids never appear, in the home list or in the order list: one set for both.
-        val hidden = setOf(MaSettingsEntry.KEYS, MaSettingsEntry.VOCABULARY, MaSettingsEntry.CORRECTIONS, MaSettingsEntry.TRANSCRIPTION_MODEL)
+        // RE_MAGIC is inside Auto correction and AI since 23.11.2026 (RE is replaced by the box).
+        val hidden = setOf(MaSettingsEntry.KEYS, MaSettingsEntry.VOCABULARY, MaSettingsEntry.CORRECTIONS, MaSettingsEntry.TRANSCRIPTION_MODEL, MaSettingsEntry.RE_MAGIC)
         if (wanted.isEmpty()) return DEFAULT.filterNot { it in hidden }
         val all = wanted.toMutableList()
         // NEW ENTRIES GO SECOND FROM THE TOP (Marko, 9.11.2026: "whenever there is a new feature in a

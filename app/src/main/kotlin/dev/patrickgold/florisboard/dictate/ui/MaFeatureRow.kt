@@ -1628,26 +1628,17 @@ fun MaFeatureRow(
                         modifier = Modifier.fillMaxSize(),
                         ring = if (recordingThis) MaRecordOutlineLive else MaRecordOutline,
                         onClick = {
-                            // RE Magic is a chat now (Marko, 13.11.2026): a tap opens the Messenger-style window over
-                            // the app; its Accept writes into this field. The spoken-instruction RE is in the long press.
-                            // The RE pop-up is open and he types in its box: RE sends that box (15.11.2026), no second pop-up.
-                            if (rec == null && dev.patrickgold.florisboard.dictate.MaRePopup.open) {
-                                dev.patrickgold.florisboard.dictate.MaRePopup.sendNow.tryEmit(Unit)
-                            } else if (rec == null && dev.patrickgold.florisboard.dictate.MaReChat.chatOn(context)) {
-                                dev.patrickgold.florisboard.dictate.MaReChatActivity.openFromKey(
+                            // REPROMPT (Marko, 23.11.2026: "RE is going away and this new replacement is reprompt"): a tap opens
+                            // the box (MaStyleBox) on its Reprompt tab, the field's text as Original. A spoken instruction
+                            // that is being recorded (long press) is sent by a second tap, as before.
+                            if (rec != null) {
+                                DictateController.onMicClick(context, reprompt = true, engine = MaProviders.ENGINE_ASSEMBLYAI)
+                                MaMessage.show("Reprompt: sending")
+                            } else {
+                                dev.patrickgold.florisboard.dictate.MaStyleBox.openFromKey(
                                     context, editorInstance.activeInfo.packageName, editorInstance.activeInfo.base.fieldId,
                                     dev.patrickgold.florisboard.dictate.MaReChat.readWholeField(context, editorInstance.activeContent.text),
                                 )
-                            } else {
-                            if (rec == null) {
-                                MaLanguage.set(context, MaLanguage.EN)
-                                // The field the message will be written into, for MaReSkill's comparison.
-                                MaReprompt.noteField(editorInstance.activeInfo.packageName, editorInstance.activeInfo.base.fieldId)
-                            }
-                            // RE transcribes with AssemblyAI and nothing else (Marko, 9.11.2026): no Parakeet,
-                            // no fallback (MaProviders.localFallbackProvider returns null for this engine).
-                            DictateController.onMicClick(context, reprompt = true, engine = MaProviders.ENGINE_ASSEMBLYAI)
-                            MaMessage.show(if (rec == null) "RE: say the instruction (AssemblyAI)" else "RE: sending")
                             }
                         },
                         // A long press opens the engine switch (Marko, 10.11.2026): Anthropic or Groq, the active one marked,
@@ -1669,12 +1660,17 @@ fun MaFeatureRow(
                     if (reMenu) MaKeyPanel(
                         title = "re", accent = MaRecordOutlineLive, anchor = reKeyRect[0], onDismiss = { reMenu = false },
                         items = listOf(
-                            // ONE model (Marko, 22.11.2026: "RE works only with API from Anthropic model Sonnet ... Groq is only
-                            // fallback"): no engine choice any more; the row says what RE uses.
-                            MaPanelItem(
-                                "Sonnet", if (dev.patrickgold.florisboard.dictate.MaReEngine.hasQwenKey(context)) "Anthropic \u00b7 Qwen only if Sonnet fails" else "Anthropic \u00b7 no fallback key",
-                                true,
-                            ) { dev.patrickgold.florisboard.dictate.MaClaudeLink.setPartner(context, null) },
+                            // The engine of Auto correction and AI (23.11.2026): Sonnet by default; Groq is also the backup.
+                            *listOf(
+                                dev.patrickgold.florisboard.dictate.MaReEngine.SONNET to "Anthropic \u00b7 default",
+                                dev.patrickgold.florisboard.dictate.MaReEngine.OPUS to "Anthropic",
+                                dev.patrickgold.florisboard.dictate.MaReEngine.HAIKU to "Anthropic \u00b7 fastest",
+                                dev.patrickgold.florisboard.dictate.MaReEngine.QWEN to (if (dev.patrickgold.florisboard.dictate.MaReEngine.hasQwenKey(context)) "Qwen \u00b7 also the backup" else "no key yet"),
+                            ).map { (e, sub) ->
+                                MaPanelItem(dev.patrickgold.florisboard.dictate.MaReEngine.label(e), sub, dev.patrickgold.florisboard.dictate.MaReEngine.engine() == e) {
+                                    dev.patrickgold.florisboard.dictate.MaReEngine.setEngine(e)
+                                }
+                            }.toTypedArray(),
                             // Claude Code sessions on the Mac (MaClaudeLink, 13.11.2026): the same chat, one thread per session.
                             *dev.patrickgold.florisboard.dictate.MaClaudeLink.sessions(context).map { name ->
                                 MaPanelItem("Claude Code · $name", "chat on the Mac", dev.patrickgold.florisboard.dictate.MaClaudeLink.partner(context) == name) {
@@ -1682,28 +1678,11 @@ fun MaFeatureRow(
                                     dev.patrickgold.florisboard.dictate.MaReChatActivity.open(context)
                                 }
                             }.toTypedArray(),
-                            MaPanelItem("Tap opens the chat", if (dev.patrickgold.florisboard.dictate.MaReChat.chatOn(context)) "on" else "off", dev.patrickgold.florisboard.dictate.MaReChat.chatOn(context)) {
-                                dev.patrickgold.florisboard.dictate.MaReChat.setChatOn(context, !dev.patrickgold.florisboard.dictate.MaReChat.chatOn(context))
-                            },
-                            MaPanelItem(
-                                "Pop-up above the keyboard",
-                                if (dev.patrickgold.florisboard.dictate.MaReChat.popupOn(context)) "on · off = the full chat" else "off · the full chat",
-                                dev.patrickgold.florisboard.dictate.MaReChat.popupOn(context),
-                            ) {
-                                dev.patrickgold.florisboard.dictate.MaReChat.setPopupOn(context, !dev.patrickgold.florisboard.dictate.MaReChat.popupOn(context))
-                            },
-                            MaPanelItem("Speak an instruction", "no chat") {
+                            MaPanelItem("Speak an instruction", "without the box") {
                                 MaLanguage.set(context, MaLanguage.EN)
                                 MaReprompt.noteField(editorInstance.activeInfo.packageName, editorInstance.activeInfo.base.fieldId)
                                 DictateController.onMicClick(context, reprompt = true, engine = MaProviders.ENGINE_ASSEMBLYAI)
-                                MaMessage.show("RE: say the instruction (AssemblyAI)")
-                            },
-                            MaPanelItem("Type the instruction", "no chat") {
-                                val info = editorInstance.activeInfo
-                                val pkg = info.packageName
-                                val empty = editorInstance.activeContent.text.isBlank() && editorInstance.activeContent.selectedText.isBlank()
-                                if (pkg == null) MaMessage.show("Reprompt: no field to write into")
-                                else MaReprompt.open(context, pkg, info.base.fieldId, write = empty)
+                                MaMessage.show("Reprompt: say the instruction")
                             },
                         ),
                     )

@@ -63,7 +63,8 @@ check("Clear history asks first", "Clear the whole history?" in hact)
 check("Re-transcribe can keep the new text", "onKeep" in hact)
 
 # 4. RE chat
-check("RE key opens the chat", "MaReChatActivity.openFromKey(" in row)
+# 23.11.2026 (Marko: "RE is going away and this new replacement is reprompt"): the key opens the box on Reprompt.
+check("RE key opens the box on Reprompt", "MaStyleBox.openFromKey(" in row and "MaReChatActivity.openFromKey(" not in row)
 check("Close key", "Icons.Default.Close, onClick = onClose" in cact)
 check("Accept under every answer", "MaHostKey(\"Accept\"" in cact)
 check("Clear key asks first", "Clear the chat?" in cact)

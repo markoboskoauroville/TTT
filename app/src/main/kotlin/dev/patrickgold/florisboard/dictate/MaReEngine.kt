@@ -19,6 +19,7 @@ import dev.patrickgold.florisboard.dictate.engines.FallbackRunner
 import dev.patrickgold.florisboard.dictate.engines.KeyRing
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
@@ -70,30 +71,43 @@ object MaReEngine {
     /** The comparison harness (MaReCompare, adb only) sets this for one run; nothing else does. */
     @Volatile var override: String? = null
 
+    const val HAIKU = "haiku"
+
     /**
-     * SONNET ONLY (Marko, 22.11.2026: "RE works only with API from Anthropic model Sonnet. That's all. No more Groq in there.
-     * Groq is only fallback if Sonnet is not working with everything he learned so far, but Sonnet is the main.").
-     * The old choices (Auto, Opus, Qwen, training mode, the per-answer letters) no longer change anything: every RE call,
-     * memory and lessons included, goes to Sonnet; Qwen on Groq answers only when Sonnet failed
-     * (DictateController.reChatAnthropic / requestRewordRaw), with the same prompt, so the same memory and lessons.
-     * [override] is kept for old callers and ignored.
+     * The AI engine of "Auto correction and AI" (Marko, 23.11.2026: "Sonnet is the engine through API called default one.
+     * Groq is backup if Sonnet is not working ... I choose Groq or Sonnet or Opus to use with my API"). One choice, made in
+     * Settings > Auto correction and AI or on the model row of the box: Sonnet (default), Opus, Haiku, or Groq (Qwen).
+     * Whatever Anthropic model is chosen, Groq answers when it fails (reChatAnthropic), with the same prompt.
+     * Old stored values (anthropic_auto, anthropic, empty) read as Sonnet. [override] is kept for old callers and ignored.
      */
-    fun engine(): String = SONNET
+    @Volatile private var picked: String? = null
+
+    fun engine(): String = when (picked ?: prefs.dictate.maReEngine.get()) {
+        OPUS -> OPUS
+        HAIKU -> HAIKU
+        QWEN, "groq" -> QWEN
+        else -> SONNET
+    }
+
+    fun setEngine(e: String) {
+        picked = e
+        MaReChat.scope.launch { prefs.dictate.maReEngine.set(e) }
+    }
 
     fun isQwen() = engine() == QWEN
 
-    /** The model Auto chose last (for the chat's status line). */
+    /** The model used last (for the status line). */
     @Volatile var lastChoice: String = ""
 
-    fun label(): String = when (engine()) {
-        QWEN -> "Qwen"
+    fun label(e: String = engine()): String = when (e) {
+        QWEN -> "Groq"
         OPUS -> "Opus"
-        SONNET -> "Sonnet"
-        else -> "Auto"
+        HAIKU -> "Haiku"
+        else -> "Sonnet"
     }
 
     /** One letter on the RE key. */
-    fun letter(e: String = engine()): String = when (e) { QWEN -> "Q"; OPUS -> "O"; SONNET -> "S"; else -> "A" }
+    fun letter(e: String = engine()): String = when (e) { QWEN -> "G"; OPUS -> "O"; HAIKU -> "H"; else -> "S" }
 
     // ------------------------------------------------------------------ Anthropic: Auto, Opus, Sonnet
 
@@ -105,7 +119,8 @@ object MaReEngine {
 
     /** The Anthropic model for this request: fixed, or (Auto) judged by Haiku from the request itself. */
     @Suppress("UNUSED_PARAMETER")
-    suspend fun anthropicModel(c: Context, request: String, memoryWork: Boolean = false): String = SONNET_MODEL.also { lastChoice = it }
+    suspend fun anthropicModel(c: Context, request: String, memoryWork: Boolean = false): String =
+        (when (engine()) { OPUS -> OPUS_MODEL; HAIKU -> JUDGE_MODEL; else -> SONNET_MODEL }).also { lastChoice = it }
 
     /** Qwen answers instead of Sonnet only when Sonnet failed and RE has its own Groq key. */
     fun canFallBack(c: Context) = hasQwenKey(c)

@@ -50,7 +50,7 @@ callers = [f for f in SRC.rglob("*.kt") if re.search(r"isSecret\s*=\s*true", cod
 check("no caller asks for a secret field", not callers, ", ".join(str(c.relative_to(SRC)) for c in callers))
 
 # 2. host look on the new screens
-HOST = ["dictate/MaReChatActivity.kt", "dictate/MaHistoryActivity.kt", "dictate/ui/MaKeyPanel.kt", "dictate/MaRePopup.kt"]
+HOST = ["dictate/MaReChatActivity.kt", "dictate/MaHistoryActivity.kt", "dictate/ui/MaKeyPanel.kt", "dictate/MaRePopup.kt", "dictate/MaStyleBox.kt"]
 for rel in HOST:
     t = code(SRC / rel)
     for bad in ["FilledTonalButton(", "FloatingActionButton(", "DropdownMenu(", "TopAppBar(", "Brush.linearGradient"]:
@@ -101,6 +101,17 @@ imp = code(SRC / "dictate/engines/KeyImporter.kt")
 check("API screen lists every key and tests them all without removing any, plain-word answers, never a key value",
       "KeyImporter.testAll(" in api and "KeyImporter.rows(" in api and '"Test all keys"' in api
       and "fun testAll(" in imp and "fun explain(" in imp and "setLines" not in imp[imp.index("fun testAll("):imp.index("suspend fun retest(")])
+box = code(SRC / "dictate/MaStyleBox.kt")
+ctrl2 = code(SRC / "dictate/DictateController.kt")
+check("The box: four tabs, Type, model row (Sonnet default, Opus, Haiku, Groq), host look",
+      '"Original", "Style", "Reprompt", "New message"' in box and '"Type"' in box and "MaReEngine.SONNET, MaReEngine.OPUS, MaReEngine.HAIKU, MaReEngine.QWEN" in box
+      and "MaHost." in box and not re.findall(r"Color\(0x[0-9A-Fa-f]{8}\)", box))
+check("A dictation opens the box when the Style badge is on, never from inside the box",
+      "MaStyleBox.openAfterDictation(" in ctrl2 and "!MaStyleBox.visible && MaStyleBox.on(context)" in ctrl2
+      and "MaStyleBadge()" in code(SRC / "dictate/ui/MaRecordMeter.kt"))
+check("Type goes into the field he came from (never sent)", "MaReResult.acceptFor(" in box)
+check("Settings: Auto correction and AI holds the style switch and the engine", '"Auto correction and AI"' in code(SRC / "app/settings/dictate/MaAutoScreen.kt")
+      and "MaStyleBox.setOn(" in code(SRC / "app/settings/dictate/MaAutoScreen.kt") and "MaReEngine.setEngine(e)" in code(SRC / "app/settings/dictate/MaAutoScreen.kt"))
 check("RE usage habits are logged", "MaReHabits.note(" in pop and "usage_habits" in code(SRC / "dictate/MaReChat.kt"))
 check("RE pop-up opens from the RE key", "popup = MaReChat.popupOn(context)" in chat)
 check("RE long press is the key panel", "MaKeyPanel(" in row[i:j] and "DropdownMenu" not in row[i:j])

@@ -244,8 +244,8 @@ fun MaRowsScreen() = FlorisScreen {
 
         // RE engine (Marko, 22.11.2026): Sonnet only; Groq's Qwen answers only when Sonnet fails. No choice to make.
         Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)) {
-            Text("RE engine: Anthropic Sonnet", style = MaterialTheme.typography.bodyLarge)
-            Text("Every RE answer, its memory and its lessons use Sonnet. Qwen (Groq, its own key in Settings, RE Magic) answers only when Sonnet does not, with the same memory.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text("AI engine: " + dev.patrickgold.florisboard.dictate.MaReEngine.label(), style = MaterialTheme.typography.bodyLarge)
+            Text("Chosen in Settings, Auto correction and AI, or on the model row of the box. Groq also answers whenever the Anthropic model does not.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
 
         // The "Row 2 becomes Row 1" buttons are gone. The tabs are dragged instead — see the strip
