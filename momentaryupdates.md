@@ -771,3 +771,6 @@ voices. Stopped here: a further build plus a full suite (~1 h) would not finish 
 > "There is a screen with file picker but also listing all the API keys and also have a button to test all the API keys. Testing is very important so people know is it working or not working and to be able to troubleshoot." (Marko, 23.11.2026)
 
 **Status:** saved first.
+
+**Status (23.11.2026):** built: API screen lists every key (provider, number, first characters) with the last test's answer; "Test all keys" tests every key and the GitHub/Frankfurt services and says in plain words what works and what to do; nothing is removed by testing. Not yet on a phone.
+

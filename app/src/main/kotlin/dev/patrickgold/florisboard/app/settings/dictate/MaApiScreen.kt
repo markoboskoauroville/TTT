@@ -14,7 +14,6 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -31,8 +30,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import dev.patrickgold.florisboard.dictate.engines.EngineCatalog
-import dev.patrickgold.florisboard.dictate.engines.EngineKeys
 import dev.patrickgold.florisboard.dictate.engines.EngineStore
 import dev.patrickgold.florisboard.dictate.engines.KeyImporter
 import dev.patrickgold.florisboard.lib.compose.FlorisScreen
@@ -59,11 +56,28 @@ fun MaApiScreen() = FlorisScreen {
         var report by remember { mutableStateOf(EngineStore.lastKeys(c).orEmpty()) }
         var tick by remember { mutableStateOf(0) }
         fun finish(text: String) { EngineStore.setLastKeys(c, text); report = text; busy = ""; tick++ }
+        @Suppress("UNUSED_VARIABLE") val unusedTick = tick
+        var rows by remember { mutableStateOf(KeyImporter.rows(c)) }
         val picker = rememberLauncherForActivityResult(ActivityResultContracts.OpenMultipleDocuments()) { uris ->
             if (uris.isNotEmpty()) {
                 busy = "Reading…"
-                scope.launch { finish(KeyImporter.importUris(c, uris) { busy = it }.summary) }
+                scope.launch { finish(KeyImporter.importUris(c, uris) { busy = it }.summary); rows = KeyImporter.rows(c) }
             }
+        }
+        // The services the GitHub token and the relay unlock, each with the answer of its own test.
+        var services by remember { mutableStateOf<List<Pair<String, String>>>(emptyList()) }
+        suspend fun testServices(): List<Pair<String, String>> {
+            val out = ArrayList<Pair<String, String>>()
+            val reTok = runCatching { dev.patrickgold.florisboard.dictate.MaRemoteDb.readToken() }.getOrNull()
+            out += "RE memory (GitHub, RE Magic Database)" to when {
+                reTok == null -> "no token: pick the file with your GitHub token"
+                kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) { dev.patrickgold.florisboard.dictate.MaRemoteDb.tokenWorks(reTok) } -> "works"
+                else -> "refused: the token cannot write to RE_MAGIC_DATABASE (expired, or no access)"
+            }
+            out += "Settings sync (GitHub)" to dev.patrickgold.florisboard.dictate.MaSettingsSync.let { it.attach(c); if (!it.enabled && !it.hasOwnToken()) "off: pick the GitHub token file to switch it on" else it.syncNow() }
+            out += "Shared corrections (GitHub)" to dev.patrickgold.florisboard.dictate.nlp.MaCorrectionsSync.syncNow()
+            out += "Frankfurt relay" to dev.patrickgold.florisboard.dictate.engines.FrankfurtRelay.check(c)
+            return out
         }
         Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
             Text(
@@ -77,24 +91,51 @@ fun MaApiScreen() = FlorisScreen {
                 onClick = { picker.launch(arrayOf("text/*", "application/json", "application/octet-stream")) },
                 modifier = Modifier.fillMaxWidth().height(56.dp),
             ) { Text(if (busy.isEmpty()) "Import keys from file" else busy, style = MaterialTheme.typography.titleMedium) }
+            // TEST ALL (23.11.2026): every key and every service, one answer each; nothing is removed.
+            Button(
+                enabled = busy.isEmpty(),
+                onClick = {
+                    busy = "Testing\u2026"
+                    scope.launch {
+                        rows = KeyImporter.testAll(c) { busy = it }
+                        busy = "Testing GitHub and Frankfurt\u2026"
+                        services = testServices()
+                        busy = ""
+                    }
+                },
+                modifier = Modifier.fillMaxWidth().height(56.dp),
+            ) { Text("Test all keys", style = MaterialTheme.typography.titleMedium) }
+
+            // Every key: provider, its number, the first characters that tell its kind, and the answer of the last test.
+            Text("Your keys (${rows.size})", style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(top = 8.dp))
+            if (rows.isEmpty()) Text("No keys yet: pick your key files above.", style = MaterialTheme.typography.bodyMedium)
+            val good = androidx.compose.ui.graphics.Color(0xFF6FA85A)
+            val bad = androidx.compose.ui.graphics.Color(0xFFE8776C)
+            for (r in rows) {
+                Column(modifier = Modifier.fillMaxWidth()) {
+                    Text("${r.name} ${r.number}/${r.total}  \u00b7  ${r.hint}", style = MaterialTheme.typography.bodyLarge)
+                    Text(
+                        r.result?.let { (if (r.ok == true) "\u2713 " else "\u2717 ") + it + (r.at?.let { a -> "  ($a)" } ?: "") } ?: "not tested yet",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = when (r.ok) { true -> good; false -> bad; null -> MaterialTheme.colorScheme.onSurfaceVariant },
+                    )
+                }
+            }
+            if (services.isNotEmpty()) {
+                Text("Services", style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(top = 8.dp))
+                for ((name, answer) in services) {
+                    val ok = answer.startsWith("works") || answer.startsWith("answers") || answer.contains("rules in use") || answer.contains("synced", true) || answer.startsWith("Up to date", true)
+                    Column(modifier = Modifier.fillMaxWidth()) {
+                        Text(name, style = MaterialTheme.typography.bodyLarge)
+                        Text((if (ok) "\u2713 " else "\u2717 ") + answer, style = MaterialTheme.typography.bodySmall, color = if (ok) good else bad)
+                    }
+                }
+            }
             OutlinedButton(
                 enabled = busy.isEmpty(),
-                onClick = { busy = "Re-testing…"; scope.launch { finish(KeyImporter.retest(c) { busy = it }.summary) } },
-                modifier = Modifier.fillMaxWidth(),
-            ) { Text("Re-test keys") }
-
-            // What is set up now: counts only, never a key.
-            Text("Set up now", style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(top = 8.dp))
-            val lines = remember(tick) {
-                val engines = EngineCatalog.ALL.mapNotNull { s -> EngineKeys.countLabel(c, s.id)?.let { EngineCatalog.shortName(s.id) + ": " + it } }.distinct()
-                val github = listOfNotNull(
-                    if (dev.patrickgold.florisboard.dictate.MaRemoteDb.hasToken()) "RE memory (RE Magic Database): token kept" else null,
-                    if (dev.patrickgold.florisboard.dictate.MaSettingsSync.hasOwnToken()) "Settings sync: " + dev.patrickgold.florisboard.dictate.MaSettingsSync.repo.ifBlank { "repository at the next sync" } else null,
-                    dev.patrickgold.florisboard.dictate.nlp.MaCorrectionsSync.status.takeIf { it.isNotBlank() },
-                )
-                (engines + github).ifEmpty { listOf("Nothing yet: pick your key files above.") }
-            }
-            for (l in lines) Row { Text("• $l", style = MaterialTheme.typography.bodyMedium) }
+                onClick = { busy = "Re-testing\u2026"; scope.launch { finish(KeyImporter.retest(c) { busy = it }.summary); rows = KeyImporter.rows(c) } },
+                modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
+            ) { Text("Remove keys that no longer work") }
             if (report.isNotBlank()) {
                 Text("Last import", style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(top = 8.dp))
                 Text(report, style = MaterialTheme.typography.bodySmall)

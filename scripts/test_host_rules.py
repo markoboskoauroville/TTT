@@ -97,6 +97,10 @@ check("API entry: first in the default order, A-key icon, one file picker, no te
       and "KeyImporter.importUris(" in api and "TextField(" not in api)
 check("Settings sync: the repository comes from the token, never typed",
       "fun discoverRepo(" in code(SRC / "dictate/MaSettingsSync.kt") and "OutlinedTextField(" not in code(SRC / "app/settings/dictate/MaSettingsSyncScreen.kt"))
+imp = code(SRC / "dictate/engines/KeyImporter.kt")
+check("API screen lists every key and tests them all without removing any, plain-word answers, never a key value",
+      "KeyImporter.testAll(" in api and "KeyImporter.rows(" in api and '"Test all keys"' in api
+      and "fun testAll(" in imp and "fun explain(" in imp and "setLines" not in imp[imp.index("fun testAll("):imp.index("suspend fun retest(")])
 check("RE usage habits are logged", "MaReHabits.note(" in pop and "usage_habits" in code(SRC / "dictate/MaReChat.kt"))
 check("RE pop-up opens from the RE key", "popup = MaReChat.popupOn(context)" in chat)
 check("RE long press is the key panel", "MaKeyPanel(" in row[i:j] and "DropdownMenu" not in row[i:j])

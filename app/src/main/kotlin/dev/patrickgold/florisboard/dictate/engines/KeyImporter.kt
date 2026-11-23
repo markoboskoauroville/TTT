@@ -240,6 +240,79 @@ object KeyImporter {
     }
 
     /** Re-tests every stored key; the ones that no longer work are dropped. */
+    // ------------------------------------------------------------------ every key, listed and tested (23.11.2026)
+    //
+    // Marko, 23.11.2026: "listing all the API keys and also have a button to test all the API keys. Testing is very
+    // important so people know is it working or not working and to be able to troubleshoot." Unlike [retest], testing
+    // here never removes a key: it says per key what is wrong and what to do. No key value is shown: only the provider,
+    // its number in the ring and the first characters that tell the kind (gsk_, sk-ant-, AIza...). Results are kept with a
+    // hash of the key (never the key) so the list shows them until the next test.
+
+    data class KeyRow(
+        val ring: String, val name: String, val number: Int, val total: Int, val hint: String,
+        val result: String?, val ok: Boolean?, val at: String?,
+    )
+
+    private fun testsPrefs(c: Context) = c.applicationContext.getSharedPreferences("ttt_key_tests", Context.MODE_PRIVATE)
+
+    private fun hashOf(v: String) = java.security.MessageDigest.getInstance("SHA-256").digest(v.toByteArray()).take(8).joinToString("") { "%02x".format(it) }
+
+    private fun hint(ring: String, v: String): String = when {
+        ring == "google_chirp" -> "service account"
+        ring == "cloudflare" -> "account"
+        else -> v.trim().take(if (v.startsWith("sk-ant-")) 7 else 4) + "\u2026"
+    }
+
+    /** The answer in plain words, and whether it works. */
+    fun explain(s: KStatus): Pair<String, Boolean> = when (s) {
+        KStatus.WORKING -> "works" to true
+        KStatus.LIMITED -> "works, but busy right now (rate limit): it rests a minute or until the daily reset" to true
+        KStatus.NO_BALANCE -> "no credit left: top up this account or use another key" to false
+        KStatus.DEAD -> "refused: the key is wrong, deleted or revoked; make a new one" to false
+        KStatus.NETWORK -> "not reached: no internet, or the provider is down; try again" to false
+    }
+
+    private fun units(c: Context, ring: String): List<String> {
+        val cur = EngineKeys.ownLines(c, ring)
+        return if (ring == "cloudflare" && cur.isNotEmpty()) listOf(cur.joinToString("\n")) else cur
+    }
+
+    private fun ringName(ring: String) = when (ring) {
+        "gemini" -> "Google (Gemini)"; "google_v1" -> "Google (Speech v1)"; "re_qwen" -> "Qwen for RE (Groq)"
+        else -> label(ring)
+    }
+
+    /** Every stored key, with the result of its last test. */
+    fun rows(c: Context): List<KeyRow> {
+        val p = testsPrefs(c)
+        return (ALL_RINGS + "re_qwen").flatMap { ring ->
+            val us = units(c, ring)
+            us.mapIndexed { i, v ->
+                val saved = p.getString(ring + "#" + hashOf(v), null)?.split('|')
+                KeyRow(ring, ringName(ring), i + 1, us.size, hint(ring, v), saved?.getOrNull(0), saved?.getOrNull(1)?.let { it == "1" }, saved?.getOrNull(2))
+            }
+        }
+    }
+
+    /** Tests every key once, keeps every key, and returns the list with the answers. */
+    suspend fun testAll(c: Context, onProgress: (String) -> Unit): List<KeyRow> {
+        val p = testsPrefs(c)
+        val stamp = java.text.SimpleDateFormat("d.M. HH:mm", java.util.Locale.ROOT).format(java.util.Date())
+        val total = (ALL_RINGS + "re_qwen").sumOf { units(c, it).size }
+        var n = 0
+        for (ring in ALL_RINGS + "re_qwen") {
+            val us = units(c, ring)
+            for ((i, v) in us.withIndex()) {
+                n++
+                onProgress("Testing $n of $total: ${ringName(ring)} ${i + 1}/${us.size}\u2026")
+                val s = KeyTester.test(if (ring == "re_qwen") "groq" else ring, v)
+                val (words, ok) = explain(s)
+                p.edit().putString(ring + "#" + hashOf(v), words + "|" + (if (ok) "1" else "0") + "|" + stamp).apply()
+            }
+        }
+        return rows(c)
+    }
+
     suspend fun retest(c: Context, onProgress: (String) -> Unit): Outcome {
         val out = ArrayList<String>()
         var removed = 0
