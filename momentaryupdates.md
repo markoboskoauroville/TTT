@@ -756,3 +756,9 @@ voices. Stopped here: a further build plus a full suite (~1 h) would not finish 
 
 **Status (23.11.2026):** built: the hairline VU meter shows at the top of the screen on every recording, keyboard up or not, at the very top edge. Needs TTT's accessibility service on. Not yet on a phone.
 
+
+## 23.11.2026, Marko: one "API" settings entry with the file picker; the token decides the sync repository by itself
+
+> "Please make a new settings API and big A as icon in the settings Which looks like keyboard or keyboard key and just make it API API is the only thing and inside there is intelligent file picker for API's and in this case if I file pick the key from I mean token from from github, then this feature is working automatically without asking me nonsense like my username. Everything is inside the token man. Don't make stupid programs." (Marko, 23.11.2026, with a screenshot of "Sync settings between devices": switch on, an empty "Repository (owner/name)" field, "Token: none yet")
+
+**Status:** saved first.
