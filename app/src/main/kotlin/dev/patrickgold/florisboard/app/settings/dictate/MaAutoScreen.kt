@@ -11,6 +11,7 @@
 package dev.patrickgold.florisboard.app.settings.dictate
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
 import dev.patrickgold.florisboard.app.FlorisPreferenceStore
