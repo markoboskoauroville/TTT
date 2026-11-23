@@ -120,7 +120,8 @@ data class DictateHistoryEntry(
 @Dao
 interface DictateHistoryDao {
     // Pinned entries float to the top; otherwise newest first.
-    @Query("SELECT * FROM $DICTATE_HISTORY_TABLE ORDER BY pinned DESC, createdAt DESC")
+    // Zero pinning (23.11.2026): newest first, nothing floats. Entries pinned before stay protected from pruning.
+    @Query("SELECT * FROM $DICTATE_HISTORY_TABLE ORDER BY createdAt DESC")
     fun getAllAsFlow(): Flow<List<DictateHistoryEntry>>
 
     @Query("SELECT * FROM $DICTATE_HISTORY_TABLE ORDER BY createdAt DESC")

@@ -744,3 +744,6 @@ voices. Stopped here: a further build plus a full suite (~1 h) would not finish 
 > "Please remove pinning from my application. Not being able to pin. That's we need to do it. Pinning no. Zero pinning." (Marko, 23.11.2026)
 
 **Status:** saved first.
+
+**Status (23.11.2026):** built: no pinning anywhere (keyboard pin key, clipboard pins and pinned section, dictation history pins, emoji pins); things pinned before are not deleted, just listed normally. Tests updated. Not yet on a phone.
+

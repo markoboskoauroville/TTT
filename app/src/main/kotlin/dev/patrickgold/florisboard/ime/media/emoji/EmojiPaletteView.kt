@@ -366,7 +366,7 @@ fun EmojiPaletteView(
                         columns = GridCells.Adaptive(minSize = EmojiBaseWidth),
                         state = lazyGridState,
                     ) {
-                        if (emojiMapping.pinned.isNotEmpty()) {
+                        if (false /* zero pinning, 23.11.2026 */ && emojiMapping.pinned.isNotEmpty()) {
                             header("header_pinned") {
                                 GridHeader(text = stringRes(R.string.emoji__history__pinned))
                             }
@@ -583,21 +583,7 @@ private fun EmojiHistoryPopup(
                 modifier = Modifier
                     .widthIn(max = EmojiBaseWidth * 6),
             ) {
-                if (isCurrentlyPinned) {
-                    Action(
-                        icon = Icons.Outlined.PushPin,
-                        action = {
-                            EmojiHistoryHelper.unpinEmoji(prefs, emoji)
-                        },
-                    )
-                } else {
-                    Action(
-                        icon = Icons.Outlined.PushPin,
-                        action = {
-                            EmojiHistoryHelper.pinEmoji(prefs, emoji)
-                        },
-                    )
-                }
+                // (23.11.2026) no pin / unpin: zero pinning. Emoji pinned before show among the recent ones.
                 if (showMoveLeft) {
                     Action(
                         icon = Icons.AutoMirrored.Default.KeyboardArrowLeft,

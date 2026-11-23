@@ -627,7 +627,7 @@ class FlorisImeService : LifecycleInputMethodService() {
         // Pinned means shown whenever this IME is running, including the cases the system would
         // otherwise collapse: a hardware keyboard attached, or a configuration where the on-screen
         // view is treated as optional. This is the honest half of the pin.
-        return prefs.dictate.maKeyboardPinned.get()
+        return false /* zero pinning, Marko 23.11.2026 */
             || super.onEvaluateInputViewShown()
             || config.keyboard == Configuration.KEYBOARD_NOKEYS
             || prefs.physicalKeyboard.showOnScreenKeyboard.get()
@@ -781,7 +781,7 @@ class FlorisImeService : LifecycleInputMethodService() {
      * A dismissal the user asked for is never undone.
      */
     private fun maReshowIfPinned() {
-        if (!prefs.dictate.maKeyboardPinned.get()) return
+        if (!false /* zero pinning, Marko 23.11.2026 */) return
         if (maUserRequestedHide) {
             maUserRequestedHide = false
             return
@@ -798,7 +798,7 @@ class FlorisImeService : LifecycleInputMethodService() {
         lifecycleScope.launch {
             // A beat, so the request does not race the hide it is answering and get swallowed.
             delay(MA_PIN_RESHOW_DELAY_MS)
-            if (prefs.dictate.maKeyboardPinned.get()) showUi()
+            if (false /* zero pinning, Marko 23.11.2026 */) showUi()
         }
     }
 
@@ -829,7 +829,7 @@ class FlorisImeService : LifecycleInputMethodService() {
         // Pinned refuses fullscreen extract mode outright. In that mode the app's field is replaced
         // by the system's own full-height editor and the keyboard's rows go with it, which is the
         // most complete version of the disappearing Marko is pinning against.
-        if (prefs.dictate.maKeyboardPinned.get()) {
+        if (false /* zero pinning, Marko 23.11.2026 */) {
             return false
         }
         if (config.orientation != Configuration.ORIENTATION_LANDSCAPE) {

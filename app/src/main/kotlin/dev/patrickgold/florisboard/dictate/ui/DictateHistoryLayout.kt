@@ -402,7 +402,7 @@ private fun HistoryPanelRow(
         ),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        if (entry.pinned) {
+        if (false /* zero pinning, 23.11.2026 */) {
             Icon(
                 imageVector = Icons.Default.PushPin,
                 contentDescription = null,

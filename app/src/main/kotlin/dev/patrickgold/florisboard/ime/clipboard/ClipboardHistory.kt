@@ -27,8 +27,10 @@ data class ClipboardHistory(val all: List<ClipboardItem>) {
 
     private val now = System.currentTimeMillis()
 
-    val pinned = all.filter { it.isPinned }
-    val unpinned = all.filter { !it.isPinned }
+    // ZERO PINNING (Marko, 23.11.2026): no pinned section. Clips saved before keep their protection from the history's size
+    // limit (nothing he saved is lost), but they are listed with everything else, by time.
+    val pinned = emptyList<ClipboardItem>()
+    val unpinned = all
     val recent = unpinned.filter { (now - it.creationTimestampMs) < RECENT_TIMESPAN_MS }
     val other = unpinned.filter { (now - it.creationTimestampMs) >= RECENT_TIMESPAN_MS }
 }

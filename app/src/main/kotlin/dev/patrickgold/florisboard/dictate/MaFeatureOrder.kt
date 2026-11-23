@@ -479,7 +479,8 @@ enum class MaFeatureKey(val id: String, val label: String) {
     ENTER("enter", "Enter");
 
     companion object {
-        fun byId(id: String): MaFeatureKey? = entries.firstOrNull { it.id == id }
+        // ZERO PINNING (Marko, 23.11.2026: "Pinning no. Zero pinning."): the pin key no longer exists; a stored row drops it.
+        fun byId(id: String): MaFeatureKey? = entries.firstOrNull { it.id == id && it != PIN }
     }
 }
 
@@ -551,7 +552,6 @@ object MaFeatureOrder {
         MaFeatureKey.SWITCHBOARD,
         MaFeatureKey.SHIFT,
         MaFeatureKey.CHANGE_CASE,
-        MaFeatureKey.PIN,
         MaFeatureKey.READER,
         // The seven reader commands are NOT here. They live on the reader row, which has its own
         // arrangement — putting them in the default feature row too would deal every new install
@@ -764,6 +764,7 @@ val MaFeatureKey.group: MaFeatureGroup
         MaFeatureKey.ZONE_2,
         MaFeatureKey.ZONE_3,
         MaFeatureKey.SWITCHBOARD,
+        // PIN: still grouped for the exhaustive mapping; byId never returns it (zero pinning, 23.11.2026).
         MaFeatureKey.PIN,
         MaFeatureKey.SPACER,
         // Which rows are showing is the shape of the keyboard, not something typed with it.

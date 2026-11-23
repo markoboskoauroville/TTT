@@ -88,17 +88,22 @@ def code(path: Path) -> str:
     return re.sub(r"^\s*//.*$", "", t, flags=re.M)
 
 
+# ZERO PINNING (Marko, 23.11.2026: "Please remove pinning from my application. Not being able to pin ... Zero pinning.").
+# The walk above still proves the sorting logic of the history model; the app offers no way to pin any more.
 ui = code(SRC / "ime/clipboard/ClipboardInputLayout.kt")
-check("the circle toggles the pin", "clipboardManager.unpinClip(item) else clipboardManager.pinClip(item)" in ui,
-      "its own idea of selected, which the history would not honour")
-check("it is a circle", "CircleShape" in ui, "a tick box reads as a setting, not as one of a set")
-check("empty and filled are one shape", "if (item.isPinned) MaClipRing else Color.Transparent" in ui,
-      "two different marks to learn")
-check("it reads the item's own state", "item.isPinned" in ui, "a second copy of pinned that can drift")
-
+check("no pin circle on a clip", "pinClip(item)" not in ui and "MaClipRing else Color.Transparent" not in ui, "zero pinning")
+check("no pin / unpin in the clip's long-press menu", "clip__pin_item" not in ui and "clip__unpin_item" not in ui, "zero pinning")
+check("no pin in the clipboard header", "Icons.Default.PushPin else Icons.Outlined.PushPin" not in ui, "zero pinning")
 hist = code(SRC / "ime/clipboard/ClipboardHistory.kt")
-check("the history already sections by pinned", "all.filter { it.isPinned }" in hist,
-      "the circle would fill and nothing would move")
+check("no pinned section; old pinned clips listed with the rest, by time", "val pinned = emptyList<ClipboardItem>()" in hist and "val unpinned = all" in hist,
+      "a pinned section would come back")
+ims = code(SRC / "FlorisImeService.kt")
+check("the keyboard is never pinned up", "maKeyboardPinned.get()" not in ims, "zero pinning")
+check("no pin key can be loaded", "it.id == id && it != PIN" in code(SRC / "dictate/MaFeatureOrder.kt"), "zero pinning")
+emo = code(SRC / "ime/media/emoji/EmojiPaletteView.kt")
+check("no emoji pin", "EmojiHistoryHelper.pinEmoji" not in emo, "zero pinning")
+hs = code(SRC / "app/settings/dictate/DictateHistoryScreen.kt")
+check("no pin in the dictation history", "onClick = onTogglePin" not in hs, "zero pinning")
 
 print(f"clip pin, test 1: {checks} checks, {len(failures)} failed ({walked} taps walked)")
 for f in failures:

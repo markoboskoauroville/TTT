@@ -100,14 +100,7 @@ object MaRows {
             // Still in the catalogue, under Dictation, where somebody looking for it will look.
             MaFeatureKey.ALL_PASTE,
             MaFeatureKey.ALL_CLEAR,
-            // PIN, last, after AC.
-            //
-            // It is on this row for a reason that has nothing to do with the clipboard and
-            // everything to do with using it: **selecting text makes Android collapse the
-            // keyboard**, and the pin is what keeps it up. So the key he needs before he can press
-            // any of the others is on the same row as the others, rather than one row away on a row
-            // that has just been hidden.
-            MaFeatureKey.PIN,
+            // (23.11.2026) no PIN key: zero pinning.
         ).map { Entry(Button.Builtin(it)) },
         enabled = true,
     )
@@ -396,7 +389,7 @@ object MaRows {
     fun catalogue(): List<Button> =
         // No filtering needed: the clipboard is no longer a set of keys in this enum, it is
         // Button.Clip. The enum now holds only the app's own keys, so every one of them is offered.
-        MaFeatureKey.entries.map { Button.Builtin(it) } +
+        MaFeatureKey.entries.filter { it != MaFeatureKey.PIN }.map { Button.Builtin(it) } +
             (1..CLIP_SLOTS).map { Button.Clip(it) } +
             (1..MACRO_SLOTS).map { Button.Macro(it) }
 

@@ -439,14 +439,7 @@ private fun HistoryRow(
                 overflow = TextOverflow.Ellipsis,
             )
             Row(verticalAlignment = Alignment.CenterVertically) {
-                if (entry.pinned) {
-                    Icon(
-                        imageVector = Icons.Default.PushPin,
-                        contentDescription = stringRes(R.string.emoji__history__pinned),
-                        modifier = Modifier.size(12.dp).padding(end = 2.dp),
-                        tint = MaterialTheme.colorScheme.primary,
-                    )
-                }
+                // (23.11.2026) no pin mark: zero pinning.
                 Text(
                     text = DateUtils.getRelativeDateTimeString(
                         context, entry.createdAt, DateUtils.MINUTE_IN_MILLIS, DateUtils.WEEK_IN_MILLIS, 0,
@@ -653,14 +646,7 @@ private fun DetailDialog(
                     )
                 }
                 Spacer(Modifier.weight(1f))
-                IconButton(onClick = onTogglePin, modifier = Modifier.size(44.dp)) {
-                    Icon(
-                        imageVector = Icons.Default.PushPin,
-                        contentDescription = stringRes(R.string.emoji__history__pinned),
-                        modifier = Modifier.size(24.dp),
-                        tint = if (entry.pinned) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
+                // (23.11.2026) no pin button: zero pinning.
             }
         }
     }

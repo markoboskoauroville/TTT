@@ -164,10 +164,10 @@ copy_order = [l.strip().rstrip(",").replace("MaFeatureKey.", "")
               for l in block.splitlines() if l.strip().startswith("MaFeatureKey.")]
 check("the copy row reads as he asked",
       copy_order == ["SELECT_ALL", "PASTE", "COPY", "CUT", "CLIP_HISTORY",
-                     "ALL_PASTE", "ALL_CLEAR", "PIN"], str(copy_order))
+                     "ALL_PASTE", "ALL_CLEAR"], str(copy_order))
 check("copy is on it", "COPY" in copy_order, "the one operation of the four that was missing")
-check("the pin is last", copy_order[-1] == "PIN",
-      "the key that stops Android collapsing the keyboard is one row away from the keys it enables")
+# 23.11.2026 (Marko: "Pinning no. Zero pinning."): the pin key is gone from every row and from the catalogue.
+check("no pin key on the copy row", "PIN" not in copy_order, "zero pinning")
 check("transcription history is off the copy row", "HISTORY" not in copy_order,
       "two ideas of history one key apart")
 check("but still in the catalogue", 'HISTORY("history"' in (SRC / "dictate/MaFeatureOrder.kt").read_text(),

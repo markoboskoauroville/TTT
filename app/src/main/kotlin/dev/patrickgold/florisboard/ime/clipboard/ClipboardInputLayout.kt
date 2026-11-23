@@ -230,26 +230,7 @@ fun ClipboardInputLayout(
                 modifier = Modifier.weight(1f),
                 text = stringRes(R.string.clipboard__header_title),
             )
-            // The pin: makes this panel the view the keyboard opens on, or gives that up again.
-            //
-            // Placed here rather than only in the opening-view settings because the moment somebody
-            // wants it is the moment they notice they keep coming back to this panel, and that
-            // moment happens here. Setting it writes the same preference the settings screen does,
-            // so the two can never disagree about what is pinned.
-            SnyggIconButton(
-                elementName = FlorisImeUi.ClipboardHeaderButton.elementName,
-                onClick = {
-                    scope.launch {
-                        prefs.dictate.maOpeningView.set(if (pinned) "keyboard" else "clipboard")
-                    }
-                },
-                modifier = sizeModifier,
-                enabled = !isPopupSurfaceActive(),
-            ) {
-                SnyggIcon(
-                    imageVector = if (pinned) Icons.Default.PushPin else Icons.Outlined.PushPin,
-                )
-            }
+            // (23.11.2026) no header pin: zero pinning. The opening view stays a setting.
             SnyggIconButton(
                 elementName = FlorisImeUi.ClipboardHeaderButton.elementName,
                 onClick = { scope.launch { prefs.clipboard.historyEnabled.set(!historyEnabled) } },
@@ -439,28 +420,7 @@ fun ClipboardInputLayout(
             }
         }
 
-            // Top right, over the entry, where it cannot be hit by accident while reaching for the
-            // text: the whole card pastes on a tap, so this target has to be somewhere the thumb
-            // does not go on its way to pasting.
-            Box(
-                modifier = Modifier
-                    .align(Alignment.TopEnd)
-                    .padding(6.dp)
-                    .size(22.dp)
-                    .clip(CircleShape)
-                    .clickable {
-                        if (item.isPinned) clipboardManager.unpinClip(item) else clipboardManager.pinClip(item)
-                    },
-                contentAlignment = Alignment.Center,
-            ) {
-                Box(
-                    modifier = Modifier
-                        .size(14.dp)
-                        .clip(CircleShape)
-                        .border(1.5.dp, MaClipRing, CircleShape)
-                        .background(if (item.isPinned) MaClipRing else Color.Transparent),
-                )
-            }
+            // (23.11.2026) no pin ring: zero pinning.
         }
     }
 
@@ -657,21 +617,6 @@ fun ClipboardInputLayout(
                                     popupItem = null
                                     keyboardManager.activateClipboardEditor(item)
                                 }
-                            }
-                            PopupAction(
-                                icon = Icons.Outlined.PushPin,
-                                text = stringRes(if (popupItem!!.isPinned) {
-                                    R.string.clip__unpin_item
-                                } else {
-                                    R.string.clip__pin_item
-                                }),
-                            ) {
-                                if (popupItem!!.isPinned) {
-                                    clipboardManager.unpinClip(popupItem!!)
-                                } else {
-                                    clipboardManager.pinClip(popupItem!!)
-                                }
-                                popupItem = null
                             }
                             PopupAction(
                                 icon = Icons.Default.Delete,
