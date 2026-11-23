@@ -747,3 +747,9 @@ voices. Stopped here: a further build plus a full suite (~1 h) would not finish 
 
 **Status (23.11.2026):** built: no pinning anywhere (keyboard pin key, clipboard pins and pinned section, dictation history pins, emoji pins); things pinned before are not deleted, just listed normally. Tests updated. Not yet on a phone.
 
+
+## 23.11.2026, Marko: bring back the hairline VU meter at the top of the screen while he talks
+
+> "Please bring back the feature which used to have and now it's gone. There is Hairline Vumeter at the top of the screen when I'm talking to my application, but it's in the background. Very simple." (Marko, 23.11.2026)
+
+**Status:** saved first.
