@@ -738,3 +738,9 @@ voices. Stopped here: a further build plus a full suite (~1 h) would not finish 
 
 **Status (22.11.2026):** built: every RE call (answers, memory, lessons, the RE-key instruction) uses Anthropic Sonnet; Qwen on Groq answers only when Sonnet fails, with the same prompt and memory; training mode off; the engine choices and H/S/O/Q letters removed (his words). Tests updated (test_re_training.py). Not yet on a phone.
 
+
+## 23.11.2026, Marko: no pinning at all
+
+> "Please remove pinning from my application. Not being able to pin. That's we need to do it. Pinning no. Zero pinning." (Marko, 23.11.2026)
+
+**Status:** saved first.
