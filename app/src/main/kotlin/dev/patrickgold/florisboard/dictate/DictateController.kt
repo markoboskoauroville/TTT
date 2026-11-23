@@ -4205,7 +4205,7 @@ object DictateController {
         _state.value = UiState.Rewording(if (phone != null) "${MaPhoneStyle.NAME} \u00B7 ${phone.name}" else MaPhoneStyle.NAME)
         val input = MaPhoneStyle.correct(text)
         val styled = runCatching {
-            MaPhoneStyle.correct(requestReword(MaPhoneStyle.instruction(), input, model = model, purpose = MaPhoneStyle.NAME))
+            MaPhoneStyle.singleLineBreaks(MaPhoneStyle.correct(requestReword(MaPhoneStyle.instruction(), input, model = model, purpose = MaPhoneStyle.NAME)))
         }.getOrElse {
             if (it is CancellationException) throw it
             MaLog.add("dictate", "style pass failed: ${it.message ?: it.javaClass.simpleName}")

@@ -42,7 +42,7 @@ object MaPhoneStyle {
             "Fix the words the recogniser misheard: choose the word that makes sense in the sentence. Fix spelling, grammar and punctuation in the language of the message. Every sentence starts with a capital letter, names have capitals.\n\n" +
             "Remove repetitions, false starts (\"no wait\") and filler words (um, uh, you know, like, I mean, ono, ovaj, znači, dakle). When he says the same thing twice, keep it once. When an explanation is confused, say it once, clearly, in the order that makes sense.\n\n" +
             "Keep every fact, name, number, date, request and decision. Add nothing he did not say. Do not soften what he said firmly and do not make firmer what he said gently. Keep English words he mixed into Croatian.\n\n" +
-            "Style: short paragraphs of one or two sentences. Plain everyday words. Written to one person as \"you\". The reason comes before the request. Warm, never gushing.\n\n" +
+            "Style: short paragraphs of one or two sentences, separated by a single line break, never an empty line. Plain everyday words. Written to one person as \"you\". The reason comes before the request. Warm, never gushing.\n\n" +
             "Never use dashes, bullet points, headings, bold, exclamation marks or emoji. Normal sentence capitals and correct apostrophes.\n\n" +
             "Names: Marko (never Marco; \"a Marco\" or \"Amarco\" is \"and Marko\"), Groq (never Grok), Claude, Speechify, Mantra, Auroville."
 
@@ -58,6 +58,15 @@ object MaPhoneStyle {
     )
 
     fun correct(text: String): String = CORRECTIONS.fold(text) { t, (re, right) -> t.replace(re, right) }
+
+    /**
+     * One line break between paragraphs, never an empty line: the model writes its "short
+     * paragraphs" with a blank line between them, and Marko wants them as Ctrl+Enter makes them,
+     * a single new line. Done here, not only asked in [INSTRUCTION], so his own saved wording and
+     * every model obey it too.
+     */
+    fun singleLineBreaks(text: String): String =
+        text.replace("\r\n", "\n").replace(Regex("""[ \t]*\n(?:[ \t]*\n)+"""), "\n")
 
     /** The wording in force: his ticked instance, or the Mac's. */
     fun instruction(): String {
