@@ -84,6 +84,7 @@ val MaSettingsEntry.icon: ImageVector
         MaSettingsEntry.VOICE_COMMANDS -> Icons.Default.Mic
         // Shield, not Lock: `Icons.Default.Lock` is absent from the icon artifact this project
         // builds against, and a missing icon is a red build rather than a blank space.
+        MaSettingsEntry.API -> MaApiIcon
         MaSettingsEntry.PERMISSIONS -> Icons.Default.Shield
         // The microphone, proven in this file: the engine that hears the voice.
         MaSettingsEntry.TRANSCRIPTION_MODEL -> Icons.Default.Mic
@@ -142,6 +143,7 @@ val MaSettingsEntry.route: Any
         MaSettingsEntry.FEATURE_ROW -> Routes.Settings.MaFeatureRow
         MaSettingsEntry.MAGIC -> Routes.Settings.MaMagic
         MaSettingsEntry.VOICE_COMMANDS -> Routes.Settings.MaVoiceCommands
+        MaSettingsEntry.API -> Routes.Settings.MaApi
         MaSettingsEntry.PERMISSIONS -> Routes.Settings.MaPermissions
         MaSettingsEntry.TRANSCRIPTION_MODEL -> Routes.Settings.MaTranscription
         MaSettingsEntry.ENGINES -> Routes.Settings.MaVoiceButtons

@@ -17,7 +17,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.getValue
@@ -55,18 +54,15 @@ fun MaSettingsSyncScreen() = FlorisScreen {
                 Text("Sync this phone", style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f))
                 Switch(checked = on, onCheckedChange = { MaSettingsSync.enabled = it; on = it })
             }
-            OutlinedTextField(
-                value = repo,
-                onValueChange = { repo = it; MaSettingsSync.repo = it },
-                label = { Text("Repository (owner/name)") },
-                singleLine = true,
-                isError = repo.isNotBlank() && !MaSettingsSync.validRepo(repo.trim()),
-                modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
-            )
+            // No repository field (Marko, 23.11.2026: "without asking me nonsense like my username. Everything is inside the
+            // token"): the token picks or makes the repository; it is only shown here.
             Text(
-                if (hasToken) "Token: saved (hidden)."
-                else "Token: none yet. Put a GitHub token that can write to this repository in a text file and use " +
-                    "Import keys from file (Voice transcription buttons). A token TTT already has is used when it can.",
+                when {
+                    repo.isNotBlank() && hasToken -> "Repository: $repo (found from your GitHub token)."
+                    hasToken -> "Repository: found from your token at the next sync."
+                    else -> "No GitHub token yet. Settings \u2192 API \u2192 Import keys from file, and pick the file with your " +
+                        "GitHub token. Everything else is automatic."
+                },
                 style = MaterialTheme.typography.bodyMedium,
                 modifier = Modifier.padding(top = 8.dp),
             )
@@ -76,6 +72,7 @@ fun MaSettingsSyncScreen() = FlorisScreen {
                     scope.launch {
                         status = MaSettingsSync.syncNow()
                         hasToken = MaSettingsSync.hasOwnToken()
+                        repo = MaSettingsSync.repo
                     }
                 }) { Text("Sync now") }
                 OutlinedButton(enabled = hasToken, onClick = { MaSettingsSync.clearToken(); hasToken = false; status = MaSettingsSync.status }) {

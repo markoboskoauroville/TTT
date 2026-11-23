@@ -53,3 +53,27 @@ val MaReIcon: ImageVector by lazy {
         }
     }.build()
 }
+
+/**
+ * The API icon (Marko, 23.11.2026: "a new settings API and big A as icon ... which looks like keyboard or keyboard key"):
+ * a keyboard key, rounded square outline, with a big bold A in it.
+ */
+val MaApiIcon: ImageVector by lazy {
+    val white = SolidColor(Color.White)
+    ImageVector.Builder(
+        name = "MaApi", defaultWidth = 24.dp, defaultHeight = 24.dp, viewportWidth = 24f, viewportHeight = 24f,
+    ).apply {
+        // the key
+        addPath(
+            pathData = PathParser().parsePathString(
+                "M6,2.5 H18 Q21.5,2.5 21.5,6 V18 Q21.5,21.5 18,21.5 H6 Q2.5,21.5 2.5,18 V6 Q2.5,2.5 6,2.5 Z",
+            ).toNodes(),
+            stroke = white, strokeLineWidth = 1.8f, strokeLineJoin = StrokeJoin.Round,
+        )
+        // the big A
+        addPath(
+            pathData = PathParser().parsePathString("M7,18 L12,5.8 L17,18 M8.9,13.6 H15.1").toNodes(),
+            stroke = white, strokeLineWidth = 2.6f, strokeLineCap = StrokeCap.Round, strokeLineJoin = StrokeJoin.Round,
+        )
+    }.build()
+}

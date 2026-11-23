@@ -91,6 +91,12 @@ acc = code(SRC / "dictate/overlay/DictateAccessibilityService.kt")
 check("NO DOWNGRADES: the hairline VU meter shows on every recording (keyboard up or not) at the very top",
       "state is DictateController.UiState.Recording\n" in acc and "&& !imeUp" not in acc
       and "LAYOUT_IN_DISPLAY_CUTOUT_MODE_ALWAYS" in code(SRC / "dictate/overlay/MaRecordingLine.kt"))
+api = code(SRC / "app/settings/dictate/MaApiScreen.kt")
+check("API entry: first in the default order, A-key icon, one file picker, no text fields",
+      "MaSettingsEntry.API," in code(SRC / "app/settings/MaSettingsOrder.kt") and "MaSettingsEntry.API -> MaApiIcon" in code(SRC / "app/settings/MaSettingsOrderScreen.kt")
+      and "KeyImporter.importUris(" in api and "TextField(" not in api)
+check("Settings sync: the repository comes from the token, never typed",
+      "fun discoverRepo(" in code(SRC / "dictate/MaSettingsSync.kt") and "OutlinedTextField(" not in code(SRC / "app/settings/dictate/MaSettingsSyncScreen.kt"))
 check("RE usage habits are logged", "MaReHabits.note(" in pop and "usage_habits" in code(SRC / "dictate/MaReChat.kt"))
 check("RE pop-up opens from the RE key", "popup = MaReChat.popupOn(context)" in chat)
 check("RE long press is the key panel", "MaKeyPanel(" in row[i:j] and "DropdownMenu" not in row[i:j])

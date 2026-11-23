@@ -24,6 +24,8 @@ package dev.patrickgold.florisboard.app.settings
 enum class MaSettingsEntry(val id: String, val title: String, val summary: String?) {
     // Keys first in the NAME too, because the name is the thing he scans for and the keys are what
     // he comes here to do. The permissions are the once-ever half.
+    // API (Marko, 23.11.2026): one entry, one file picker for every key and token; the A-key icon. First in the list.
+    API("api", "API", "Every key and token, from one file picker"),
     PERMISSIONS("permissions", "API keys and permissions", "Everything the keyboard needs to work"),
     // Marko, 7.11.2026: "Transcription model is the settings entry." The on-device engine is Parakeet.
     TRANSCRIPTION_MODEL("transcription_model", "Transcription model", "AssemblyAI, Parakeet on the phone, or Parakeet as fallback"),
@@ -101,6 +103,7 @@ object MaSettingsOrder {
      * any other and somebody who wants it at the top should be able to drag it there.
      */
     val DEFAULT: List<MaSettingsEntry> = listOf(
+        MaSettingsEntry.API,
         MaSettingsEntry.PERMISSIONS,
         MaSettingsEntry.ENGINES,
         MaSettingsEntry.AUTO,

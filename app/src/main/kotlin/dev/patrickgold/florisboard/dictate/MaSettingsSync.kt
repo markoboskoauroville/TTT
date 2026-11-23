@@ -145,17 +145,53 @@ object MaSettingsSync {
         }
     }.getOrDefault(false)
 
+    /** The repository name the settings live in when nothing was chosen: made by TTT itself, private. */
+    const val DEFAULT_REPO_NAME = "TTT_SETTINGS"
+
     /**
-     * From the key file picker (KeyImporter): the first of [tokens] that can write to the sync repository is kept.
-     * Returns a line for the import report, or null when no repository is set.
+     * EVERYTHING IS IN THE TOKEN (Marko, 23.11.2026: "if I file pick the token from GitHub, then this feature is working
+     * automatically without asking me nonsense like my username. Everything is inside the token man."). The token says
+     * who owns it (GET /user); among the repositories it can write, one whose name holds "settings" (TTT_SETTINGS first)
+     * is taken; when there is none, a private TTT_SETTINGS is created. Returns "owner/name" or null. Blocking.
+     */
+    fun discoverRepo(tok: String): String? = runCatching {
+        val login = http.newCall(req("https://api.github.com/user", tok).build()).execute().use { r ->
+            if (!r.isSuccessful) return null
+            JSONObject(r.body.string()).optString("login").ifEmpty { return null }
+        }
+        val repos = http.newCall(req("https://api.github.com/user/repos?per_page=100&affiliation=owner&sort=updated", tok).build()).execute().use { r ->
+            if (!r.isSuccessful) org.json.JSONArray() else org.json.JSONArray(r.body.string())
+        }
+        val writable = (0 until repos.length()).map { repos.getJSONObject(it) }
+            .filter { it.optJSONObject("permissions")?.optBoolean("push") == true }
+            .map { it.getString("full_name") }
+        writable.firstOrNull { it.substringAfter('/').equals(DEFAULT_REPO_NAME, true) }
+            ?: writable.firstOrNull { it.substringAfter('/').contains("ttt", true) && it.substringAfter('/').contains("setting", true) }
+            ?: run {
+                val body = JSONObject().put("name", DEFAULT_REPO_NAME).put("private", true)
+                    .put("description", "TTT keyboard settings, shared between Marko's phones (made by TTT)").put("auto_init", true)
+                http.newCall(req("https://api.github.com/user/repos", tok).post(body.toString().toRequestBody(JSON)).build()).execute().use { r ->
+                    if (r.isSuccessful) JSONObject(r.body.string()).getString("full_name")
+                    else if (r.code == 422) "$login/$DEFAULT_REPO_NAME".takeIf { canWrite(tok, it) } else null
+                }
+            }
+    }.getOrNull()
+
+    /**
+     * From the key file picker (KeyImporter): the first of [tokens] that can write a settings repository is kept, the
+     * repository is found or made from the token itself, and sync is switched on. A line for the import report.
      */
     fun offerTokens(tokens: List<String>): String? {
-        if (!validRepo()) return null
-        val i = tokens.indexOfFirst { canWrite(it) }
-        if (i < 0) return "GitHub (settings sync): no token can write to $repo, not stored"
-        saveToken(tokens[i])
-        syncSoon(0)
-        return "GitHub (settings sync): token ${i + 1} can write to $repo, stored"
+        for ((i, t) in tokens.withIndex()) {
+            val r = if (validRepo() && canWrite(t)) repo else discoverRepo(t) ?: continue
+            if (!canWrite(t, r)) continue
+            repo = r
+            saveToken(t)
+            enabled = true
+            syncSoon(0)
+            return "GitHub (settings sync): token ${i + 1} writes $r, stored; settings sync is on"
+        }
+        return "GitHub (settings sync): no token could write or make a settings repository, not stored"
     }
 
     /** The token for the repository: its own, else RE's when that one can write there. */
@@ -221,8 +257,13 @@ object MaSettingsSync {
 
     private suspend fun doSync(c: Context): String {
         if (!enabled) return "Off."
-        if (!validRepo()) return "Write the repository as owner/name."
-        val tok = token() ?: return "No GitHub token that can write to $repo. Put one in a text file and use Import keys from file."
+        // The repository comes from the token (23.11.2026): never asked for.
+        if (!validRepo()) {
+            val t = ownToken() ?: runCatching { MaRemoteDb.readToken() }.getOrNull()
+                ?: return "No GitHub token yet: Settings, API, Import keys from file."
+            repo = discoverRepo(t) ?: return "The GitHub token cannot write or make a settings repository."
+        }
+        val tok = token() ?: return "No GitHub token that can write to $repo: Settings, API, Import keys from file."
         val s = sp() ?: return "Not ready."
         val api = "https://api.github.com/repos/$repo/contents/$FILE"
 

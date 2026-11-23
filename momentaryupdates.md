@@ -762,3 +762,6 @@ voices. Stopped here: a further build plus a full suite (~1 h) would not finish 
 > "Please make a new settings API and big A as icon in the settings Which looks like keyboard or keyboard key and just make it API API is the only thing and inside there is intelligent file picker for API's and in this case if I file pick the key from I mean token from from github, then this feature is working automatically without asking me nonsense like my username. Everything is inside the token man. Don't make stupid programs." (Marko, 23.11.2026, with a screenshot of "Sync settings between devices": switch on, an empty "Repository (owner/name)" field, "Token: none yet")
 
 **Status:** saved first.
+
+**Status (23.11.2026):** built: Settings has a new first entry "API" with an A-key icon and only the file picker; picking the GitHub token now sets up settings sync by itself (finds or makes a private TTT_SETTINGS repository, switches sync on); the repository field is gone. Not yet on a phone.
+

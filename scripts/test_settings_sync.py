@@ -28,9 +28,9 @@ check("MaSettingsSync.maybePull()" in read("FlorisImeService.kt") and "MaSetting
       "keyboard open pulls, keyboard close pushes")
 check("MaSettingsSync.syncSoon()" in read("app/FlorisAppActivity.kt"), "leaving Settings pushes")
 check("MaSettingsSync.offerTokens(toks)" in read("dictate/engines/KeyImporter.kt"), "token only through the key file picker")
-check("OutlinedTextField" in read("app/settings/dictate/MaSettingsSyncScreen.kt") and "token" not in
-      re.sub(r'"[^"]*"', "", read("app/settings/dictate/MaSettingsSyncScreen.kt")).lower().split("outlinedtextfield")[1][:300],
-      "the only text field is the repository name, never a token box")
+# 23.11.2026 (Marko: "without asking me nonsense like my username. Everything is inside the token"): no text field at all.
+check("TextField(" not in read("app/settings/dictate/MaSettingsSyncScreen.kt") and "fun discoverRepo(" in read("dictate/MaSettingsSync.kt"),
+      "no fields: the repository comes from the token")
 check("SETTINGS_SYNC" in read("app/settings/MaSettingsOrderScreen.kt"), "entry has a route")
 if fail:
     print("\n".join("FAIL " + f for f in fail)); sys.exit(1)
