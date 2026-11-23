@@ -765,3 +765,9 @@ voices. Stopped here: a further build plus a full suite (~1 h) would not finish 
 
 **Status (23.11.2026):** built: Settings has a new first entry "API" with an A-key icon and only the file picker; picking the GitHub token now sets up settings sync by itself (finds or makes a private TTT_SETTINGS repository, switches sync on); the repository field is gone. Not yet on a phone.
 
+
+## 23.11.2026, Marko: the API screen lists every key and tests them all
+
+> "There is a screen with file picker but also listing all the API keys and also have a button to test all the API keys. Testing is very important so people know is it working or not working and to be able to troubleshoot." (Marko, 23.11.2026)
+
+**Status:** saved first.
