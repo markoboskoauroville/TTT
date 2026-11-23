@@ -130,8 +130,12 @@ class DictateAccessibilityService : AccessibilityService() {
             combine(
                 DictateController.state,
                 _imeVisible,
-            ) { state, imeUp ->
-                state is DictateController.UiState.Recording && !imeUp
+            ) { state, _ ->
+                // EVERY recording, keyboard up or not (Marko, 23.11.2026: "bring back the feature which used to have and now
+                // it's gone. There is Hairline Vumeter at the top of the screen when I'm talking to my application ... Very
+                // simple."). Hidden only while the keyboard showed its own recorder, it never appeared for him: he dictates
+                // with the keyboard up.
+                state is DictateController.UiState.Recording
             }.distinctUntilChanged().collect { show ->
                 recordingLine?.show(show)
             }

@@ -44,10 +44,10 @@ import android.view.WindowManager
  * Three device-pixels tall, at the very bottom, across the full width. Not touchable, not focusable,
  * and it never covers anything: at that height it sits in the gesture bar's own margin.
  *
- * ### Why only when the keyboard is hidden
+ * ### When
  *
- * With the keyboard up he can already see the recorder — the timer, the waveform, the red dot. A
- * second indicator would be a second thing saying what the first one says.
+ * Every recording, keyboard up or not (Marko, 23.11.2026, asked for it back: hidden while the keyboard was up, he never
+ * saw it). It needs TTT's accessibility service on, because an accessibility overlay is what may draw over every app.
  */
 class MaRecordingLine(private val service: AccessibilityService) {
 
@@ -104,9 +104,17 @@ class MaRecordingLine(private val service: AccessibilityService) {
             WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY,
             WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or
                 WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE or
-                WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS,
+                WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS or
+                WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN,
             PixelFormat.TRANSLUCENT,
-        ).apply { gravity = Gravity.TOP }
+        ).apply {
+            gravity = Gravity.TOP
+            // The very top edge, also on phones with a camera hole (23.11.2026): without this Android puts the window below
+            // the cutout band, where the status bar's own icons hide a one-pixel line.
+            if (android.os.Build.VERSION.SDK_INT >= 30) {
+                layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_ALWAYS
+            }
+        }
 
         runCatching {
             windowManager.addView(meter, params)

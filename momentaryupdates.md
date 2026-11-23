@@ -753,3 +753,6 @@ voices. Stopped here: a further build plus a full suite (~1 h) would not finish 
 > "Please bring back the feature which used to have and now it's gone. There is Hairline Vumeter at the top of the screen when I'm talking to my application, but it's in the background. Very simple." (Marko, 23.11.2026)
 
 **Status:** saved first.
+
+**Status (23.11.2026):** built: the hairline VU meter shows at the top of the screen on every recording, keyboard up or not, at the very top edge. Needs TTT's accessibility service on. Not yet on a phone.
+

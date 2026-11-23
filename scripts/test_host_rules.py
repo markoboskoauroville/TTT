@@ -87,6 +87,10 @@ check("Shared corrections: MANTRA_CORRECTIONS, own device file only, union merge
       "MANTRA_CORRECTIONS" in sync and "learned/${own.name}" in sync and "fun merge(" in sync and "sumOf { it.count }" in sync
       and "MaCorrectionsSync.recordLocal(" in dc and "_effective.value, MaLanguage.active()" in dc
       and "MaCorrectionsSync.offerTokens(" in code(SRC / "dictate/engines/KeyImporter.kt"))
+acc = code(SRC / "dictate/overlay/DictateAccessibilityService.kt")
+check("NO DOWNGRADES: the hairline VU meter shows on every recording (keyboard up or not) at the very top",
+      "state is DictateController.UiState.Recording\n" in acc and "&& !imeUp" not in acc
+      and "LAYOUT_IN_DISPLAY_CUTOUT_MODE_ALWAYS" in code(SRC / "dictate/overlay/MaRecordingLine.kt"))
 check("RE usage habits are logged", "MaReHabits.note(" in pop and "usage_habits" in code(SRC / "dictate/MaReChat.kt"))
 check("RE pop-up opens from the RE key", "popup = MaReChat.popupOn(context)" in chat)
 check("RE long press is the key panel", "MaKeyPanel(" in row[i:j] and "DropdownMenu" not in row[i:j])

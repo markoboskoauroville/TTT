@@ -30,7 +30,7 @@ line = re.sub(r"^\s*//.*$", "", re.sub(r"/\*.*?\*/", "", line_src, flags=re.S), 
 check("full width", "WindowManager.LayoutParams.MATCH_PARENT," in line, "still a notch in the middle")
 check("one device pixel tall", re.search(r"MATCH_PARENT,\s*\n\s*1,", line) is not None,
       "taller than a hairline")
-check("pinned to the top", "gravity = Gravity.TOP }" in line, "not at the top edge")
+check("pinned to the top", "gravity = Gravity.TOP" in line and "LAYOUT_IN_DISPLAY_CUTOUT_MODE_ALWAYS" in line, "not at the top edge")
 check("the meter is horizontal", "MaVuView(service, vertical = false)" in line, "upright, in a strip")
 check("only the meter is added", line.count("windowManager.addView(") == 1, "more than one view")
 
