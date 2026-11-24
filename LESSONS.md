@@ -38,5 +38,9 @@
 - 14.11.2026 An AudioRecord without setPreferredDevice follows Android's input routing, and a USB audio device (Marko's Sony camera) outranks the built-in mic: TTT recorded silence from the camera. Pin the device on every AudioRecord (MicChoice), check getRoutedDevice() once frames flow and log it ([mic] in the TTT log).
 - 14.11.2026 The chain_on gate hid Frankfurt: the Frankfurt branch lived inside EngineChain.dictate, which ran only when chain_on was true (and returned null when the key's engine was not "usable" on the phone). The Pixel's old UI config had chain_on false, so build 684 went the old direct path and Frankfurt never got a job. A switch that must win (FRA) is decided first, at the decision point, not inside an optional branch; the decision is logged (TTT-FRA).
 
+
+## 24.11.2026: coded but not built, and asked whether to build
+A fix pushed to a side branch is not delivered; Marko had to ask. After code: merge to main and push, that is the build. Never ask. Also: a style rule in a prompt ("then a blank line") is followed literally; enforce layout in code.
+
 ## 15.11.2026: setPreferredDevice returning true is not proof
 It returned true while the take still went to the USB camera (another app already held that input open). Always read `routedDevice` back and log it; retry with a different audio source; show the real route to Marko.

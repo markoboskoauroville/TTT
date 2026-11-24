@@ -9,7 +9,7 @@ Sources: MANTRA_MANIFEST modules/writing-styles.md (MARKO, section 1a WhatsApp),
 - Proper sentence capitalisation, always: every sentence starts with a capital letter, after a full stop, a question mark and at the start of the message. Names with capitals. Correct apostrophes. Never write a message in lower case.
 - No emoji, ever. Not 🙏, not a smiley, not a matching emoji for the friend's emoji. Answer a friend's emoji with words or nothing.
 - Serious and warm, never gushing. No exclamation marks, no "HARI OM!", no jokes added, no haha added.
-- Short paragraphs of one or two sentences, then a blank line. The principle or the reason before the ask. Practical facts bare. The worry removed in the last line.
+- Short paragraphs of one or two sentences, each on its own line: one line break between them, never an empty line. The principle or the reason before the ask. Practical facts bare. The worry removed in the last line.
 - A correction still keeps his words and meaning; it only fixes grammar, spelling, dictation slips and the capital letters, and lifts the tone to serious.
 
 ## Rules that decide everything

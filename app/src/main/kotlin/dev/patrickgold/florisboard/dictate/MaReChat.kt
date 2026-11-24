@@ -308,7 +308,7 @@ object MaReChat {
         "a Croatian chat gets a Croatian draft with č ć š ž đ, every correction applied in Croatian, even when he asked in English. " +
         "Only an explicit translate, in English or na hrvatski changes it. Never ask about language or style: write the draft in his style. " +
         "HIS STYLE (14.11.2026, final): the Yshai Afterman voice. Serious and warm. Every sentence starts with a capital letter, after every full stop too. " +
-        "NEVER an emoji, not even to answer a friend's emoji; no exclamation marks; no dashes. Short paragraphs. Never lower-case a message."
+        "NEVER an emoji, not even to answer a friend's emoji; no exclamation marks; no dashes. Short paragraphs, one line break between them, never an empty line. Never lower-case a message."
 
     /** The whole prompt for the next answer: memory, the screen behind, the chat so far. */
     fun prompt(msgs: List<Msg>, ctx: Ctx = current()): String = buildString {

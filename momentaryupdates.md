@@ -4,6 +4,15 @@ Every request word for word, saved and pushed before any code (MANTRA_MANIFEST r
 
 
 
+## 24.11.2026: style correction adds an empty line between paragraphs; always build
+
+> "Please fix my application TTT keyboard. When it is in this mode for style corrections, it always adds a space bar between paragraphs. I don't want space. Just Ctrl-Enter, one new line. Please fix that. This styling is wrong." (Marko, 23.11.2026)
+
+> "Yes, you need to build a new application and never ask me anymore. You need to build. After you code, you build. It's a very simple process to push to the domain and that's it." (Marko, 24.11.2026)
+
+**Cause:** re_style.md said "Short paragraphs of one or two sentences, then a blank line", and the Mac style instruction asked for short paragraphs; the models put an empty line between them.
+**Status:** fixed: one line break, never an empty line, in re_style.md, the RE rules, MaPhoneStyle.INSTRUCTION, and enforced in code (MaPhoneStyle.singleLineBreaks on the style pass and on every Style box answer, so a phone copy of re_style.md cannot bring it back). Pushed to main = built.
+
 ## 21.11.2026: RE crashes on open in Messenger (build 697)
 
 > "Please open re and see it's crashing and then solve this crashing." (Marko, 21.11.2026, Pixel session testing the Nothing over Tailscale adb)

@@ -164,7 +164,8 @@ object MaStyleBox {
     private suspend fun ask(app: Context, msgs: List<MaReChat.Msg>): String {
         val a = withContext(Dispatchers.IO) { MaReChat.ask(app, msgs, ctx()) { s -> MaReChat.scope.launch(Dispatchers.Main) { status = s } } }
         val m = MaReChat.Msg(false, a)
-        return (m.draft ?: m.shown).trim()
+        // One line break between paragraphs, never an empty line (Marko 23.11.2026), whatever the guide says.
+        return MaPhoneStyle.singleLineBreaks((m.draft ?: m.shown).trim())
     }
 
     /** Writes the Style tab from Original with the chosen model. */
