@@ -7,7 +7,7 @@ unchanged then; on 2.11.2026 the repo became TTT and the APK ttt-build-N.apk). A
 Pop-up Configuration with a key's ID card), Key colours renamed Coloring the Buttons; the personal model learns from
 corrections (MaCorrections: a typo cut back and retyped is unlearned and its fix offered first; recent words outrank
 old ones, after AOSP LatinIME); deleted letters no longer learned. Tests on the Mac: scripts/test_popups.py,
-scripts/test_corrections.sh (Gradle's own Kotlin compiler, no kotlinc). Product page: https://talktotype.pages.dev
+scripts/test_corrections.sh (Gradle's own Kotlin compiler, no kotlinc). Product page: https://talktotype.markobosko.org
 (site/build.py, Cloudflare Pages "talktotype"), linked from the biography. Not yet tried by his thumbs: the correction
 learning.
 
