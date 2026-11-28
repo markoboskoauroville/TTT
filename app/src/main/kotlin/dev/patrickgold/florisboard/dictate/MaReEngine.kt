@@ -235,7 +235,8 @@ object MaReEngine {
             try {
                 // Qwen's skills, written by Opus in training mode (MaReTraining), on every Qwen call.
                 val skills = MaReTraining.skills().let { if (it.isBlank()) "" else "\n\nYour skills (learned from your supervisor, follow them):\n$it" }
-                return KeyRing.run(c, qwenRing(c), "Qwen") { k -> stripThinking(chat(k, model, system + QWEN_RULES + skills, user)) }
+                val ring = qwenRing(c)
+                return KeyRing.run(c, ring, "Qwen", stateId = if (ring == RING) RING else "groq_style") { k -> stripThinking(chat(k, model, system + QWEN_RULES + skills, user)) }
                     .also { lastAnswered = "groq:$model" }
             } catch (t: Throwable) {
                 if (t is kotlinx.coroutines.CancellationException) throw t

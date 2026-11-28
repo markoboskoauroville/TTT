@@ -61,8 +61,11 @@ object KeyRing {
      * the last key. The status line says every move ("Groq-1 out of free use -> Groq-2"). A key still resting
      * (until 00:00 UTC for a daily quota) is skipped on the way round unless every key rests.
      */
-    suspend fun <T> run(c: Context, ringId: String, label: String, block: suspend (String) -> T): T {
-        val all = EngineKeys.lines(c, ringId).ifEmpty { throw EngineFailure(FailKind.NOT_CONFIGURED, "no key") }
+    suspend fun <T> run(c: Context, keysFrom: String, label: String, stateId: String = keysFrom, block: suspend (String) -> T): T {
+        // [stateId]: whose cursor and rests these are. Style on Groq reads the dictation keys but keeps its own cursor and
+        // rests (28.11.2026: Qwen's rate limits moved the dictation cursor 1 -> 4 in thirty seconds).
+        val ringId = stateId
+        val all = EngineKeys.lines(c, keysFrom).ifEmpty { throw EngineFailure(FailKind.NOT_CONFIGURED, "no key") }
         val n = all.size
         val now = System.currentTimeMillis()
         val start = cursor(c, ringId).let { if (it in 0 until n) it else 0 }

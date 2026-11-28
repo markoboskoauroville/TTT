@@ -52,6 +52,9 @@ check("the attempt deadline covers the upload", "else 10_000L + (sec * 1000).toL
 check("a blocked network is named", "fun netBlocked" in chain and "if (netBlocked(c)) BLOCKED" in chain and "EngineChain.BLOCKED" in fra,
       "a bare 'no internet' while Android blocks TTT in the background")
 
+check("Groq styling keeps its own cursor", 'stateId = if (ring == RING) RING else "groq_style"' in eng
+      and "stateId: String = keysFrom" in code("dictate/engines/KeyRing.kt"), "style rate limits move the dictation key ring")
+
 # ---------------------------------------------------------------- Frankfurt keys: additive, resent when missing
 check("keys go to Frankfurt additively", '.put("replace", false)' in fra and '.put("replace", true)' not in fra,
       "one phone's copy wipes the other phone's rings in Frankfurt")
