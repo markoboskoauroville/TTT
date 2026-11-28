@@ -127,4 +127,6 @@ Still open: Deepgram direct on the 45 s clip took 45.6 s once more (one attempt,
 through Frankfurt the same clip takes 2-9 s). Soniox has no credit (engine error in Frankfurt). ElevenLabs has no key.
 Android on-device returns nothing for English from a file on this Pixel (cause in Google's recognizer not found; it now
 fails honestly). Groq's free keys hit Qwen's rate limit after about three style requests in a row (each key rests a minute);
-from 712 that no longer moves the dictation key ring. The badge text "✓ STYLE Groq" was cut on the recorder; 713 shortens it.
+from 712 that no longer moves the dictation key ring. The badge text "✓ STYLE Groq" (711) and "✓ Sonnet" (713) were cut on the recorder; 714 shows just "Sonnet" / "Groq" in a
+gold ring (muted "STYLE" = off), both seen whole on the Pixel. 712 gives Groq styling its own key cursor.
+Final on the phone: build 714 (versionCode 1714), STYLE left on ANTHROPIC (Sonnet) as found, FRA off as found.
