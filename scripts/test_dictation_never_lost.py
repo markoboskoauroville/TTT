@@ -83,7 +83,7 @@ check("a box that never opened types the words", "MaStyleBox.openedAt < askedAt"
 for v in ('const val OFF = "off"', 'const val ANTHROPIC = "anthropic"', 'const val GROQ = "groq"'):
     check("provider " + v, v in box, "missing")
 check("the badge cycles the three", "MaStyleBox.setProvider(context, MaStyleBox.nextProvider(pv))" in box, "a tap does not switch")
-check("the badge names the provider", '"STYLE off"' in box and '"✓ STYLE Groq"' in box and '"✓ STYLE " + MaStyleBox.modelLabel' in box,
+check("the badge names the provider, short enough not to be cut", '"✓ Groq"' in box and '"✓ " + MaStyleBox.modelLabel' in box and "fontSize = 10.sp" in box,
       "the status line does not say which styling is on")
 check("the H/E panel has the STYLE row", '"STYLE"' in panel and "MaStyleBox.setProvider(context, pv)" in panel
       and '"ANTHROPIC"' in panel and '"GROQ"' in panel, "no switch where he chooses engines")
