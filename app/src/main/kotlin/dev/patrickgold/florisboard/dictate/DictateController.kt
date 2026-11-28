@@ -441,6 +441,18 @@ object DictateController {
         maAppContext?.let { MaRecordingService.stop(it) }
     }
 
+    /** Seconds of a PCM WAV from its own header (rate, channels, bits); 0.0 when it is not one. */
+    private fun maWavSeconds(f: File): Double = runCatching {
+        java.io.RandomAccessFile(f, "r").use { r ->
+            val h = ByteArray(44); r.readFully(h)
+            val b = java.nio.ByteBuffer.wrap(h).order(java.nio.ByteOrder.LITTLE_ENDIAN)
+            if (b.getInt(0) != 0x46464952) return@use 0.0 // "RIFF"
+            val ch = b.getShort(22).toInt(); val rate = b.getInt(24); val bits = b.getShort(34).toInt()
+            val bps = rate.toLong() * ch * (bits / 8)
+            if (bps <= 0) 0.0 else (f.length() - 44).toDouble() / bps
+        }
+    }.getOrDefault(0.0)
+
     /** The in-flight transcription coroutine, cancellable via the stop button (see [cancelTranscription]). */
     private var transcribeJob: Job? = null
 
@@ -1802,7 +1814,13 @@ object DictateController {
                                 // division by zero in a log line is a crash in the send path.
                                 val after = it.length()
                                 if (before > 0L) {
-                                    val cut = (100 - (after * 100 / before)).toInt().coerceIn(0, 100)
+                                    // By DURATION, not bytes (28.11.2026): the recording is at the phone's rate (48 kHz) and
+                                    // the trimmed copy is 16 kHz, so the byte ratio said "trimmed 70%" for a take that lost
+                                    // a few seconds of silence (the clip kept 40.9 s of a 45 s take).
+                                    val secBefore = maWavSeconds(audioFile)
+                                    val secAfter = maWavSeconds(it)
+                                    val cut = (if (secBefore > 0.0 && secAfter > 0.0) (100 - secAfter * 100 / secBefore).toInt()
+                                        else (100 - (after * 100 / before)).toInt()).coerceIn(0, 100)
                                     MaLog.add("stt", "trimmed $cut% of the audio before upload")
                                     // And where he can see it without opening the log: under the
                                     // switch that did it.
@@ -3082,7 +3100,20 @@ object DictateController {
         if (outputTarget == OutputTarget.IME && pendingPress == null && !MaStyleBox.visible && MaStyleBox.on(context)) {
             val info = editor(context).activeInfo
             if (info.packageName != null && info.packageName != context.packageName) {
+                val askedAt = System.currentTimeMillis()
                 MaStyleBox.openAfterDictation(context, body, info.packageName, info.base.fieldId)
+                // NEVER LOSE THE DICTATION (28.11.2026): Android may refuse to open a window from the keyboard (background
+                // activity start; TTT's accessibility service, which lifts that, is off on the Pixel). Then nothing was
+                // typed and the box never came. If the box has not opened 1.5 s later, the words are typed as dictated.
+                val typed = body
+                scope.launch {
+                    delay(1500)
+                    if (MaStyleBox.openedAt < askedAt && !MaStyleBox.visible) {
+                        MaLog.add("box", "style box did not open in 1.5 s: ${typed.length} chars typed as dictated")
+                        MaMessage.show("Style box did not open: typed as dictated")
+                        sink(context).commitText(typed)
+                    }
+                }
                 return true
             }
         }
@@ -4496,8 +4527,9 @@ object DictateController {
      */
     suspend fun reChatAnthropic(context: Context, userContent: String, memoryWork: Boolean = false, status: (String) -> Unit = {}): String {
         maAppContext = context.applicationContext
-        // Groq chosen as the engine (23.11.2026): it answers itself, with the same prompt.
-        if (MaReEngine.isQwen() && MaReEngine.canFallBack(context)) {
+        // Groq chosen as the engine (23.11.2026): it answers itself, with the same prompt. Without a Groq key it says so
+        // (28.11.2026): before, it fell through to Sonnet without a word, so "Groq" was really Anthropic.
+        if (MaReEngine.isQwen()) {
             return MaReEngine.groqAsk(context, MaReEngine.FALLBACK_SYSTEM, userContent, status)
         }
         val model = MaReEngine.anthropicModel(context, userContent, memoryWork)

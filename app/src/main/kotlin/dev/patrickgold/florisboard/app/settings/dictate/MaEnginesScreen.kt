@@ -98,8 +98,8 @@ fun MaEnginesScreen() = FlorisScreen {
         }
 
         toggle(
-            "Fallback between engines",
-            "Each dictation goes through the chain below for the language on the E/H key. On an error, a timeout or a quota answer it switches to the next engine at once and says so under the recorder. Off: the old single engine.",
+            "Use the engine of the H/E key",
+            "On: every dictation goes to the engine the H or E key shows (never another one; retries every 3 s, next key of the same provider on quota). Off: with FRA off, dictation goes to the old single engine of Voice transcription settings, whatever H and E show.",
             chainOn,
         ) { chainOn = it; EngineStore.setChainOn(c, it) }
 

@@ -60,6 +60,12 @@ object EngineChain {
 
     const val MAX_RETRIES = 10
 
+    /** An HTTP 4xx that no retry can change (not 408 timeout, 409, 425, 429 rate limit). Pure, for the tests. */
+    fun permanent(message: String?): Boolean {
+        val m = Regex("^HTTP (4\\d\\d)").find(message?.trim().orEmpty()) ?: return false
+        return m.groupValues[1] !in setOf("408", "409", "425", "429")
+    }
+
     fun timeoutMs(sec: Double, local: Boolean) = if (local) 40_000L else 8_000L + (sec * 500).toLong()
 
     /**
@@ -84,6 +90,14 @@ object EngineChain {
         // FRA on + Frankfurt runs the key's engine: that engine, even if it is not "usable" here (its keys live in Frankfurt).
         val fraFirst = first != null && first !in skip && FrankfurtRelay.on(c) && FrankfurtRelay.handles(first)
         if (first != null && (first in ids || fraFirst)) ids = listOf(first)
+        // NEVER ANOTHER ENGINE (rule 11; found by the matrix 28.11.2026): the key's engine is not usable here (no key on
+        // this phone, model not installed, switched off) and Frankfurt is not running it. Before, the first usable engine
+        // of the stored order answered instead, without a word. Now the take stops with the audio kept and says why.
+        else if (first != null) {
+            val name = EngineCatalog.shortName(first)
+            onStatus("$letter \u00b7 $name is not set up on this phone" + if (FrankfurtRelay.handles(first)) " \u00b7 FRA on runs it in Frankfurt" else "")
+            throw EngineGaveUp("$name is not set up on this phone (no key or model)" + if (FrankfurtRelay.handles(first)) "; with FRA on, Frankfurt runs it" else "")
+        }
         if (ids.isEmpty()) return null
         val sec = ClipBuffer.seconds(wav)
         // NEVER another engine by itself (Marko, 10.11.2026: "Change models. Automatically never do that."): the engine he chose is
@@ -129,6 +143,12 @@ object EngineChain {
                         throw EngineGaveUp("${cand.name}: every key is out of free use or refused")
                     }
                     if (k == FailKind.NOT_CONFIGURED) throw EngineGaveUp("${cand.name} is not set up")
+                    // A plain refusal of THIS request (HTTP 400 / 404 / 413 / 415 ...) is the same on every retry: say it now
+                    // instead of after 10 x 3 s (28.11.2026). Timeouts, network errors and 5xx are still retried.
+                    if (k == FailKind.ERROR && permanent(t.message)) {
+                        onStatus("$letter \u00b7 ${cand.name}: ${t.message?.take(60)} \u00b7 audio kept")
+                        throw EngineGaveUp("${cand.name} refused this audio: ${t.message?.take(100)}")
+                    }
                     attempt++
                     if (attempt > MAX_RETRIES) {
                         onStatus("$letter \u00b7 ${cand.name} \u00b7 gave up after $MAX_RETRIES tries, audio kept")

@@ -104,7 +104,9 @@ check("chat Clear keeps people", "peopleDir" not in chat[chat.find("fun clearCha
 eng = code(SRC / "dictate/MaReEngine.kt")
 check("four RE engines", all(x in eng for x in ['AUTO = "anthropic_auto"', 'OPUS = "opus"', 'SONNET = "sonnet"', 'QWEN = "qwen"']))
 check("no OpenAI model for RE", "gpt-oss" not in eng and "gpt-oss" not in row[row.find("MaFeatureKey.REPROMPT ->"):row.find("MaFeatureKey.WHATSAPP ->")])
-check("Qwen has its own ring", 'RING = "re_qwen"' in eng and "KeyRing.run(c, RING" in eng)
+# 28.11.2026: RE's own ring first; without one, TTT's Groq keys (so STYLE: GROQ works on a phone without an RE key).
+check("Qwen has its own ring", 'RING = "re_qwen"' in eng and "KeyRing.run(c, qwenRing(c)" in eng
+      and 'if (EngineKeys.ownLines(c, RING).isNotEmpty()) RING else "groq"' in eng)
 check("Qwen thinking stripped", "fun stripThinking" in eng and "reasoning_format" in eng)
 check("Auto judge with Haiku, unsure = Opus", "JUDGE_MODEL" in eng and "When unsure, pick opus" in eng)
 qk = code(SRC / "app/settings/dictate/MaReQwenKey.kt")

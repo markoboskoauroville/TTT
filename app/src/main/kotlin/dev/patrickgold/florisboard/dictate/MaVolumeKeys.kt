@@ -126,6 +126,8 @@ object MaVolumeKeys {
      *
      * Nothing happens on the way down except starting the clock — see the note on release above.
      */
+    @Volatile private var offLoggedAt = 0L
+
     fun onDown(context: Context, keyCode: Int, event: KeyEvent?): Boolean {
         if (!isVolume(keyCode)) return false
         // Switched off, this module is not here. Returning false hands the key straight to the
@@ -134,7 +136,10 @@ object MaVolumeKeys {
         //
         // Logged, because the whole point of the log line is to answer "why did nothing happen".
         if (!live()) {
-            MaLog.add("vol", "${name(keyCode)} \u2014 keys switched off, system volume")
+            // Once per minute at most (28.11.2026): every press of an ordinary volume change was a log line, and 286 of the
+            // 400 lines on the Pixel were these, which pushed every dictation line out of the log.
+            val now = System.currentTimeMillis()
+            if (now - offLoggedAt > 60_000L) { offLoggedAt = now; MaLog.add("vol", "${name(keyCode)} \u2014 keys switched off, system volume") }
             return false
         }
         MaLog.add("vol", "${name(keyCode)} down")

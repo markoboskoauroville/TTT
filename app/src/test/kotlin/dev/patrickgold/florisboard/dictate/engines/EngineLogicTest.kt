@@ -161,6 +161,18 @@ class EngineLogicTest {
         val cf = KeyText.cloudflare("https://dash.cloudflare.com/$acct/workers/ai\n\ncfut_abcdefghijklmnopqrstuvwxyz0123456789ABCD")
         assertEquals(acct + "\ncfut_abcdefghijklmnopqrstuvwxyz0123456789ABCD", cf)
     }
+
+    @Test
+    fun `a plain 4xx refusal is not retried, timeouts and rate limits are`() {
+        assertTrue(EngineChain.permanent("HTTP 400: bad audio"))
+        assertTrue(EngineChain.permanent("HTTP 404"))
+        assertTrue(EngineChain.permanent("HTTP 413"))
+        assertEquals(false, EngineChain.permanent("HTTP 408"))
+        assertEquals(false, EngineChain.permanent("HTTP 429"))
+        assertEquals(false, EngineChain.permanent("HTTP 503"))
+        assertEquals(false, EngineChain.permanent("no answer"))
+        assertEquals(false, EngineChain.permanent(null))
+    }
 }
 
 class EngineSlotTest {

@@ -136,7 +136,19 @@ object MaReEngine {
     private val http = OkHttpClient.Builder().connectTimeout(15, TimeUnit.SECONDS).callTimeout(120, TimeUnit.SECONDS).build()
     private val JSONT = "application/json".toMediaType()
 
-    fun hasQwenKey(c: Context): Boolean = EngineKeys.ownLines(c, RING).isNotEmpty()
+    /**
+     * Groq's keys for RE and Style: RE's own ring when it has keys, else TTT's Groq keys (the ones dictation uses), so
+     * the STYLING switch's GROQ works on a phone that has Groq keys but no separate RE key (28.11.2026; before, Groq
+     * without an RE key silently answered with Sonnet).
+     */
+    fun qwenRing(c: Context): String = if (EngineKeys.ownLines(c, RING).isNotEmpty()) RING else "groq"
+
+    fun hasQwenKey(c: Context): Boolean = EngineKeys.ownLines(c, qwenRing(c)).isNotEmpty()
+
+    /** The Qwen model last read from Groq's list (no network): "qwen3.8-27b". */
+    fun qwenShort(c: Context): String =
+        (c.applicationContext.getSharedPreferences("ma_re_engine", Context.MODE_PRIVATE).getString("qwen_model", null) ?: QWEN_FALLBACK)
+            .substringAfter('/')
 
     /** Live: GET /models with [key]. "works" (200), "refused" (401/403), or what went wrong. Never shows the key. */
     suspend fun testQwenKey(key: String): String = withContext(Dispatchers.IO) {
@@ -158,7 +170,7 @@ object MaReEngine {
         val p = c.applicationContext.getSharedPreferences("ma_re_engine", Context.MODE_PRIVATE)
         val at = p.getLong("qwen_at", 0L)
         p.getString("qwen_model", null)?.let { if (System.currentTimeMillis() - at < 86_400_000L) return it }
-        val key = EngineKeys.ownLines(c, RING).firstOrNull() ?: return QWEN_FALLBACK
+        val key = EngineKeys.ownLines(c, qwenRing(c)).firstOrNull() ?: return QWEN_FALLBACK
         val ids = withContext(Dispatchers.IO) {
             runCatching {
                 http.newCall(Request.Builder().url("https://api.groq.com/openai/v1/models").header("Authorization", "Bearer $key").build())
@@ -216,14 +228,14 @@ object MaReEngine {
 
     /** One Qwen chat call with RE's own key ring: the same key rules as everywhere (next key on quota, 3 s retries x10). */
     suspend fun groqAsk(c: Context, system: String, user: String, status: (String) -> Unit): String {
-        if (!hasQwenKey(c)) throw EngineFailure(FailKind.NOT_CONFIGURED, "no RE Qwen key yet")
+        if (!hasQwenKey(c)) throw EngineFailure(FailKind.NOT_CONFIGURED, "Groq: no key")
         val model = qwenModel(c)
         var attempt = 0
         while (true) {
             try {
                 // Qwen's skills, written by Opus in training mode (MaReTraining), on every Qwen call.
                 val skills = MaReTraining.skills().let { if (it.isBlank()) "" else "\n\nYour skills (learned from your supervisor, follow them):\n$it" }
-                return KeyRing.run(c, RING, "Qwen") { k -> stripThinking(chat(k, model, system + QWEN_RULES + skills, user)) }
+                return KeyRing.run(c, qwenRing(c), "Qwen") { k -> stripThinking(chat(k, model, system + QWEN_RULES + skills, user)) }
                     .also { lastAnswered = "groq:$model" }
             } catch (t: Throwable) {
                 if (t is kotlinx.coroutines.CancellationException) throw t

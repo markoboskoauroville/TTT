@@ -53,6 +53,8 @@
         <intent>
             <action android:name="android.service.textservice.SpellCheckerService"/>
         </intent>
+        <!-- Frankfurt rides on Tailscale: TTT wakes it when it is off (FrankfurtRelay.wakeTailscale, 28.11.2026). -->
+        <package android:name="com.tailscale.ipn"/>
     </queries>
 
     <application

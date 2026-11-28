@@ -96,6 +96,28 @@ object FrankfurtRelay {
 
     private class RelayDown(msg: String) : IOException(msg)
 
+    // ------------------------------------------------------------------ Tailscale: Frankfurt is only reachable through it
+
+    /** Is a VPN (Tailscale) up on this phone? Unknown = yes, so a failed check never blocks a take. */
+    fun vpnUp(c: Context): Boolean = runCatching {
+        val cm = c.getSystemService(android.net.ConnectivityManager::class.java)
+        @Suppress("DEPRECATION")
+        cm.allNetworks.any { cm.getNetworkCapabilities(it)?.hasTransport(android.net.NetworkCapabilities.TRANSPORT_VPN) == true }
+    }.getOrDefault(true)
+
+    /**
+     * THE MATRIX'S FIRST FINDING (28.11.2026): Tailscale was off on the Pixel, so with FRA on (the default) every take
+     * waited 10 x (4 s connect + 3 s) and then stopped, while the same take direct worked. The fix at the nose: TTT asks
+     * Tailscale to connect (its own CONNECT_VPN intent, the one Tasker uses; Tailscale already holds the VPN permission)
+     * and the status line says so. Still never direct by itself (rule 23).
+     */
+    fun wakeTailscale(c: Context): Boolean = runCatching {
+        c.applicationContext.sendBroadcast(
+            android.content.Intent("com.tailscale.ipn.CONNECT_VPN").setClassName("com.tailscale.ipn", "com.tailscale.ipn.IPNReceiver"),
+        )
+        android.util.Log.i("TTT-FRA", "Tailscale was off: asked it to connect")
+    }.isSuccess
+
     /** JSON of a 2xx answer. IOException = Frankfurt not reachable; a non-2xx answer = [EngineFailure]. */
     private suspend fun call(req: Request): JSONObject {
         http.newCall(req).await().use { r ->
@@ -126,7 +148,11 @@ object FrankfurtRelay {
     suspend fun syncKeys(c: Context, force: Boolean = false): String = withContext(Dispatchers.IO) {
         val (rings, hash) = keysPayload(c)
         if (!force && p(c).getString("keys_hash", null) == hash) return@withContext "keys already in Frankfurt"
-        val body = JSONObject().put("rings", rings).put("replace", true).toString().toRequestBody(JSONT)
+        // ADDITIVE, never replace (28.11.2026). Both phones and the Mac copy their keys to the same Frankfurt store; with
+        // "replace" the last phone to change its keys wiped every ring the other one had (the Pixel has no Cloudflare,
+        // Google or Soniox key, so its copy emptied them for the Nothing), and the other phone never noticed because its
+        // own hash had not changed. Frankfurt turns dead keys aside by itself (refused = rests an hour, forward-only ring).
+        val body = JSONObject().put("rings", rings).put("replace", false).toString().toRequestBody(JSONT)
         val out = call(Request.Builder().url(url(c) + "/keys").post(body).build()).optJSONObject("rings") ?: JSONObject()
         p(c).edit().putString("keys_hash", hash).apply()
         var total = 0
@@ -160,15 +186,40 @@ object FrankfurtRelay {
      * text; throws [EngineGaveUp] when Frankfurt says the engine failed or Frankfurt itself stayed unreachable.
      * Cancelling the coroutine cancels the job in Frankfurt.
      */
-    suspend fun transcribe(c: Context, id: String, wav: File, lang: String, names: List<String>, onStatus: (String) -> Unit): String {
+    suspend fun transcribe(c: Context, id: String, wav: File, lang: String, names: List<String>, onStatus: (String) -> Unit): String =
+        try {
+            transcribeOnce(c, id, wav, lang, names, onStatus)
+        } catch (e: KeysMissing) {
+            // Frankfurt has no key for this engine although the phone has one (the VM was rebuilt, another device's copy,
+            // a key file edited by hand): the phone's hash said "already there", so it never sent them again. Send them
+            // now and ask once more (28.11.2026).
+            if (!EngineKeys.has(c, id)) throw EngineGaveUp((e.message ?: "no key in Frankfurt") + " (and none on this phone)")
+            onStatus("Frankfurt had no ${EngineCatalog.shortName(id)} key · sending the phone's keys again")
+            runCatching { syncKeys(c, force = true) }
+            transcribeOnce(c, id, wav, lang, names, onStatus)
+        }
+
+    private class KeysMissing(msg: String) : Exception(msg)
+
+    private suspend fun transcribeOnce(c: Context, id: String, wav: File, lang: String, names: List<String>, onStatus: (String) -> Unit): String {
         val l = if (lang == "en") "en" else "hr"
         val name = EngineCatalog.shortName(id)
         var attempt = 0
+        var woke = false
         // 1. reach Frankfurt and hand over the audio (3 s x 10 when it does not answer, like every engine).
         var job: JSONObject
         while (true) {
+            if (!woke && !vpnUp(c)) {
+                woke = true
+                onStatus("Frankfurt · Tailscale is off · turning it on…")
+                if (wakeTailscale(c)) {
+                    // Tailscale needs a moment to bring the tunnel up; wait for it (up to 6 s), then go on as usual.
+                    var n = 0
+                    while (n < 12 && !vpnUp(c)) { delay(500); n++ }
+                }
+            }
             try {
-                onStatus(if (attempt == 0) "Frankfurt · sending to $name…" else "Frankfurt not answering · retry $attempt/${EngineChain.MAX_RETRIES}")
+                onStatus(if (attempt == 0) "Frankfurt · sending to $name…" else "Frankfurt not answering" + (if (!vpnUp(c)) " · Tailscale off" else "") + " · retry $attempt/${EngineChain.MAX_RETRIES}")
                 runCatching { syncKeys(c) }.onFailure { if (it is EngineFailure) throw EngineGaveUp(it.message ?: "Frankfurt refused") else if (it is IOException) throw it }
                 val req = Request.Builder().url(url(c) + "/jobs?engine=$id&lang=$l")
                     .header("X-TTT-Names", namesHeader(names)).post(wav.asRequestBody(WAV)).build()
@@ -178,10 +229,11 @@ object FrankfurtRelay {
                 attempt++
                 if (attempt > EngineChain.MAX_RETRIES) {
                     setLast(c, "not answering")
-                    onStatus("Frankfurt not answering · gave up, audio kept · FRA off = direct")
-                    throw EngineGaveUp("Frankfurt did not answer after ${EngineChain.MAX_RETRIES} tries (switch FRA off on the H/E panel to send direct)")
+                    val ts = if (!vpnUp(c)) " · Tailscale is off on this phone" else ""
+                    onStatus("Frankfurt not answering$ts · gave up, audio kept · FRA off = direct")
+                    throw EngineGaveUp("Frankfurt did not answer after ${EngineChain.MAX_RETRIES} tries$ts (switch FRA off on the H/E panel to send direct)")
                 }
-                onStatus("Frankfurt not answering · retry $attempt/${EngineChain.MAX_RETRIES}")
+                onStatus("Frankfurt not answering" + (if (!vpnUp(c)) " · Tailscale off" else "") + " · retry $attempt/${EngineChain.MAX_RETRIES}")
                 delay(3000)
             } catch (f: EngineFailure) {
                 throw EngineGaveUp(f.message ?: "Frankfurt refused")
@@ -197,7 +249,11 @@ object FrankfurtRelay {
                 job.optString("status").takeIf { it.isNotEmpty() }?.let(onStatus)
                 when (st) {
                     "done" -> return job.optString("text")
-                    "failed" -> throw EngineGaveUp(job.optString("error").ifEmpty { "Frankfurt: $name failed" })
+                    "failed" -> {
+                        val err = job.optString("error").ifEmpty { "Frankfurt: $name failed" }
+                        if (err.contains("no key in Frankfurt", ignoreCase = true) || err.contains("not set up in Frankfurt", ignoreCase = true)) throw KeysMissing(err)
+                        throw EngineGaveUp(err)
+                    }
                     "cancelled" -> throw EngineGaveUp("cancelled in Frankfurt")
                 }
                 version = job.optInt("version", version)

@@ -146,6 +146,9 @@ object MaReResult {
         return true
     }
 
+    /** Text accepted and not yet in a field (the box's Type checks it, 28.11.2026). */
+    fun pending(): Boolean = accepted != null
+
     /** One of the full-screen windows closed without inserting: the keyboard comes back. */
     fun closedWithoutInsert() {
         markClosed()

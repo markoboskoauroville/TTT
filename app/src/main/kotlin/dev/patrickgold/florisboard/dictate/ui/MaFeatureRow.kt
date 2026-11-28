@@ -2583,7 +2583,8 @@ private fun MaEngineMenu(lang: String, anchor: androidx.compose.ui.geometry.Rect
     val statusPx = with(density) { 28.dp.toPx() }
     val availPx = (loc[1] + keyTop - statusPx).coerceAtLeast(with(density) { 120.dp.toPx() })
     val micNote by dev.patrickgold.florisboard.dictate.audio.MicChoice.lastNote.collectAsState()
-    val rows = ids.size + 1 + mics.size + (if (micNote != null) 1 else 0)
+    // +1: the STYLE row (OFF / ANTHROPIC / GROQ) under the header (28.11.2026).
+    val rows = ids.size + 2 + mics.size + (if (micNote != null) 1 else 0)
     val rowDp = with(density) { (availPx / rows).toDp() }.coerceIn(30.dp, 52.dp)
     val panelDp = rowDp * rows
     val panelPx = with(density) { panelDp.toPx() }.coerceAtMost(availPx)
@@ -2632,6 +2633,39 @@ private fun MaEngineMenu(lang: String, anchor: androidx.compose.ui.geometry.Rect
                     text = "\u2715", color = Color(0xFFECEAE3), fontSize = 18.sp,
                     modifier = Modifier.clickable { onDismiss() }.padding(horizontal = 12.dp, vertical = 4.dp),
                 )
+            }
+            // STYLING (Marko, 28.11.2026: "for styling must be simple way to switch between API from Anthropic or API from
+            // Groq"): one row, three chips; the lit one is what the next dictation gets, the model is named under it.
+            val stylePv = dev.patrickgold.florisboard.dictate.MaStyleBox.shownProvider(context)
+            Row(modifier = Modifier.fillMaxWidth().height(rowDp).padding(horizontal = 10.dp), verticalAlignment = Alignment.CenterVertically) {
+                Text(text = "STYLE", color = MaPanelSub, fontSize = 13.sp, fontWeight = FontWeight.Bold, maxLines = 1)
+                for ((pv, name) in listOf(
+                    dev.patrickgold.florisboard.dictate.MaStyleBox.OFF to "OFF",
+                    dev.patrickgold.florisboard.dictate.MaStyleBox.ANTHROPIC to "ANTHROPIC",
+                    dev.patrickgold.florisboard.dictate.MaStyleBox.GROQ to "GROQ",
+                )) {
+                    val lit = pv == stylePv
+                    Column(
+                        modifier = Modifier
+                            .padding(start = 6.dp)
+                            .clip(RoundedCornerShape(8.dp))
+                            .border(1.dp, if (lit) red else MaPanelEdge, RoundedCornerShape(8.dp))
+                            .background(if (lit) red.copy(alpha = 0.22f) else Color.Transparent)
+                            .clickable { dev.patrickgold.florisboard.dictate.MaStyleBox.setProvider(context, pv) }
+                            .padding(horizontal = 7.dp, vertical = 1.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                    ) {
+                        Text(
+                            text = name, color = if (lit) red else MaPanelInk, fontSize = 13.sp,
+                            fontWeight = if (lit) FontWeight.Bold else FontWeight.Normal, maxLines = 1, softWrap = false,
+                        )
+                        if (pv != dev.patrickgold.florisboard.dictate.MaStyleBox.OFF) Text(
+                            text = if (pv == dev.patrickgold.florisboard.dictate.MaStyleBox.GROQ) dev.patrickgold.florisboard.dictate.MaReEngine.qwenShort(context)
+                                else dev.patrickgold.florisboard.dictate.MaStyleBox.modelLabel(context, pv),
+                            color = MaPanelSub, fontSize = 10.sp, maxLines = 1, softWrap = false,
+                        )
+                    }
+                }
             }
             for (m in mics) {
                 val sel = m.key == micLit

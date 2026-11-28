@@ -104,9 +104,48 @@ object MaStyleBox {
 
     /** The Style badge: on by default. */
     fun on(c: Context) = p(c).getBoolean("on", true)
-    fun setOn(c: Context, v: Boolean) { p(c).edit().putBoolean("on", v).apply(); badge = v }
+    fun setOn(c: Context, v: Boolean) { p(c).edit().putBoolean("on", v).apply(); badge = v; shown = provider(c) }
     var badge by mutableStateOf<Boolean?>(null)
     fun badgeOn(c: Context): Boolean = badge ?: on(c).also { badge = it }
+
+    // ---- STYLING: OFF / ANTHROPIC / GROQ (Marko, 28.11.2026: "for styling must be simple way to switch between API from
+    // Anthropic or API from Groq"). One switch made of the two settings that already exist: the Style badge (on/off) and the
+    // AI engine (MaReEngine: Sonnet / Opus / Haiku = Anthropic, Groq = Qwen on Groq). Shown on the recorder badge and in the
+    // H/E long-press panel; a tap on the badge goes OFF -> ANTHROPIC -> GROQ -> OFF.
+    const val OFF = "off"
+    const val ANTHROPIC = "anthropic"
+    const val GROQ = "groq"
+
+    fun provider(c: Context): String = if (!on(c)) OFF else if (MaReEngine.isQwen()) GROQ else ANTHROPIC
+
+    /** What the badge and the panel show; null until read once. */
+    var shown by mutableStateOf<String?>(null)
+    fun shownProvider(c: Context): String = shown ?: provider(c).also { shown = it }
+
+    fun setProvider(c: Context, v: String) {
+        when (v) {
+            OFF -> { p(c).edit().putBoolean("on", false).apply(); badge = false }
+            GROQ -> { p(c).edit().putBoolean("on", true).apply(); badge = true; MaReEngine.setEngine(MaReEngine.QWEN); engine = MaReEngine.QWEN }
+            else -> {
+                p(c).edit().putBoolean("on", true).apply(); badge = true
+                // Anthropic keeps the Anthropic model he chose (Sonnet by default, Opus or Haiku if picked in the box).
+                if (MaReEngine.isQwen()) { MaReEngine.setEngine(MaReEngine.SONNET); engine = MaReEngine.SONNET }
+            }
+        }
+        shown = v
+    }
+
+    fun nextProvider(v: String) = when (v) { OFF -> ANTHROPIC; ANTHROPIC -> GROQ; else -> OFF }
+
+    /** The model each provider uses, said where he chooses it. */
+    fun modelLabel(c: Context, v: String = provider(c)): String = when (v) {
+        OFF -> "off"
+        GROQ -> "Groq " + MaReEngine.qwenShort(c)
+        else -> MaReEngine.label(MaReEngine.engine().takeIf { it != MaReEngine.QWEN } ?: MaReEngine.SONNET)
+    }
+
+    /** How long a Style request may take before the Original is shown instead (the dictation is never held hostage). */
+    const val STYLE_TIMEOUT_MS = 30_000L
 
     /** The box is on screen: a dictation made inside it is typed into its own field, never opens a second box. */
     @Volatile var visible = false
@@ -123,6 +162,7 @@ object MaStyleBox {
     private var fieldId = 0
     private var replace = false
     private var asked = ""
+    @Volatile private var appCtx: Context? = null
 
     private fun open(context: Context) {
         engine = MaReEngine.engine()
@@ -133,6 +173,7 @@ object MaStyleBox {
     }
 
     private fun target(context: Context, p: String?, f: Int, fieldText: String?) {
+        appCtx = context.applicationContext
         pkg = p?.takeIf { it != context.packageName }
         fieldId = f
         MaReChat.pkg = pkg; MaReChat.fieldId = f; MaReChat.fieldText = fieldText?.trim()?.takeIf { it.isNotEmpty() }
@@ -177,16 +218,37 @@ object MaStyleBox {
         val text = original
         if (text.isBlank() || styling) return
         styling = true; status = ""
+        val who = MaReEngine.label(engine)
         MaReChat.scope.launch {
-            val r = runCatching { ask(app, listOf(MaReChat.Msg(true, MaReSession.FIELD_PREFIX + text), MaReChat.Msg(true, STYLE_ASK))) }
+            val r = runCatching {
+                kotlinx.coroutines.withTimeout(STYLE_TIMEOUT_MS) {
+                    ask(app, listOf(MaReChat.Msg(true, MaReSession.FIELD_PREFIX + text), MaReChat.Msg(true, STYLE_ASK)))
+                }
+            }
             withContext(Dispatchers.Main) {
                 styling = false
-                r.onSuccess { styled = it; status = "" }.onFailure { e ->
-                    if (e !is CancellationException) status = "Style could not be written: " + (e.message ?: e.javaClass.simpleName).take(100)
+                r.onSuccess {
+                    if (it.isBlank()) { failed(who, "empty answer") } else { styled = it; status = backupNote() }
+                }.onFailure { e ->
+                    if (e is kotlinx.coroutines.TimeoutCancellationException) failed(who, "no answer in ${STYLE_TIMEOUT_MS / 1000} s")
+                    else if (e !is CancellationException) failed(who, (e.message ?: e.javaClass.simpleName).take(80))
                 }
             }
         }
     }
+
+    /**
+     * The chosen provider failed, has no key or did not answer in time (28.11.2026): the dictation is never lost. The box
+     * turns to Original at once (Type puts it in the app) with one small line saying why.
+     */
+    private fun failed(who: String, why: String) {
+        if (tab == STYLE) tab = ORIGINAL
+        status = "Style ($who) failed: $why. Original shown."
+    }
+
+    /** When Groq answered in place of the Anthropic model (the backup), the box says so. */
+    private fun backupNote(): String =
+        if (engine != MaReEngine.QWEN && MaReEngine.lastAnswered.startsWith("groq:")) "Anthropic did not answer: Groq wrote it (backup)." else ""
 
     /** Reprompt: his instruction, about the text in the box when there is one; the answer lands on New message. */
     fun reprompt(app: Context, instruction: String) {
@@ -222,8 +284,36 @@ object MaStyleBox {
         if (t.isEmpty() || pkg == null) return false
         MaReHabits.note("typed from the box", listOf("Original", "Style", "Reprompt", "New message")[tab] + ", ${t.length} chars")
         MaReResult.acceptFor(t, pkg, fieldId, words = asked, replace = replace)
+        deliverSoon(t)
         return true
     }
+
+    /**
+     * After Type the box closes and the app behind gets its field back, but the keyboard is not always shown again, so
+     * the old wait for the keyboard's next onStartInputView could leave the text waiting until it expired (60 s).
+     * Now the text goes in as soon as the IME has the field's connection again (tried for 4 s); if it never does, it is
+     * on the clipboard with a note, so a dictation is never lost (28.11.2026).
+     */
+    private fun deliverSoon(t: String) {
+        val app = appCtx ?: return
+        MaReChat.scope.launch(Dispatchers.Main) {
+            for (wait in listOf(350L, 400L, 600L, 900L, 1750L)) {
+                kotlinx.coroutines.delay(wait)
+                if (!MaReResult.pending()) return@launch
+                dev.patrickgold.florisboard.FlorisImeService.maDeliverReNow()
+            }
+            kotlinx.coroutines.delay(300)
+            if (MaReResult.pending()) {
+                val cm = app.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+                cm.setPrimaryClip(ClipData.newPlainText("TTT", t))
+                Toast.makeText(app, "The app did not take the text: it is on the clipboard, paste it.", Toast.LENGTH_LONG).show()
+                MaLog.add("box", "type: field not back in 4 s, ${t.length} chars put on the clipboard")
+            }
+        }
+    }
+
+    /** The box was asked to open after a dictation (DictateController checks it really did: [openedAt]). */
+    @Volatile var openedAt = 0L
 }
 
 class MaStyleBoxActivity : ComponentActivity() {
@@ -234,6 +324,7 @@ class MaStyleBoxActivity : ComponentActivity() {
         MaRemoteDb.attach(this)
         MaReChat.ensureMemory()
         MaStyleBox.visible = true
+        MaStyleBox.openedAt = System.currentTimeMillis()
         setContent {
             MaterialTheme(colorScheme = darkColorScheme(background = MaHost.Bg, surface = MaHost.Bg)) {
                 StyleBoxScreen(onType = { text -> if (MaStyleBox.type(text)) { typed = true; finish() } }, onClose = { finish() })
@@ -371,16 +462,24 @@ private fun StyleBoxScreen(onType: (String) -> Unit, onClose: () -> Unit) {
     }
 }
 
-/** The Style badge on the recorder: lit = the dictation opens the box with Original and Style; a tap removes or returns it. */
+/**
+ * The Style badge on the recorder, the status line he always sees while he talks (28.11.2026): which styling this
+ * dictation gets. "STYLE off" (muted), "✓ STYLE Sonnet" or "✓ STYLE Groq" (gold). A tap goes OFF -> ANTHROPIC -> GROQ -> OFF.
+ */
 @Composable
 internal fun MaStyleBadge(modifier: Modifier = Modifier) {
     val context = LocalContext.current
-    val on = MaStyleBox.badgeOn(context)
+    val pv = MaStyleBox.shownProvider(context)
+    val on = pv != MaStyleBox.OFF
     Text(
-        text = if (on) "✓ STYLE" else "STYLE",
+        text = when (pv) {
+            MaStyleBox.OFF -> "STYLE off"
+            MaStyleBox.GROQ -> "✓ STYLE Groq"
+            else -> "✓ STYLE " + MaStyleBox.modelLabel(context, MaStyleBox.ANTHROPIC)
+        },
         color = if (on) MaHost.Gold else MaHost.Muted, fontSize = 11.sp, fontWeight = FontWeight.Bold, maxLines = 1, softWrap = false,
         modifier = modifier.clip(RoundedCornerShape(6.dp))
             .border(1.dp, if (on) MaHost.Gold else MaHost.Muted.copy(alpha = 0.5f), RoundedCornerShape(6.dp))
-            .clickable { MaStyleBox.setOn(context, !on) }.padding(horizontal = 5.dp, vertical = 1.dp),
+            .clickable { MaStyleBox.setProvider(context, MaStyleBox.nextProvider(pv)) }.padding(horizontal = 5.dp, vertical = 1.dp),
     )
 }
