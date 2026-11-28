@@ -233,7 +233,8 @@ object FrankfurtRelay {
                     onStatus("Frankfurt not answering$ts · gave up, audio kept · FRA off = direct")
                     throw EngineGaveUp("Frankfurt did not answer after ${EngineChain.MAX_RETRIES} tries$ts (switch FRA off on the H/E panel to send direct)")
                 }
-                onStatus("Frankfurt not answering" + (if (!vpnUp(c)) " · Tailscale off" else "") + " · retry $attempt/${EngineChain.MAX_RETRIES}")
+                onStatus("Frankfurt not answering" + (if (EngineChain.netBlocked(c)) " · " + EngineChain.BLOCKED else if (!vpnUp(c)) " · Tailscale off" else "") +
+                    " · retry $attempt/${EngineChain.MAX_RETRIES}")
                 delay(3000)
             } catch (f: EngineFailure) {
                 throw EngineGaveUp(f.message ?: "Frankfurt refused")
@@ -263,7 +264,7 @@ object FrankfurtRelay {
                 } catch (e: IOException) {
                     lost++
                     if (lost > EngineChain.MAX_RETRIES) throw EngineGaveUp("lost Frankfurt while it was transcribing; audio kept")
-                    onStatus("Frankfurt · $name · lost the line · retry $lost/${EngineChain.MAX_RETRIES}")
+                    onStatus("Frankfurt · $name · lost the line" + (if (EngineChain.netBlocked(c)) " · " + EngineChain.BLOCKED else "") + " · retry $lost/${EngineChain.MAX_RETRIES}")
                     delay(3000)
                 }
             }

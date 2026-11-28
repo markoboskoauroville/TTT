@@ -68,7 +68,26 @@ object EngineChain {
         return m.groupValues[1] !in setOf("408", "409", "425", "429")
     }
 
-    fun timeoutMs(sec: Double, local: Boolean) = if (local) 40_000L else 8_000L + (sec * 500).toLong()
+    /**
+     * One attempt's deadline. It covers the upload too, so it grows with the audio (16 kHz WAV is 32 kB a second): the old
+     * 8 s + 0.5 s per second timed out on a 45 s take over a slow uplink and on the async engines (the matrix 28.11.2026:
+     * Deepgram 37.9 s and Speechmatics 55.5 s for one take each, both "no answer" on the first try, the whole audio sent twice).
+     */
+    fun timeoutMs(sec: Double, local: Boolean) = if (local) 40_000L else 10_000L + (sec * 1000).toLong()
+
+    /**
+     * Android refuses TTT's traffic right now: the keyboard is hidden (TTT is then a background process) on a metered network
+     * (mobile data, a hotspot) while "Background data" is off for TTT. The matrix 28.11.2026 on the Pixel: keyboard up =
+     * allowed; Home pressed = blocked (METERED_USER_RESTRICTED), so a take still in flight retried "no internet" until
+     * the keyboard came back. Said in the status line instead of a bare "no internet".
+     */
+    @Suppress("DEPRECATION")
+    fun netBlocked(c: Context): Boolean = runCatching {
+        val cm = c.getSystemService(android.net.ConnectivityManager::class.java)
+        cm.activeNetworkInfo?.detailedState == android.net.NetworkInfo.DetailedState.BLOCKED
+    }.getOrDefault(false)
+
+    const val BLOCKED = "Android blocks TTT's internet while the keyboard is hidden (Background data is off for TTT)"
 
     /**
      * The dictation entry. The key's own engine ([first]) goes first; the others follow in the stored
@@ -166,7 +185,7 @@ object EngineChain {
                         throw EngineGaveUp("${cand.name} did not answer after $MAX_RETRIES tries")
                     }
                     // The reason in plain words; for an error the adapter's own short message ("HTTP 503"), never a key (28.11.2026).
-                    val why = if (k == FailKind.NETWORK) "no internet" else if (k == FailKind.TIMEOUT) "no answer" else (t.message?.take(60)?.ifBlank { null } ?: "failed")
+                    val why = if (k == FailKind.NETWORK) (if (netBlocked(c)) BLOCKED else "no internet") else if (k == FailKind.TIMEOUT) "no answer" else (t.message?.take(60)?.ifBlank { null } ?: "failed")
                     onStatus("$letter \u00b7 ${cand.name} \u00b7 retry $attempt/$MAX_RETRIES \u00b7 $why")
                     kotlinx.coroutines.delay(3000)
                 }

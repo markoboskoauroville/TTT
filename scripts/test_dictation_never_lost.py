@@ -48,6 +48,10 @@ adapters = code("dictate/engines/EngineAdapters.kt")
 check("a missing recognizer language is said at once", "ERROR_LANGUAGE_UNAVAILABLE" in adapters and "FailKind.NOT_CONFIGURED" in adapters,
       "10 retries x 3 s for a language the phone does not have")
 
+check("the attempt deadline covers the upload", "else 10_000L + (sec * 1000).toLong()" in chain, "a 45 s take timed out and was sent twice")
+check("a blocked network is named", "fun netBlocked" in chain and "if (netBlocked(c)) BLOCKED" in chain and "EngineChain.BLOCKED" in fra,
+      "a bare 'no internet' while Android blocks TTT in the background")
+
 # ---------------------------------------------------------------- Frankfurt keys: additive, resent when missing
 check("keys go to Frankfurt additively", '.put("replace", false)' in fra and '.put("replace", true)' not in fra,
       "one phone's copy wipes the other phone's rings in Frankfurt")

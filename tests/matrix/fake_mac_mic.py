@@ -41,7 +41,7 @@ while True:
             ahead = (i / 32000.0) - (time.time() - t0)
             if ahead > 0:
                 time.sleep(ahead)
-        c.sendall(b"\x00" * 32000 * 8 // 10)
+        c.sendall(bytes(32000 * 8 // 10))
         time.sleep(0.9)
         print(f"done {len(pcm) / 32000.0:.1f} s", flush=True)
     except Exception as e:
