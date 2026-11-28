@@ -464,7 +464,7 @@ private fun StyleBoxScreen(onType: (String) -> Unit, onClose: () -> Unit) {
 
 /**
  * The Style badge on the recorder, the status line he always sees while he talks (28.11.2026): which styling this
- * dictation gets. "STYLE" (muted = off), "✓ Sonnet" or "✓ Groq" (gold). A tap goes OFF -> ANTHROPIC -> GROQ -> OFF.
+ * dictation gets. "STYLE" (muted = off), "Sonnet" or "Groq" (gold ring = on). A tap goes OFF -> ANTHROPIC -> GROQ -> OFF.
  */
 @Composable
 internal fun MaStyleBadge(modifier: Modifier = Modifier) {
@@ -475,9 +475,10 @@ internal fun MaStyleBadge(modifier: Modifier = Modifier) {
         // As short as the old "✓ STYLE": the slot under the clock is narrow and "✓ STYLE Groq" was cut to "✓ STYL" on the
         // Pixel (28.11.2026). The gold ring says styling is on, the word says who writes it; muted STYLE = off.
         text = when (pv) {
+            // No check mark: "✓ Sonnet" was still cut to "✓ Sonn" on the Pixel (build 713). The gold ring is the "on".
             MaStyleBox.OFF -> "STYLE"
-            MaStyleBox.GROQ -> "✓ Groq"
-            else -> "✓ " + MaStyleBox.modelLabel(context, MaStyleBox.ANTHROPIC)
+            MaStyleBox.GROQ -> "Groq"
+            else -> MaStyleBox.modelLabel(context, MaStyleBox.ANTHROPIC)
         },
         color = if (on) MaHost.Gold else MaHost.Muted, fontSize = 10.sp, fontWeight = FontWeight.Bold, maxLines = 1, softWrap = false,
         modifier = modifier.clip(RoundedCornerShape(6.dp))
