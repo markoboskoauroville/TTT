@@ -1,0 +1,133 @@
+kind,clip,lang,engine_or_provider,route,run,ok,wer_pct,ms,path,answered_by,outcome,error,last_status,text
+style,en_long,en,anthropic,,1,True,0.0,3687,,claude-sonnet-5-5,,,,"Good morning everyone.
+Here is the plan for the concert weekend.
+On Friday we load the van at 9 in the morning and leave Zagreb by 10. The drive to Split takes about 4 hours, so we should arrive around 2 in the afternoon.
+The sound check starts at 5, and the doors open at 8. We have 12 songs in the first set and 9 in the second set.
+Please check your instruments tonight. New strings, spare batteries and the in-ear monitors.
+The hotel is booked for 2 nights, and breakfast is from 7 to 10.
+On Saturday morning we record a short video for the festival, so wear something simple and bright. Marija will bring the camera and two lights.
+On Sunday we drive back after lunch.
+If anything changes, I will send a message to the group.
+Thank you, and see you on Friday."
+style,en_long,en,groq,,1,True,0.0,3209,,claude-sonnet-5-5,,,,"Good morning everyone.
+Here is the plan for the concert weekend. On Friday we load the van at 9 in the morning and leave Zagreb by 10. The drive to Split takes about 4 hours, so we should arrive around 2 in the afternoon.
+The sound check starts at 5, and the doors open at 8. We have 12 songs in the first set and 9 in the second set.
+Please check your instruments tonight. New strings, spare batteries and the in-ear monitors.
+The hotel is booked for 2 nights, and breakfast is from 7 to 10.
+On Saturday morning we record a short video for the festival, so wear something simple and bright. Marija will bring the camera and two lights.
+On Sunday we drive back after lunch. If anything changes, I will send a message to the group.
+Thank you, and see you on Friday."
+style,en_para,en,anthropic,,1,True,5.0,1342,,claude-sonnet-5-5,,,,"Hi Tom,
+The rehearsal moves to Thursday, the 14th, at 7:30 in the evening.
+Please bring the two frame drums, the long cables and 3 microphones.
+The studio costs 45 euros per hour, so let's finish by ten.
+Thank you."
+style,en_para,en,groq,,1,True,5.0,1549,,claude-sonnet-5-5,,,,"Hi Tom,
+The rehearsal moves to Thursday, the 14th, at 7:30 in the evening.
+Please bring the two frame drums, the long cables and 3 microphones.
+The studio costs 45 euros per hour, so let's finish by ten.
+Thank you."
+style,en_short,en,anthropic,,1,True,0.0,842,,claude-sonnet-5-5,,,,Please send me the invoice before Friday.
+style,en_short,en,groq,,1,True,0.0,811,,claude-sonnet-5-5,,,,Please send me the invoice before Friday.
+style,hr_para,hr,anthropic,,1,True,15.6,2167,,claude-sonnet-5-5,,,,"Dragi Ivane,
+Proba je u četvrtak u 19:30 navečer.
+Molim te donesi dva bubnja, duge kablove i tri mikrofona.
+Studio košta 45 eura po satu, pa završimo do 22:00.
+Hvala ti."
+style,hr_para,hr,groq,,1,True,0.0,2090,,claude-sonnet-5-5,,,,"Dragi Ivane, proba je u četvrtak u sedam i trideset navečer.
+Molim te donesi dva bubnja, duge kablove i tri mikrofona.
+Studio košta četrdeset pet eura po satu, pa završimo do deset.
+Hvala."
+style,hr_short,hr,anthropic,,1,True,0.0,1622,,claude-sonnet-5-5,,,,"Bok Ana,
+Stižem za deset minuta."
+style,hr_short,hr,groq,,1,True,0.0,1954,,claude-sonnet-5-5,,,,"Bok Ana,
+Stižem za deset minuta."
+style,en_long,en,anthropic,,2,True,0.0,2097,,claude-sonnet-5-5,,,,"Good morning everyone.
+Here is the plan for the concert weekend.
+On Friday we load the van at 9 in the morning and leave Zagreb by 10. The drive to Split takes about 4 hours, so we should arrive around 2 in the afternoon.
+The sound check starts at 5, and the doors open at 8. We have 12 songs in the first set and 9 in the second set.
+Please check your instruments tonight: new strings, spare batteries and the in-ear monitors.
+The hotel is booked for 2 nights, and breakfast is from 7 to 10.
+On Saturday morning we record a short video for the festival, so wear something simple and bright. Marija will bring the camera and two lights.
+On Sunday we drive back after lunch.
+If anything changes, I will send a message to the group.
+Thank you, and see you on Friday."
+style,en_long,en,groq,,2,True,0.0,2134,,claude-sonnet-5-5,,,,"Good morning everyone.
+Here is the plan for the concert weekend.
+On Friday we load the van at 9 in the morning and leave Zagreb by 10. The drive to Split takes about 4 hours, so we should arrive around 2 in the afternoon. The sound check starts at 5, and the doors open at 8. We have 12 songs in the first set and 9 in the second set.
+Please check your instruments tonight: new strings, spare batteries and the in-ear monitors.
+The hotel is booked for 2 nights, and breakfast is from 7 to 10.
+On Saturday morning we record a short video for the festival, so wear something simple and bright. Marija will bring the camera and two lights.
+On Sunday we drive back after lunch.
+If anything changes, I will send a message to the group.
+Thank you, and see you on Friday."
+style,en_para,en,anthropic,,2,True,5.0,1489,,claude-sonnet-5-5,,,,"Hi Tom,
+The rehearsal moves to Thursday, the 14th, at 7:30 in the evening.
+Please bring the two frame drums, the long cables and 3 microphones.
+The studio costs 45 euros per hour, so let's finish by ten.
+Thank you."
+style,en_para,en,groq,,2,True,0.0,1181,,claude-sonnet-5-5,,,,"Hi Tom,
+The rehearsal moves to Thursday, the 14th, at 7:30 in the evening.
+Please bring the two frame drums, the long cables and 3 microphones.
+The studio costs 45 euros per hour, so let's finish by ten.
+Thanks."
+style,en_short,en,anthropic,,2,True,0.0,606,,claude-sonnet-5-5,,,,Please send me the invoice before Friday.
+style,en_short,en,groq,,2,True,0.0,1180,,claude-sonnet-5-5,,,,Please send me the invoice before Friday.
+style,hr_para,hr,anthropic,,2,True,9.4,2268,,claude-sonnet-5-5,,,,"Dragi Ivane,
+Proba je u četvrtak u 19:30 navečer.
+Molim te donesi dva bubnja, duge kablove i tri mikrofona.
+Studio košta 45 eura po satu, pa završimo do deset.
+Hvala ti."
+style,hr_para,hr,groq,,2,True,0.0,2007,,claude-sonnet-5-5,,,,"Dragi Ivane, proba je u četvrtak u sedam i trideset navečer.
+Molim te donesi dva bubnja, duge kablove i tri mikrofona.
+Studio košta četrdeset pet eura po satu, pa završimo do deset.
+Hvala."
+style,hr_short,hr,anthropic,,2,True,0.0,1987,,claude-sonnet-5-5,,,,"Bok Ana,
+Stižem za deset minuta."
+style,hr_short,hr,groq,,2,True,0.0,1667,,claude-sonnet-5-5,,,,"Bok Ana,
+Stižem za deset minuta."
+style,en_long,en,anthropic,,3,True,0.0,2305,,claude-sonnet-5-5,,,,"Good morning everyone.
+Here is the plan for the concert weekend.
+On Friday we load the van at 9 in the morning and leave Zagreb by 10. The drive to Split takes about 4 hours, so we should arrive around 2 in the afternoon.
+The sound check starts at 5, and the doors open at 8. We have 12 songs in the first set and 9 in the second set.
+Please check your instruments tonight: new strings, spare batteries and the in-ear monitors.
+The hotel is booked for 2 nights, and breakfast is from 7 to 10.
+On Saturday morning we record a short video for the festival, so wear something simple and bright. Marija will bring the camera and two lights.
+On Sunday we drive back after lunch.
+If anything changes, I will send a message to the group.
+Thank you, and see you on Friday."
+style,en_long,en,groq,,3,True,0.0,2149,,claude-sonnet-5-5,,,,"Good morning everyone.
+Here is the plan for the concert weekend.
+On Friday we load the van at 9 in the morning and leave Zagreb by 10. The drive to Split takes about 4 hours, so we should arrive around 2 in the afternoon.
+The sound check starts at 5, and the doors open at 8. We have 12 songs in the first set and 9 in the second set.
+Please check your instruments tonight. New strings, spare batteries and the in-ear monitors.
+The hotel is booked for 2 nights, and breakfast is from 7 to 10.
+On Saturday morning we record a short video for the festival, so wear something simple and bright. Marija will bring the camera and two lights.
+On Sunday we drive back after lunch.
+If anything changes, I will send a message to the group.
+Thank you, and see you on Friday."
+style,en_para,en,anthropic,,3,True,0.0,1475,,claude-sonnet-5-5,,,,"Hi Tom,
+The rehearsal moves to Thursday, the 14th, at 7:30 in the evening.
+Please bring the two frame drums, the long cables and 3 microphones.
+The studio costs 45 euros per hour, so let's finish by ten.
+Thanks."
+style,en_para,en,groq,,3,True,5.0,1252,,claude-sonnet-5-5,,,,"Hi Tom,
+The rehearsal moves to Thursday, the 14th, at 7:30 in the evening.
+Please bring the two frame drums, the long cables and 3 microphones.
+The studio costs 45 euros per hour, so let's finish by ten.
+Thank you."
+style,en_short,en,anthropic,,3,True,0.0,798,,claude-sonnet-5-5,,,,Please send me the invoice before Friday.
+style,en_short,en,groq,,3,True,0.0,804,,claude-sonnet-5-5,,,,Please send me the invoice before Friday.
+style,hr_para,hr,anthropic,,3,True,15.6,2009,,claude-sonnet-5-5,,,,"Dragi Ivane, proba je u četvrtak u 19:30.
+Molim te donesi dva bubnja, duge kablove i tri mikrofona.
+Studio košta 45 eura po satu, pa završimo do 22:00.
+Hvala."
+style,hr_para,hr,groq,,3,True,0.0,2149,,claude-sonnet-5-5,,,,"Dragi Ivane,
+Proba je u četvrtak u sedam i trideset navečer.
+Molim te donesi dva bubnja, duge kablove i tri mikrofona.
+Studio košta četrdeset pet eura po satu, pa završimo do deset.
+Hvala."
+style,hr_short,hr,anthropic,,3,True,0.0,1629,,claude-sonnet-5-5,,,,"Bok Ana,
+Stižem za deset minuta."
+style,hr_short,hr,groq,,3,True,0.0,1539,,claude-sonnet-5-5,,,,"Bok Ana,
+Stižem za deset minuta."

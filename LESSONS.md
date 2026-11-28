@@ -44,3 +44,12 @@ A fix pushed to a side branch is not delivered; Marko had to ask. After code: me
 
 ## 15.11.2026: setPreferredDevice returning true is not proof
 It returned true while the take still went to the USB camera (another app already held that input open). Always read `routedDevice` back and log it; retry with a different audio source; show the real route to Marko.
+
+## 28.11.2026: measure the real path with a known voice before guessing
+- A synthetic-voice matrix through the keyboard's own transcribe() found in an hour what months of "sometimes it fails" did not: another engine answering silently, "Groq" being Sonnet, Android answering "" as success. Test the path the user takes, not an engine in isolation, and record WHO answered, not only whether text came back.
+- "Success" with the wrong engine or an empty string is the worst failure: it looks like it worked. An empty answer to speech is an error; the answering engine is logged and checked.
+- The phone's environment is part of the bug: Tailscale disabled (Frankfurt unreachable), Background data off (no internet when the keyboard hides on a metered network), a cached process frozen. Read `dumpsys netpolicy` / `package` before blaming code, and say the cause in the status line.
+- A whole-request deadline must cover the upload; size it by audio length (1 s per audio second), not only by processing.
+- Two devices writing one key store with "replace" wipe each other; copy additively and resend when the store says it has nothing.
+- RE's Groq ring is preferred, but STYLE: GROQ falls back to TTT's own Groq keys (Marko asked for a simple switch that works; 13.11 rule "RE never uses TTT's Groq keys" relaxed for that case only).
+

@@ -8,6 +8,8 @@ Every request word for word, saved and pushed before any code (MANTRA_MANIFEST r
 
 **Status:** saved first.
 
+**Status (28.11.2026):** done in builds 708-711: synthetic-voice matrix of all 13 engines, Frankfurt and direct, 3 runs each, styling with Anthropic and Groq (docs/engine-matrix-2026-11-28.md). Found and fixed: another engine answering silently, "Groq" styling answered by Sonnet, Android answering empty, Tailscale off unnoticed, long takes timing out, dead engines retried a minute, blocked network unnamed, Frankfurt keys overwritten between phones, style failures hiding the words. STYLE switch OFF / ANTHROPIC / GROQ on the recorder badge and in the H/E long-press panel.
+
 
 
 ## 24.11.2026: style correction adds an empty line between paragraphs; always build
