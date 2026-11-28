@@ -60,6 +60,8 @@ object EngineChain {
 
     const val MAX_RETRIES = 10
 
+    const val NO_TEXT = "%s returned no text for speech (audio kept: Resend, or pick another engine)"
+
     /** An HTTP 4xx that no retry can change (not 408 timeout, 409, 425, 429 rate limit). Pure, for the tests. */
     fun permanent(message: String?): Boolean {
         val m = Regex("^HTTP (4\\d\\d)").find(message?.trim().orEmpty()) ?: return false
@@ -113,6 +115,7 @@ object EngineChain {
             try {
                 EngineLive.setActive(l, id)
                 val text = FrankfurtRelay.transcribe(c, id, wav, l, names()) { m -> onStatus("$letter · $m") }
+                if (text.isBlank()) { onStatus("$letter · $name returned no text · audio kept"); throw EngineGaveUp(NO_TEXT.format(name)) }
                 EngineStore.addUsage(c, id, sec)
                 val ms = System.currentTimeMillis() - t0
                 onStatus("done ($name via Frankfurt, ${FallbackRunner.seconds(ms)} s)")
@@ -132,11 +135,19 @@ object EngineChain {
                 try {
                     val s = System.currentTimeMillis()
                     val text = kotlinx.coroutines.withTimeout(timeoutMs(sec, cand.isLocal)) { cand.call() }
+                    // AN EMPTY ANSWER IS NOT A DICTATION (the matrix 28.11.2026: Android on-device answered "" to every English
+                    // take, and the keyboard typed nothing and said nothing). The speech gate already dropped silent takes,
+                    // so empty here means the engine failed: say so, keep the audio for Resend.
+                    if (text.isBlank()) {
+                        onStatus("$letter \u00b7 ${cand.name} returned no text \u00b7 audio kept")
+                        throw EngineGaveUp(NO_TEXT.format(cand.name))
+                    }
                     val ms = System.currentTimeMillis()
                     onStatus("done (${cand.name}, ${FallbackRunner.seconds(ms - t0)} s)")
                     return ChainResult(text, cand.id, cand.name, ms - t0, listOf(Attempt(cand.id, true, null, ms - s)))
                 } catch (t: Throwable) {
                     if (t is kotlinx.coroutines.CancellationException && t !is kotlinx.coroutines.TimeoutCancellationException) throw t
+                    if (t is EngineGaveUp) throw t
                     val k = FallbackRunner.classify(t)
                     if (k == FailKind.QUOTA || k == FailKind.AUTH) {
                         onStatus("$letter \u00b7 ${cand.name}: every key is out")

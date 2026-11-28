@@ -42,6 +42,12 @@ m = re.search(r"if \(first != null && \(first in ids \|\| fraFirst\)\) ids = lis
 check("an unusable chosen engine stops the take", m is not None and "throw EngineGaveUp" in m.group(1),
       "the first usable engine of the order answers instead of the one he chose")
 
+check("an empty answer is a failure, not a dictation", chain.count("if (text.isBlank())") == 2 and "if (t is EngineGaveUp) throw t" in chain,
+      "an engine answering \"\" typed nothing and said nothing")
+adapters = code("dictate/engines/EngineAdapters.kt")
+check("a missing recognizer language is said at once", "ERROR_LANGUAGE_UNAVAILABLE" in adapters and "FailKind.NOT_CONFIGURED" in adapters,
+      "10 retries x 3 s for a language the phone does not have")
+
 # ---------------------------------------------------------------- Frankfurt keys: additive, resent when missing
 check("keys go to Frankfurt additively", '.put("replace", false)' in fra and '.put("replace", true)' not in fra,
       "one phone's copy wipes the other phone's rings in Frankfurt")

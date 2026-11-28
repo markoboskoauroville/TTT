@@ -154,7 +154,16 @@ object EngineAdapters {
                     override fun onEndOfSpeech() {}
                     override fun onPartialResults(p: android.os.Bundle?) {}
                     override fun onEvent(t: Int, p: android.os.Bundle?) {}
-                    override fun onError(e: Int) { finish(Result.failure(EngineFailure(FailKind.ERROR, "recognizer error $e"))) }
+                    override fun onError(e: Int) {
+                        // 12 / 13 = the language is not on this phone's recognizer (the matrix 28.11.2026: Croatian, every
+                        // take, 10 retries x 3 s for nothing): not set up, said at once. 7 = no match: nothing heard.
+                        finish(when (e) {
+                            SpeechRecognizer.ERROR_LANGUAGE_NOT_SUPPORTED, SpeechRecognizer.ERROR_LANGUAGE_UNAVAILABLE ->
+                                Result.failure(EngineFailure(FailKind.NOT_CONFIGURED, "no ${if (lang2(lang) == "en") "English" else "Croatian"} on this phone's recognizer"))
+                            SpeechRecognizer.ERROR_NO_MATCH -> Result.success("")
+                            else -> Result.failure(EngineFailure(FailKind.ERROR, "recognizer error $e"))
+                        })
+                    }
                     override fun onResults(r: android.os.Bundle?) {
                         val t = r?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)?.firstOrNull().orEmpty()
                         finish(Result.success(t))
