@@ -100,6 +100,10 @@
                 <action android:name="dev.ttt.engines.EXPORT_UI"/>
                 <action android:name="dev.ttt.engines.BENCH"/>
                 <action android:name="dev.ttt.engines.REPORT"/>
+                <action android:name="dev.ttt.engines.AAC_BENCH"/>
+                <action android:name="dev.ttt.engines.MATRIX"/>
+                <action android:name="dev.ttt.engines.STYLE_MATRIX"/>
+                <action android:name="dev.ttt.remote.LOG"/>
             </intent-filter>
         </receiver>
 <!-- allow http:// endpoints the user configures (e.g. a LAN Ollama / self-hosted server, #136); default providers all use https -->

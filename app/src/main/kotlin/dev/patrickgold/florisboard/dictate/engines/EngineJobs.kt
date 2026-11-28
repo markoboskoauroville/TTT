@@ -156,7 +156,38 @@ class EngineDebugReceiver : BroadcastReceiver() {
                             .put("state", DictateController.state.value.javaClass.simpleName)
                             .put("keysPerRing", rings)
                             .put("githubDb", dev.patrickgold.florisboard.dictate.MaRemoteDb.hasToken())
-                            .put("hH", EngineStore.selected(app, "hr")).put("hE", EngineStore.selected(app, "en")))
+                            .put("hH", EngineStore.selected(app, "hr")).put("hE", EngineStore.selected(app, "en"))
+                            // The switches that decide the dictation path (28.11.2026), so adb sees why a take went where it went.
+                            .put("fraOn", FrankfurtRelay.on(app)).put("chainOn", EngineStore.chainOn(app)).put("clipsOn", EngineStore.clipsOn(app))
+                            .put("fraLast", FrankfurtRelay.lastState(app) ?: "")
+                            .put("styleOn", dev.patrickgold.florisboard.dictate.MaStyleBox.on(app))
+                            .put("legacyProvider", dev.patrickgold.florisboard.dictate.MaProviders.transcriptionAccount().providerId)
+                            .put("legacyHasKey", dev.patrickgold.florisboard.dictate.MaProviders.transcriptionAccount().apiKey.isNotBlank())
+                            .put("rewordProvider", dev.patrickgold.florisboard.dictate.MaProviders.rewordingAccount().providerId)
+                            .put("rewordHasKey", dev.patrickgold.florisboard.dictate.MaProviders.rewordingAccount().apiKey.isNotBlank())
+                            .put("aiCorrect", prefs.dictate.maAiCorrectDictation.get()))
+                    }
+                    "dev.ttt.remote.LOG" -> {
+                        // The app's own log (MaLog, 400 lines, lengths and states, never a key or his text) for adb (28.11.2026).
+                        remoteOut(app, i, JSONObject().put("log", dev.patrickgold.florisboard.dictate.MaLog.readAll()))
+                    }
+                    "dev.ttt.engines.MATRIX" -> {
+                        // The engine matrix (EngineMatrix, 28.11.2026): e=engines (comma), r=fra,direct, n=runs, only=clip names.
+                        val engines = (i.getStringExtra("e") ?: EngineCatalog.ALL.joinToString(",") { it.id }).split(',').map { it.trim() }.filter { it.isNotEmpty() }
+                        val routes = (i.getStringExtra("r") ?: "fra,direct").split(',').map { it.trim() }.filter { it.isNotEmpty() }
+                        val only = i.getStringExtra("only")?.split(',')?.map { it.trim() }?.toSet()
+                        val n = i.getIntExtra("n", 1)
+                        dev.patrickgold.florisboard.dictate.MaReChat.scope.launch(Dispatchers.IO) {
+                            EngineMatrix.transcription(app, engines, routes, n, only) { out(it) }
+                        }
+                    }
+                    "dev.ttt.engines.STYLE_MATRIX" -> {
+                        val pv = (i.getStringExtra("p") ?: "anthropic,groq").split(',').map { it.trim() }.filter { it.isNotEmpty() }
+                        val only = i.getStringExtra("only")?.split(',')?.map { it.trim() }?.toSet()
+                        val n = i.getIntExtra("n", 1)
+                        dev.patrickgold.florisboard.dictate.MaReChat.scope.launch(Dispatchers.IO) {
+                            EngineMatrix.styling(app, pv, n, only) { out(it) }
+                        }
                     }
                     "dev.ttt.remote.CLAUDE_SAY" -> {
                         // A Claude Code session on the Mac writes to Marko (MaClaudeLink, 13.11.2026), by text over adb:

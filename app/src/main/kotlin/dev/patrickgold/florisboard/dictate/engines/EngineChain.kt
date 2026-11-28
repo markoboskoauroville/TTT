@@ -134,7 +134,8 @@ object EngineChain {
                         onStatus("$letter \u00b7 ${cand.name} \u00b7 gave up after $MAX_RETRIES tries, audio kept")
                         throw EngineGaveUp("${cand.name} did not answer after $MAX_RETRIES tries")
                     }
-                    val why = if (k == FailKind.NETWORK) "no internet" else if (k == FailKind.TIMEOUT) "no answer" else "failed"
+                    // The reason in plain words; for an error the adapter's own short message ("HTTP 503"), never a key (28.11.2026).
+                    val why = if (k == FailKind.NETWORK) "no internet" else if (k == FailKind.TIMEOUT) "no answer" else (t.message?.take(60)?.ifBlank { null } ?: "failed")
                     onStatus("$letter \u00b7 ${cand.name} \u00b7 retry $attempt/$MAX_RETRIES \u00b7 $why")
                     kotlinx.coroutines.delay(3000)
                 }

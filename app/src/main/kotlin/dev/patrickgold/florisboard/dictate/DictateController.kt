@@ -444,6 +444,49 @@ object DictateController {
     /** The in-flight transcription coroutine, cancellable via the stop button (see [cancelTranscription]). */
     private var transcribeJob: Job? = null
 
+    /**
+     * One take of the adb matrix (EngineMatrix, 28.11.2026): what the keyboard's own transcribe() decided and returned.
+     * While it is set, nothing is typed, nothing goes into the history, the clip buffer or the resend slot.
+     */
+    class DebugTake {
+        val statuses: MutableList<String> = java.util.Collections.synchronizedList(mutableListOf())
+        @Volatile var path: String = ""
+        @Volatile var engineSelected: String = ""
+        @Volatile var answeredBy: String = ""
+        @Volatile var text: String? = null
+        @Volatile var error: String? = null
+        @Volatile var outcome: String = ""
+    }
+    @Volatile private var debugTake: DebugTake? = null
+
+    /**
+     * Runs [wav] (16 kHz mono WAV, a copy: it is deleted afterwards) through exactly the path a keyboard take uses
+     * (transcribe(): the FRA / chain / old-path decision, the engine, the retries), and returns what happened.
+     * Only when the keyboard is idle. adb only (EngineDebugReceiver needs android.permission.DUMP).
+     */
+    suspend fun debugTakeFile(context: Context, wav: File, seconds: Long): DebugTake = withContext(Dispatchers.Main) {
+        val d = DebugTake()
+        if (_state.value !is UiState.Idle && _state.value !is UiState.Error) { d.error = "keyboard busy: " + _state.value.javaClass.simpleName; return@withContext d }
+        debugTake = d
+        val watch = scope.launch { _maStatus.collect { if (it.isNotBlank() && d.statuses.lastOrNull() != it) d.statuses.add(it) } }
+        try {
+            transcribeJob = null
+            transcribe(context.applicationContext, wav, recordedSeconds = seconds, gate = true, source = DictateHistorySource.KEYBOARD)
+            transcribeJob?.join()
+            if (d.text == null && d.error == null) {
+                val st = _state.value
+                d.error = if (st is UiState.Error) "UiState.Error: " + st.message + (st.detail?.let { " ($it)" } ?: "") else "no text (" + st.javaClass.simpleName + ")"
+            }
+        } finally {
+            watch.cancel()
+            debugTake = null
+            _state.value = UiState.Idle
+            _maStatus.value = ""
+            runCatching { wav.delete() }
+        }
+        d
+    }
+
     // The in-flight manual rewording coroutine (a prompt chip / "Send"), so the stop button can abort it
     // mid-generation (issue #192). The post-transcription rewording chain instead runs inside
     // [transcribeJob]; [cancelRewording] cancels whichever is active.
@@ -1826,6 +1869,8 @@ object DictateController {
                     "decide: fra ${if (engFraOn) "on" else "off"}, engine $engSelected, chainOn $engChainOn, chatAudio $chatAudio, " +
                         "forced $engForced -> ${if (engFra) "FRANKFURT" else if (engChain && engSelected != "assemblyai") "chain direct" else "old direct path"}",
                 )
+                debugTake?.path = if (engFra) "FRANKFURT" else if (engChain && engSelected != "assemblyai") "chain direct" else "old direct path"
+                debugTake?.engineSelected = engSelected
                 var stageWav: File? = null
                 if (!chatAudio && (engChain || engFra || dev.patrickgold.florisboard.dictate.engines.EngineStore.clipsOn(appContext))) {
                     val engWav = MaResample.toTargetRate(uploadFile) ?: uploadFile
@@ -1836,7 +1881,7 @@ object DictateController {
                         if (engFra || (engChain && engSelected != "assemblyai")) {
                             engineOutcome = dev.patrickgold.florisboard.dictate.engines.EngineChain.dictate(
                                 appContext, engWav, engLang, first = engSelected, skip = emptySet(), legacyFailed = null,
-                                onStatus = { _maStatus.value = it },
+                                onStatus = { _maStatus.value = it; debugTake?.statuses?.add(it) },
                             )
                         }
                     } finally {
@@ -2039,7 +2084,7 @@ object DictateController {
                 }
                 logLatency(latencyTrace, "providerCompleted", providerStartedNanos)
                 // The clip buffer (20 per language): the staged 16 kHz audio and what came back, as the first reference.
-                stageWav?.let { w ->
+                if (debugTake == null) stageWav?.let { w ->
                     dev.patrickgold.florisboard.dictate.engines.ClipBuffer.add(
                         appContext, w, engLang, result.text, engineOutcome?.engineId ?: engSelected,
                     )
@@ -2048,6 +2093,7 @@ object DictateController {
                 // back, measured across encoding, upload, queue and answer. Stored rather than only
                 // shown, so a comparison run over an evening survives being forgotten.
                 val maSendMs = System.currentTimeMillis() - maSendStartedAt
+                debugTake?.answeredBy = engineOutcome?.engineId ?: ("legacy:" + account.providerId)
                 prefs.dictate.maLastSendMs.set(maSendMs)
                 prefs.dictate.maLastSendFormat.set(maFormatTag)
                 if (engineOutcome == null) _maStatus.value = "%.1fs \u00b7 %s".format(maSendMs / 1000.0, maFormatTag.uppercase())
@@ -2100,6 +2146,7 @@ object DictateController {
                 throw c
             } catch (e: DictateApiException) {
                 outcome = "apiError"
+                debugTake?.error = "DictateApiException ${e.kind}: ${e.message.orEmpty().take(160)}"
                 _pendingPrompts.value = emptyList()
                 // Exportable failures (too large / bad format) keep the audio regardless of the resend
                 // pref, so it can be saved instead of lost (issue #144).
@@ -2112,6 +2159,7 @@ object DictateController {
                 _state.value = apiError(e, appContext, canResend = keepAudio)
             } catch (t: Throwable) {
                 outcome = "unexpectedError"
+                debugTake?.error = "${t.javaClass.simpleName}: ${t.message.orEmpty().take(160)}"
                 _pendingPrompts.value = emptyList()
                 keepAudio = retainFailedAudio(audioFile, live, recordedSeconds)
                 if (replayHistoryId == null) {
@@ -2134,6 +2182,7 @@ object DictateController {
                     dev.patrickgold.florisboard.dictate.recognition.RecognitionBridge.completeOutcome(outcome)
                 }
                 logLatency(latencyTrace, "terminal:$outcome")
+                debugTake?.outcome = outcome
             }
         }
     }
@@ -2154,6 +2203,8 @@ object DictateController {
         capture: HistoryCapture? = null,
         latencyTrace: BatchLatencyTrace? = null,
     ) {
+        // adb matrix (EngineMatrix, 28.11.2026): the transcript is handed back here; nothing is typed, kept or styled.
+        debugTake?.let { d -> d.text = rawText; _state.value = UiState.Idle; return }
         // REPROMPT BY VOICE (5.11.2026): the transcript is his instruction for the field. Nothing of it
         // is typed: a streamed preview is taken back, and the field's text is reshaped, or, when the
         // field is empty, the message he asked for is written (MaReprompt, sent bare, code words
@@ -3100,6 +3151,7 @@ object DictateController {
         // saved (issue #144); otherwise retention is gated on the resend-button preference.
         force: Boolean = false,
     ): Boolean {
+        if (debugTake != null) return false
         if (!force && !prefs.dictate.resendButton.get()) return false
         if (!audioFile.exists() || audioFile.length() == 0L) return false
         if (retained?.file != audioFile) discardRetainedAudio()
@@ -3646,6 +3698,7 @@ object DictateController {
     ) {
         // Gated only on the master history switch: a failed dictation has no text, so its audio is the ONLY
         // recovery path — we keep it even when "keep audio" (which governs successful dictations) is off.
+        if (debugTake != null) return
         if (!prefs.dictate.historyEnabled.get()) return
         if (isSensitiveDictationField(appContext)) return
         if (!audioFile.exists() || audioFile.length() == 0L) return
@@ -4449,7 +4502,7 @@ object DictateController {
         }
         val model = MaReEngine.anthropicModel(context, userContent, memoryWork)
         return try {
-            reChatRaw(context, userContent, model)
+            reChatRaw(context, userContent, model).also { MaReEngine.lastAnswered = model }
         } catch (t: Throwable) {
             // Groq only as the fallback (Marko, 22.11.2026): the same prompt, so the same memory, lessons and people.
             if (t is CancellationException || !MaReEngine.canFallBack(context)) throw t

@@ -168,6 +168,10 @@ object MaStyleBox {
         return MaPhoneStyle.singleLineBreaks((m.draft ?: m.shown).trim())
     }
 
+    /** adb matrix (EngineMatrix, 28.11.2026): the Style tab's exact request for [text], with the engine set now. */
+    suspend fun styleForTest(app: Context, text: String): String =
+        ask(app, listOf(MaReChat.Msg(true, MaReSession.FIELD_PREFIX + text), MaReChat.Msg(true, STYLE_ASK)))
+
     /** Writes the Style tab from Original with the chosen model. */
     fun style(app: Context) {
         val text = original

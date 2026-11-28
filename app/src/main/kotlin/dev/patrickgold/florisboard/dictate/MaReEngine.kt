@@ -99,6 +99,9 @@ object MaReEngine {
     /** The model used last (for the status line). */
     @Volatile var lastChoice: String = ""
 
+    /** Who really answered the last RE / Style request: "claude-sonnet-5-5", or "groq:<model>" (the matrix reads it). */
+    @Volatile var lastAnswered: String = ""
+
     fun label(e: String = engine()): String = when (e) {
         QWEN -> "Groq"
         OPUS -> "Opus"
@@ -221,6 +224,7 @@ object MaReEngine {
                 // Qwen's skills, written by Opus in training mode (MaReTraining), on every Qwen call.
                 val skills = MaReTraining.skills().let { if (it.isBlank()) "" else "\n\nYour skills (learned from your supervisor, follow them):\n$it" }
                 return KeyRing.run(c, RING, "Qwen") { k -> stripThinking(chat(k, model, system + QWEN_RULES + skills, user)) }
+                    .also { lastAnswered = "groq:$model" }
             } catch (t: Throwable) {
                 if (t is kotlinx.coroutines.CancellationException) throw t
                 val kind = FallbackRunner.classify(t)
