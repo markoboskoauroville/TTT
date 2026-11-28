@@ -107,6 +107,24 @@ Groq keys. Failover: ANTHROPIC fails -> Groq writes it (backup, said in the box)
 takes more than 30 s -> the box turns to Original at once with one line saying why; Type always works; if the box cannot
 open, the words are typed as dictated after 1.5 s; if Type cannot reach the field in 4 s, the text is on the clipboard.
 
-## After the fixes
+## After the fixes (build 711 on the Pixel; 712-713 only add the separate Groq style cursor and the short badge)
 
-See the section added below by the re-run on build 711.
+Quick pass, 1 run per clip (tests/matrix/results/build711_*):
+
+| check | build 708 | build 711 |
+|---|---|---|
+| Direct, engine without a key on this phone (Cloudflare, Google, Chirp, Soniox, ElevenLabs) | answered by groq_v3 / parakeet, "success" | stops at once: "X is not set up on this phone; with FRA on, Frankfurt runs it" (25/25) |
+| Android on-device, English | "" returned as success, nothing typed | "returned no text for speech (audio kept)", 0.5-6 s |
+| Android on-device, Croatian | 10 retries, 31 s | "not set up", under 0.1 s |
+| FRA with Tailscale disabled | 74.8 s, "Frankfurt did not answer" | 80.8 s (6 s waiting for Tailscale to wake), status "Tailscale off" on every retry and in the error |
+| ElevenLabs in Frankfurt | "no key in Frankfurt" | "no key in Frankfurt (and none on this phone)", 1-3 s |
+| STYLE Groq | answered by claude-sonnet-5-5 (15/15) | answered by groq:qwen/qwen3.8-27b (10/10, median 0.9 s); Anthropic Sonnet 10/10, median 2.0 s |
+| Working engines direct | groq_turbo, groq_v3, gemini, deepgram, assemblyai, speechmatics, parakeet: 35/35 | 35/35 |
+| Working engines in Frankfurt | 150/150 incl. Cloudflare, Google, Chirp | 50/50 (1 run) |
+| End to end (fake Mac mic, E key, box, Type into Keep) | Sonnet: landed | GROQ picked on the panel chip: box styled by Groq, Type landed in Keep |
+
+Still open: Deepgram direct on the 45 s clip took 45.6 s once more (one attempt, no timeout now with the wider deadline;
+through Frankfurt the same clip takes 2-9 s). Soniox has no credit (engine error in Frankfurt). ElevenLabs has no key.
+Android on-device returns nothing for English from a file on this Pixel (cause in Google's recognizer not found; it now
+fails honestly). Groq's free keys hit Qwen's rate limit after about three style requests in a row (each key rests a minute);
+from 712 that no longer moves the dictation key ring. The badge text "✓ STYLE Groq" was cut on the recorder; 713 shortens it.
