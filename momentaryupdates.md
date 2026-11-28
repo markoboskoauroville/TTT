@@ -2,6 +2,12 @@
 
 Every request word for word, saved and pushed before any code (MANTRA_MANIFEST requests-saved-first).
 
+## 28.11.2026, Marko: debug TTT now; every engine with a synthetic voice, Frankfurt on/off, styling off/on; a simple Anthropic/Groq switch for styling
+
+> "As the side hustle please install latest version of TTT on the Pixel. and then with artificial synthetic voice. Test all the engines. Or transcription. Using Frankfurt, no Frankfurt. And see where is the bug, why it doesn't work all the time. With styling, without styling. And for styling must be simple way to switch between API from Anthropic or API from Groq. basically I want you to debug TTT right now." (Marko, 28.11.2026, dictated; "poise" = voice, "Groc" = Groq, "atropic" = Anthropic)
+
+**Status:** saved first.
+
 
 
 ## 24.11.2026: style correction adds an empty line between paragraphs; always build
